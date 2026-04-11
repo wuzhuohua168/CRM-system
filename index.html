@@ -851,6 +851,14 @@
 <!-- ===== CRM 整柜台账 TAB ===== -->
 <div id="tab15" class="tab-content">
 
+    <!-- 视图切换 -->
+    <div style="display:flex; gap:0; margin-bottom:10px; background:rgba(255,255,255,0.7); border:1px solid #dde8f4; border-radius:12px; padding:4px; backdrop-filter:blur(8px);">
+        <button id="crm-view-btn-list" onclick="crmSwitchView('list')" style="flex:1; padding:8px; border:none; border-radius:8px; font-size:13px; font-weight:bold; cursor:pointer; background:#4a90e2; color:#fff; transition:0.2s;">📋 台账</button>
+        <button id="crm-view-btn-stats" onclick="crmSwitchView('stats')" style="flex:1; padding:8px; border:none; border-radius:8px; font-size:13px; font-weight:bold; cursor:pointer; background:transparent; color:#7a90a8; transition:0.2s;">📊 利润统计</button>
+    </div>
+
+    <!-- 台账视图 -->
+    <div id="crm-view-list">
     <!-- 顶部操作栏 -->
     <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
@@ -893,6 +901,64 @@
         <button onclick="crmExportPDF(true)" style="background:#e74c3c; border:none; color:#fff; border-radius:999px; padding:5px 14px; font-size:12px; font-weight:bold; cursor:pointer;">导出PDF</button>
         <button onclick="crmExportCSV(true)" style="background:#27ae60; border:none; color:#fff; border-radius:999px; padding:5px 14px; font-size:12px; font-weight:bold; cursor:pointer;">导出CSV</button>
         <button onclick="crmToggleSelectMode()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#ccc; border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer;">退出</button>
+    </div>
+    </div><!-- end crm-view-list -->
+
+    <!-- 利润统计视图 -->
+    <div id="crm-view-stats" style="display:none;">
+        <!-- 总览卡片 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;" id="crm-stat-overview"></div>
+        <!-- 月度趋势 -->
+        <div class="module-card" style="margin-bottom:12px;">
+            <div class="title">📈 月度毛利趋势</div>
+            <canvas id="crm-profit-chart" style="width:100%; height:200px; display:block;"></canvas>
+            <div id="crm-profit-chart-empty" style="text-align:center; color:#bbb; font-size:12px; padding:20px 0; display:none;">暂无足够数据</div>
+        </div>
+        <!-- 客户排名 -->
+        <div class="module-card" style="margin-bottom:12px;">
+            <div class="title">🏆 客户毛利排名</div>
+            <div id="crm-stat-clients"></div>
+        </div>
+        <!-- 逐票明细 -->
+        <div class="module-card" style="margin-bottom:12px;">
+            <div class="title">📑 逐票毛利明细</div>
+            <div id="crm-stat-detail"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CRM PDF 导出选项弹窗 ===== -->
+<div id="crm-pdf-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:10035; align-items:center; justify-content:center; padding:20px;">
+    <div style="width:min(380px,100%); background:#fff; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden;">
+        <div style="padding:16px 18px; background:linear-gradient(135deg,#2c3e50,#34495e); color:#fff; display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-size:15px; font-weight:bold;">选择导出版本</div>
+            <button onclick="crmClosePdfModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; line-height:1; padding:0; width:auto; flex:none;">×</button>
+        </div>
+        <div style="padding:18px;">
+            <div style="font-size:12px; color:#888; margin-bottom:14px;">请选择导出内容，客户版不含供应商成本与毛利数据。</div>
+            <!-- 客户版 -->
+            <div onclick="crmBuildAndDownloadPDF('client')" style="border:2px solid #4a90e2; border-radius:14px; padding:14px 16px; margin-bottom:12px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='#fff'">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <span style="font-size:22px;">📄</span>
+                    <div>
+                        <div style="font-size:14px; font-weight:bold; color:#2c3e50;">客户版</div>
+                        <div style="font-size:11px; color:#4a90e2; font-weight:bold;">可直接分享给客户</div>
+                    </div>
+                </div>
+                <div style="font-size:11px; color:#888; line-height:1.6;">✅ 客户、MBL、航线、柜型、品名、ETD/ETA<br>✅ 客户收费合计、状态<br>❌ 不含供应商成本、毛利、内部单号</div>
+            </div>
+            <!-- 内部完整版 -->
+            <div onclick="crmBuildAndDownloadPDF('full')" style="border:2px solid #2c3e50; border-radius:14px; padding:14px 16px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f5f6f7'" onmouseout="this.style.background='#fff'">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <span style="font-size:22px;">🔒</span>
+                    <div>
+                        <div style="font-size:14px; font-weight:bold; color:#2c3e50;">内部完整版</div>
+                        <div style="font-size:11px; color:#e74c3c; font-weight:bold;">含成本&毛利，仅限内部使用</div>
+                    </div>
+                </div>
+                <div style="font-size:11px; color:#888; line-height:1.6;">✅ 全部字段<br>✅ 供应商成本明细、毛利、毛利率<br>✅ 带"内部保密"水印</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1022,8 +1088,8 @@
                     </div>
                 </div>
 
-                <!-- 费用 -->
-                <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">费用 (CNY)</div>
+                <!-- 客户收入 -->
+                <div style="font-size:12px; font-weight:bold; color:#27ae60; margin-bottom:8px;">💰 客户收入 (CNY)</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">海运费</label>
@@ -1048,6 +1114,22 @@
                     <div>
                         <label style="font-size:11px; color:#999; display:block; margin-bottom:4px;">合计费用（自动）</label>
                         <div id="crm-f-fee-total" style="padding:9px; background:#f7fbff; border:1px solid #d5e5f5; border-radius:8px; font-size:13px; font-weight:bold; color:#2c7be5;">¥ 0</div>
+                    </div>
+                </div>
+
+                <!-- 供应商成本 -->
+                <div style="font-size:12px; font-weight:bold; color:#e67e22; margin-bottom:8px; margin-top:4px;">🏭 供应商成本</div>
+                <div style="font-size:11px; color:#aaa; margin-bottom:8px;">每项填原币金额+币种+汇率，系统自动换算CNY合计</div>
+                <div id="crm-cost-rows" style="margin-bottom:12px;"></div>
+                <div style="background:#fff8f0; border:1px solid #f0d5a8; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; color:#e67e22; font-weight:bold;">供应商成本合计（CNY）</span>
+                    <span id="crm-f-cost-total" style="font-size:15px; font-weight:bold; color:#e67e22;">¥ 0</span>
+                </div>
+                <div style="background:linear-gradient(135deg,#f0fff4,#e8f8f0); border:1px solid #a8dfc0; border-radius:10px; padding:10px 12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <span style="font-size:12px; color:#1f7a5c; font-weight:bold;">预计毛利（CNY）</span>
+                    <div style="display:flex; gap:16px; align-items:center;">
+                        <span id="crm-f-profit" style="font-size:15px; font-weight:bold; color:#1f7a5c;">¥ 0</span>
+                        <span id="crm-f-margin" style="font-size:12px; color:#27ae60; background:#d4f1e4; padding:2px 10px; border-radius:999px;">0%</span>
                     </div>
                 </div>
 
@@ -6683,6 +6765,7 @@ function crmShowAddModal() {
     document.getElementById('crm-edit-id').value = '';
     document.getElementById('crm-f-fee-total').textContent = '¥ 0';
     document.getElementById('crm-modal-title').textContent = '新增整柜';
+    crmRenderCostRows({});
     document.getElementById('crm-modal').style.display = 'block';
     crmBindFeeCalc();
 }
@@ -6700,15 +6783,118 @@ function crmBindFeeCalc() {
 
 function crmUpdateFeeTotal() {
     const ids = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-port','crm-f-fee-other'];
-    const total = ids.reduce((s, id) => s + (parseFloat(document.getElementById(id).value)||0), 0);
-    document.getElementById('crm-f-fee-total').textContent = '¥ ' + total.toLocaleString('zh-CN', {minimumFractionDigits:0, maximumFractionDigits:0});
+    const revenue = ids.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+    const totalEl = document.getElementById('crm-f-fee-total');
+    if (totalEl) totalEl.textContent = '¥ ' + revenue.toLocaleString('zh-CN', {minimumFractionDigits:0, maximumFractionDigits:0});
+    crmUpdateCostTotal();
+}
+
+const CRM_COST_ITEMS = [
+    { key: 'shipping_agent', label: '船代理费' },
+    { key: 'truck',          label: '拖车费' },
+    { key: 'customs_export', label: '报关费' },
+    { key: 'customs_import', label: '清关费' },
+    { key: 'tax',            label: '税金' },
+    { key: 'delivery',       label: '尾程派送费' },
+    { key: 'other',          label: '其他成本' },
+];
+const CRM_CURRENCIES = ['CNY','JPY','USD','EUR','HKD','TWD'];
+
+function crmRenderCostRows(costs) {
+    costs = costs || {};
+    const container = document.getElementById('crm-cost-rows');
+    if (!container) return;
+    container.innerHTML = CRM_COST_ITEMS.map(item => {
+        const c = costs[item.key] || {};
+        const amt   = c.amt   || '';
+        const cur   = c.cur   || 'CNY';
+        const rate  = c.rate  || (cur === 'CNY' ? 1 : '');
+        const cnyVal = c.cny  || '';
+        return `<div style="margin-bottom:10px;">
+            <div style="font-size:11px; color:#c0762a; font-weight:bold; margin-bottom:5px;">${item.label}</div>
+            <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1.5fr; gap:6px; align-items:center;">
+                <input type="number" id="crm-cost-amt-${item.key}" value="${amt}" placeholder="金额"
+                    oninput="crmCostLineCalc('${item.key}')"
+                    style="padding:8px; border:1px solid #f0d0a0; border-radius:7px; font-size:13px; width:100%;">
+                <select id="crm-cost-cur-${item.key}" onchange="crmCostLineCalc('${item.key}')"
+                    style="padding:8px; border:1px solid #f0d0a0; border-radius:7px; font-size:12px; background:#fff; width:100%;">
+                    ${CRM_CURRENCIES.map(c2 => `<option${c2===cur?' selected':''}>${c2}</option>`).join('')}
+                </select>
+                <input type="number" id="crm-cost-rate-${item.key}" value="${rate}" placeholder="汇率" step="0.0001"
+                    oninput="crmCostLineCalc('${item.key}')"
+                    style="padding:8px; border:1px solid #f0d0a0; border-radius:7px; font-size:12px; width:100%;">
+                <div id="crm-cost-cny-${item.key}" style="padding:8px; background:#fff8f0; border:1px solid #f0d0a0; border-radius:7px; font-size:12px; font-weight:bold; color:#e67e22; text-align:right;">
+                    ${cnyVal ? '¥'+Number(cnyVal).toLocaleString() : '—'}
+                </div>
+            </div>
+            <div style="display:flex; gap:4px; font-size:9px; color:#bbb; margin-top:2px; padding:0 1px;">
+                <span style="flex:2;">原币金额</span><span style="flex:1;">币种</span><span style="flex:1.2;">汇率</span><span style="flex:1.5; text-align:right;">≈ CNY</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function crmCostLineCalc(key) {
+    const amt  = parseFloat(document.getElementById('crm-cost-amt-'+key)?.value) || 0;
+    const cur  = document.getElementById('crm-cost-cur-'+key)?.value || 'CNY';
+    const rateEl = document.getElementById('crm-cost-rate-'+key);
+    let rate = parseFloat(rateEl?.value) || 0;
+    // auto-set rate=1 when CNY selected
+    if (cur === 'CNY') { if (rateEl) rateEl.value = 1; rate = 1; }
+    const cny = amt * rate;
+    const display = document.getElementById('crm-cost-cny-'+key);
+    if (display) display.textContent = cny > 0 ? '¥' + cny.toLocaleString('zh-CN',{maximumFractionDigits:0}) : '—';
+    crmUpdateCostTotal();
+}
+
+function crmUpdateCostTotal() {
+    let costTotal = 0;
+    CRM_COST_ITEMS.forEach(item => {
+        const amt  = parseFloat(document.getElementById('crm-cost-amt-'+item.key)?.value) || 0;
+        const cur  = document.getElementById('crm-cost-cur-'+item.key)?.value || 'CNY';
+        const rate = cur === 'CNY' ? 1 : (parseFloat(document.getElementById('crm-cost-rate-'+item.key)?.value) || 0);
+        costTotal += amt * rate;
+    });
+    const ctEl = document.getElementById('crm-f-cost-total');
+    if (ctEl) ctEl.textContent = '¥ ' + costTotal.toLocaleString('zh-CN',{maximumFractionDigits:0});
+
+    // revenue
+    const revIds = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-port','crm-f-fee-other'];
+    const revenue = revIds.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+
+    const profit = revenue - costTotal;
+    const margin = revenue > 0 ? (profit / revenue * 100) : 0;
+    const profitEl = document.getElementById('crm-f-profit');
+    const marginEl = document.getElementById('crm-f-margin');
+    if (profitEl) {
+        profitEl.textContent = (profit >= 0 ? '¥ ' : '- ¥ ') + Math.abs(profit).toLocaleString('zh-CN',{maximumFractionDigits:0});
+        profitEl.style.color = profit >= 0 ? '#1f7a5c' : '#e74c3c';
+    }
+    if (marginEl) {
+        marginEl.textContent = margin.toFixed(1) + '%';
+        marginEl.style.background = profit >= 0 ? '#d4f1e4' : '#fde8e8';
+        marginEl.style.color = profit >= 0 ? '#27ae60' : '#e74c3c';
+    }
 }
 
 function crmFormToRecord() {
-    const g = id => (document.getElementById(id).value || '').trim();
-    const n = id => parseFloat(document.getElementById(id).value) || 0;
+    const g = id => (document.getElementById(id)?.value || '').trim();
+    const n = id => parseFloat(document.getElementById(id)?.value) || 0;
     const fees = { ocean: n('crm-f-fee-ocean'), truck: n('crm-f-fee-truck'), customs: n('crm-f-fee-customs'), port: n('crm-f-fee-port'), other: n('crm-f-fee-other') };
     fees.total = fees.ocean + fees.truck + fees.customs + fees.port + fees.other;
+    // gather costs
+    const costs = {};
+    let costTotal = 0;
+    CRM_COST_ITEMS.forEach(item => {
+        const amt  = parseFloat(document.getElementById('crm-cost-amt-'+item.key)?.value) || 0;
+        const cur  = document.getElementById('crm-cost-cur-'+item.key)?.value || 'CNY';
+        const rate = cur === 'CNY' ? 1 : (parseFloat(document.getElementById('crm-cost-rate-'+item.key)?.value) || 0);
+        const cny  = amt * rate;
+        if (amt) { costs[item.key] = { amt, cur, rate, cny }; costTotal += cny; }
+    });
+    costs._total = costTotal;
+    const profit = fees.total - costTotal;
+    const margin = fees.total > 0 ? profit / fees.total : 0;
     return {
         client:   g('crm-f-client'),
         orderno:  g('crm-f-orderno'),
@@ -6731,6 +6917,9 @@ function crmFormToRecord() {
         pickup:   g('crm-f-pickup'),
         freetime: g('crm-f-freetime'),
         fees,
+        costs,
+        profit,
+        margin,
         status:   g('crm-f-status'),
         incoterm: g('crm-f-incoterm'),
         notes:    g('crm-f-notes'),
@@ -6750,6 +6939,18 @@ function crmRecordToForm(r) {
     s('crm-f-fee-customs', (r.fees||{}).customs || ''); s('crm-f-fee-port', (r.fees||{}).port || '');
     s('crm-f-fee-other', (r.fees||{}).other || '');
     s('crm-f-status', r.status); s('crm-f-incoterm', r.incoterm); s('crm-f-notes', r.notes);
+    // render cost rows first, then populate values
+    crmRenderCostRows(r.costs || {});
+    const costs = r.costs || {};
+    CRM_COST_ITEMS.forEach(item => {
+        const c = costs[item.key] || {};
+        const aEl = document.getElementById('crm-cost-amt-'+item.key);
+        const rEl = document.getElementById('crm-cost-rate-'+item.key);
+        const cEl = document.getElementById('crm-cost-cur-'+item.key);
+        if (aEl) aEl.value = c.amt || '';
+        if (cEl) cEl.value = c.cur || 'CNY';
+        if (rEl) rEl.value = c.rate || (c.cur === 'CNY' || !c.cur ? 1 : '');
+    });
     crmUpdateFeeTotal();
 }
 
@@ -6836,11 +7037,44 @@ function crmShowDetail(id) {
             ['预计到港 ETA', fmt(r.eta)], ['实际到港 ATA', fmt(r.ata)],
             ['提柜日', fmt(r.pickup)], ['免柜期截止', fmt(r.freetime)],
         ])}
-        ${section('费用明细', [
+        ${section('💰 客户收入', [
             ['海运费', fmtMoney(fees.ocean)], ['拖车费', fmtMoney(fees.truck)],
             ['报关费', fmtMoney(fees.customs)], ['港杂费', fmtMoney(fees.port)],
-            ['其他', fmtMoney(fees.other)], ['合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
+            ['其他', fmtMoney(fees.other)], ['收入合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
         ])}
+        ${(() => {
+            const costs = r.costs || {};
+            const costTotal = costs._total || 0;
+            const profit = r.profit !== undefined ? r.profit : (fees.total - costTotal);
+            const margin = r.margin !== undefined ? r.margin : (fees.total > 0 ? profit/fees.total : 0);
+            const pc = profit >= 0 ? '#1f7a5c' : '#e74c3c';
+            const hasCosts = CRM_COST_ITEMS.some(item => costs[item.key]);
+            if (!hasCosts) return '<div style="background:#f8fbff;border-radius:8px;padding:10px;font-size:12px;color:#aaa;margin-bottom:14px;text-align:center;">暂未录入供应商成本</div>';
+            const costRows = CRM_COST_ITEMS.filter(item => costs[item.key]).map(item => {
+                const c = costs[item.key];
+                const detail = c.cur !== 'CNY' ? `${c.amt} ${c.cur} × ${c.rate} = ¥${Number(c.cny).toLocaleString()}` : `¥${Number(c.cny).toLocaleString()}`;
+                return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">${item.label}</span><span style="color:#444;">${detail}</span></div>`;
+            }).join('');
+            const bar = Math.min(Math.max(margin*100,0),100);
+            return `<div style="margin-bottom:14px;">
+                <div style="font-size:11px;font-weight:bold;color:#e67e22;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f5dfc0;">🏭 供应商成本</div>
+                <div style="background:#fff9f2;border-radius:8px;padding:10px 12px;">${costRows}
+                    <div style="display:flex;justify-content:space-between;padding-top:6px;margin-top:4px;font-size:13px;font-weight:bold;"><span style="color:#e67e22;">成本合计</span><span style="color:#e67e22;">¥${Number(costTotal).toLocaleString()}</span></div>
+                </div></div>
+            <div style="background:${profit>=0?'linear-gradient(135deg,#f0fff4,#e8f8f0)':'linear-gradient(135deg,#fff4f4,#fde8e8)'};border:1px solid ${profit>=0?'#a8dfc0':'#f5b8b8'};border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="font-size:13px;font-weight:bold;color:${pc};">毛利</span>
+                    <span style="font-size:18px;font-weight:bold;color:${pc};">${profit>=0?'':'-'}¥${Math.abs(profit).toLocaleString()}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:12px;color:#888;">毛利率</span>
+                    <span style="font-size:14px;font-weight:bold;color:${pc};background:${profit>=0?'#d4f1e4':'#fde0e0'};padding:2px 12px;border-radius:999px;">${(margin*100).toFixed(1)}%</span>
+                </div>
+                <div style="margin-top:8px;background:rgba(255,255,255,0.6);border-radius:8px;overflow:hidden;height:6px;">
+                    <div style="height:100%;background:${pc};width:${bar}%;transition:width 0.5s;"></div>
+                </div>
+            </div>`;
+        })()}
         ${r.notes ? `<div style="margin-bottom:14px;"><div style="font-size:11px; font-weight:bold; color:#4a90e2; margin-bottom:8px; padding-bottom:4px; border-bottom:1px solid #e8f0f8;">备注 / 日志</div>
             <div style="background:#f8fbff; border-radius:8px; padding:10px; font-size:13px; color:#2c3e50; white-space:pre-wrap; line-height:1.6;">${r.notes}</div></div>` : ''}
         <div style="font-size:10px; color:#aaa; margin-bottom:12px;">
@@ -6970,7 +7204,8 @@ function crmRender() {
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;">
                         <span style="background:${col}22; color:${col}; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:bold;">${r.status}</span>
-                        ${fees.total ? `<span style="font-size:12px; font-weight:bold; color:#2c7be5;">¥${Number(fees.total).toLocaleString()}</span>` : ''}
+                        ${fees.total ? `<span style="font-size:12px; font-weight:bold; color:#2c7be5;">收 ¥${Number(fees.total).toLocaleString()}</span>` : ''}
+                    ${(r.profit !== undefined && (r.costs||{})._total) ? `<span style="font-size:11px; font-weight:bold; color:${r.profit>=0?'#1f7a5c':'#e74c3c'};">利 ${r.profit>=0?'':'-'}¥${Math.abs(r.profit).toLocaleString()}${r.margin?` (${(r.margin*100).toFixed(0)}%)`:''}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -6978,6 +7213,202 @@ function crmRender() {
             ${r.goods ? `<div style="margin-top:4px; font-size:11px; color:#95a5a6; padding-left:${crmSelectMode?'26px':'0'}">货：${r.goods}</div>` : ''}
         </div>`;
     }).join('');
+}
+
+
+// ─── CRM 视图切换 ───
+let crmCurrentView = 'list';
+function crmSwitchView(v) {
+    crmCurrentView = v;
+    document.getElementById('crm-view-list').style.display = v === 'list' ? 'block' : 'none';
+    document.getElementById('crm-view-stats').style.display = v === 'stats' ? 'block' : 'none';
+    const btnL = document.getElementById('crm-view-btn-list');
+    const btnS = document.getElementById('crm-view-btn-stats');
+    if (btnL) { btnL.style.background = v==='list'?'#4a90e2':'transparent'; btnL.style.color = v==='list'?'#fff':'#7a90a8'; }
+    if (btnS) { btnS.style.background = v==='stats'?'#1f7a5c':'transparent'; btnS.style.color = v==='stats'?'#fff':'#7a90a8'; }
+    if (v === 'stats') crmRenderStats();
+}
+
+// ─── CRM 利润统计 ───
+function crmRenderStats() {
+    const data = crmLoad();
+    const fmtM = v => v !== undefined ? (v>=0?'':'-')+'¥'+Math.abs(v).toLocaleString('zh-CN',{maximumFractionDigits:0}) : '—';
+    const fmtP = v => v !== undefined ? (v*100).toFixed(1)+'%' : '—';
+
+    const withCosts = data.filter(r => r.costs && r.costs._total);
+    const totalRev  = data.reduce((s,r) => s + ((r.fees||{}).total||0), 0);
+    const totalCost = withCosts.reduce((s,r) => s + (r.costs._total||0), 0);
+    const totalProfit = withCosts.reduce((s,r) => s + (r.profit||0), 0);
+    const avgMargin  = totalRev > 0 ? (withCosts.reduce((s,r)=>s+(r.profit||0),0)) / withCosts.reduce((s,r)=>s+((r.fees||{}).total||0),0) : 0;
+    const profitColor = totalProfit >= 0 ? '#1f7a5c' : '#e74c3c';
+
+    // 总览
+    const overview = document.getElementById('crm-stat-overview');
+    if (overview) overview.innerHTML = [
+        {label:'总票数', val: data.length+'票', sub:'含'+withCosts.length+'票有成本数据', color:'#4a90e2'},
+        {label:'总收入', val:'¥'+totalRev.toLocaleString(), sub:'客户收费合计', color:'#2980b9'},
+        {label:'总成本', val:'¥'+totalCost.toLocaleString(), sub:'供应商成本合计', color:'#e67e22'},
+        {label:'毛利 / 毛利率', val: fmtM(totalProfit), sub: fmtP(avgMargin)+' 综合毛利率', color: profitColor},
+    ].map(c=>`<div class="stat-card" style="border-top:3px solid ${c.color};">
+        <div class="stat-label">${c.label}</div>
+        <div class="stat-value" style="color:${c.color};font-size:16px;">${c.val}</div>
+        <div class="stat-sub">${c.sub}</div>
+    </div>`).join('');
+
+    // 月度趋势
+    const byMonth = {};
+    withCosts.forEach(r => {
+        const month = (r.etd||r.createdAt||'').slice(0,7);
+        if (!month) return;
+        if (!byMonth[month]) byMonth[month] = { rev:0, cost:0, profit:0 };
+        byMonth[month].rev    += (r.fees||{}).total||0;
+        byMonth[month].cost   += r.costs._total||0;
+        byMonth[month].profit += r.profit||0;
+    });
+    const months = Object.keys(byMonth).sort();
+    const canvas = document.getElementById('crm-profit-chart');
+    const emptyEl = document.getElementById('crm-profit-chart-empty');
+    if (months.length < 2) {
+        if (canvas) canvas.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'block';
+    } else {
+        if (canvas) canvas.style.display = 'block';
+        if (emptyEl) emptyEl.style.display = 'none';
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth * window.devicePixelRatio || 600;
+        canvas.height = 200 * window.devicePixelRatio;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        const W = canvas.offsetWidth || 600, H = 200;
+        const profits = months.map(m => byMonth[m].profit);
+        const revs    = months.map(m => byMonth[m].rev);
+        const maxVal  = Math.max(...profits, ...revs, 1);
+        const minVal  = Math.min(...profits, 0);
+        const range   = maxVal - minVal || 1;
+        const pad = { l:50, r:16, t:16, b:36 };
+        const chartW = W - pad.l - pad.r;
+        const chartH = H - pad.t - pad.b;
+        const xStep  = chartW / (months.length - 1 || 1);
+        const yScale = v => pad.t + chartH - ((v - minVal) / range) * chartH;
+        ctx.clearRect(0, 0, W, H);
+        // grid
+        ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+        [0, 0.25, 0.5, 0.75, 1].forEach(t => {
+            const y = pad.t + chartH * t;
+            ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+            const v = maxVal - t * range;
+            ctx.fillStyle = '#aaa'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+            ctx.fillText('¥'+Math.round(v/1000)+'k', pad.l - 4, y + 3);
+        });
+        // zero line
+        if (minVal < 0) {
+            const zy = yScale(0);
+            ctx.strokeStyle = '#ccc'; ctx.setLineDash([4,3]); ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(pad.l, zy); ctx.lineTo(W-pad.r, zy); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        // revenue bars
+        const barW = Math.max(4, xStep * 0.4);
+        months.forEach((m, i) => {
+            const x = pad.l + i * xStep;
+            const v = byMonth[m].rev;
+            const y0 = yScale(0), y1 = yScale(v);
+            ctx.fillStyle = 'rgba(74,144,226,0.2)';
+            ctx.fillRect(x - barW/2, Math.min(y0,y1), barW, Math.abs(y0-y1));
+        });
+        // profit line
+        ctx.strokeStyle = '#1f7a5c'; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+        ctx.beginPath();
+        months.forEach((m, i) => {
+            const x = pad.l + i * xStep, y = yScale(byMonth[m].profit);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        // dots
+        months.forEach((m, i) => {
+            const x = pad.l + i * xStep, y = yScale(byMonth[m].profit);
+            const p = byMonth[m].profit;
+            ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2);
+            ctx.fillStyle = p >= 0 ? '#1f7a5c' : '#e74c3c'; ctx.fill();
+        });
+        // x labels
+        ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+        months.forEach((m, i) => {
+            const x = pad.l + i * xStep;
+            ctx.fillText(m.slice(5), x, H - 8);
+        });
+    }
+
+    // 客户排名
+    const byClient = {};
+    withCosts.forEach(r => {
+        const c = r.client || '未知';
+        if (!byClient[c]) byClient[c] = { rev:0, cost:0, profit:0, count:0 };
+        byClient[c].rev    += (r.fees||{}).total||0;
+        byClient[c].cost   += r.costs._total||0;
+        byClient[c].profit += r.profit||0;
+        byClient[c].count  ++;
+    });
+    const clientList = Object.entries(byClient).sort((a,b) => b[1].profit - a[1].profit);
+    const clEl = document.getElementById('crm-stat-clients');
+    if (clEl) {
+        if (!clientList.length) { clEl.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:16px;">暂无数据</div>'; }
+        else clEl.innerHTML = clientList.map(([name, d], i) => {
+            const margin = d.rev > 0 ? d.profit/d.rev : 0;
+            const pc = d.profit >= 0 ? '#1f7a5c' : '#e74c3c';
+            const barPct = Math.min(Math.max(margin*100, 0), 100);
+            return `<div style="padding:10px 0;border-bottom:1px solid #f0f4fa;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="background:#4a90e222;color:#4a90e2;border-radius:999px;padding:1px 8px;font-size:10px;font-weight:bold;">#${i+1}</span>
+                        <span style="font-size:13px;font-weight:bold;color:#2c3e50;">${name}</span>
+                        <span style="font-size:10px;color:#aaa;">${d.count}票</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:bold;color:${pc};">${fmtM(d.profit)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
+                    <span>收入 ¥${d.rev.toLocaleString()}</span>
+                    <span>成本 ¥${d.cost.toLocaleString()}</span>
+                    <span style="color:${pc};font-weight:bold;">${fmtP(margin)}</span>
+                </div>
+                <div style="background:#eee;border-radius:999px;height:4px;overflow:hidden;">
+                    <div style="height:100%;background:${pc};width:${barPct}%;"></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // 逐票明细
+    const detailEl = document.getElementById('crm-stat-detail');
+    if (detailEl) {
+        const rows = data.filter(r => (r.fees||{}).total || (r.costs||{})._total).sort((a,b)=>(b.etd||'').localeCompare(a.etd||''));
+        if (!rows.length) { detailEl.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:16px;">暂无数据</div>'; return; }
+        detailEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead><tr style="background:#f0f6ff;">
+                <th style="padding:7px 6px;text-align:left;border-bottom:2px solid #dde8f4;color:#4a90e2;">客户</th>
+                <th style="padding:7px 6px;text-align:center;border-bottom:2px solid #dde8f4;color:#4a90e2;">ETD</th>
+                <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#27ae60;">收入</th>
+                <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#e67e22;">成本</th>
+                <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#1f7a5c;">毛利</th>
+                <th style="padding:7px 6px;text-align:center;border-bottom:2px solid #dde8f4;color:#1f7a5c;">利润率</th>
+            </tr></thead>
+            <tbody>${rows.map((r,i)=>{
+                const rev  = (r.fees||{}).total||0;
+                const cost = (r.costs||{})._total||0;
+                const pft  = r.profit !== undefined ? r.profit : rev - cost;
+                const mgn  = rev > 0 ? pft/rev : 0;
+                const pc   = pft >= 0 ? '#1f7a5c' : '#e74c3c';
+                const hasCost = (r.costs||{})._total;
+                return `<tr style="background:${i%2?'#f8fbff':'#fff'};">
+                    <td style="padding:7px 6px;font-weight:600;color:#2c3e50;">${r.client||'—'}</td>
+                    <td style="padding:7px 6px;text-align:center;color:#888;">${r.etd||'—'}</td>
+                    <td style="padding:7px 6px;text-align:right;color:#2980b9;">¥${rev.toLocaleString()}</td>
+                    <td style="padding:7px 6px;text-align:right;color:#e67e22;">${hasCost?'¥'+cost.toLocaleString():'—'}</td>
+                    <td style="padding:7px 6px;text-align:right;font-weight:bold;color:${pc};">${hasCost?fmtM(pft):'—'}</td>
+                    <td style="padding:7px 6px;text-align:center;"><span style="background:${hasCost?(pft>=0?'#d4f1e4':'#fde0e0'):'#f5f5f5'};color:${hasCost?pc:'#bbb'};padding:2px 8px;border-radius:999px;font-weight:bold;">${hasCost?fmtP(mgn):'—'}</span></td>
+                </tr>`;
+            }).join('')}</tbody>
+        </table>`;
+    }
 }
 
 function crmExportCSV(selectionOnly = false) {
@@ -7005,6 +7436,9 @@ function crmExportCSV(selectionOnly = false) {
     showToast('CSV已导出');
 }
 
+// ─── PDF 导出选项弹窗 ───
+let _crmPdfList = null;
+
 function crmExportPDF(selectionOnly = false) {
     const data = crmLoad();
     let list;
@@ -7020,105 +7454,175 @@ function crmExportPDF(selectionOnly = false) {
         });
     }
     if (!list.length) { showToast('暂无数据'); return; }
+    _crmPdfList = list;
+    // Show options modal
+    document.getElementById('crm-pdf-modal').style.display = 'flex';
+}
+
+function crmClosePdfModal() {
+    document.getElementById('crm-pdf-modal').style.display = 'none';
+    _crmPdfList = null;
+}
+
+function crmBuildAndDownloadPDF(mode) {
+    // mode: 'client' = 只含客户收入，'full' = 含供应商成本+毛利
+    const list = _crmPdfList;
+    if (!list || !list.length) return;
+    crmClosePdfModal();
 
     const STATUS_COLOR = {
         '询价':'#8e44ad','已订舱':'#2980b9','已装柜':'#e67e22','已开船':'#16a085',
         '已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'
     };
     const fmt = v => v || '—';
-    const fmtMoney = v => v ? '¥' + Number(v).toLocaleString() : '—';
     const today = new Date().toLocaleDateString('zh-CN');
+    const isClient = mode === 'client';
 
-    const rowsHtml = list.map((r, i) => {
-        const f = r.fees || {};
-        const col = STATUS_COLOR[r.status] || '#888';
-        return `<tr style="background:${i%2===0?'#fff':'#f8fbff'};">
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:11px; color:#2c3e50; font-weight:600;">${r.client||'—'}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:10px; color:#555;">${r.orderno||'—'}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:10px; color:#555;">${r.mbl||'—'}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:11px; text-align:center;">${fmt(r.pol)} → ${fmt(r.pod)}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:10px; text-align:center; color:#444;">${r.ctype||'—'}${r.cqty>1?' ×'+r.cqty:''}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:10px; color:#555;">${fmt(r.goods)}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:10px; text-align:center; color:#555;">${fmt(r.etd)}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:10px; text-align:center; color:#555;">${fmt(r.eta)}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:11px; text-align:center; font-weight:bold; color:#2c7be5;">${f.total ? '¥'+Number(f.total).toLocaleString() : '—'}</td>
-            <td style="padding:8px 6px; border:1px solid #e0e8f0; text-align:center;">
-                <span style="background:${col}22; color:${col}; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:bold; white-space:nowrap;">${r.status}</span>
-            </td>
-        </tr>`;
-    }).join('');
-
-    const totalFees = list.reduce((s, r) => s + ((r.fees||{}).total||0), 0);
     const statusSummary = {};
     list.forEach(r => { statusSummary[r.status] = (statusSummary[r.status]||0)+1; });
     const summaryTags = Object.entries(statusSummary).map(([s,c]) => {
         const col = STATUS_COLOR[s]||'#888';
-        return `<span style="background:${col}18; color:${col}; border:1px solid ${col}44; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:bold; margin-right:6px;">${s} ${c}票</span>`;
+        return `<span style="background:${col}18;color:${col};border:1px solid ${col}44;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:bold;margin-right:6px;">${s} ${c}票</span>`;
     }).join('');
 
-    const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
-    <title>CRM整柜台账</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; background:#fff; padding:24px; }
-        @media print {
-            body { padding: 0; }
-            .no-print { display: none !important; }
-            @page { margin: 12mm 10mm; size: A4 landscape; }
-        }
-    </style>
-    </head><body>
-    <div style="max-width:1100px; margin:0 auto;">
-        <!-- 标题 -->
-        <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:16px; padding-bottom:12px; border-bottom:2px solid #4a90e2;">
-            <div>
-                <div style="font-size:22px; font-weight:bold; color:#2c3e50; letter-spacing:2px;">📦 整柜台账报告</div>
-                <div style="font-size:12px; color:#888; margin-top:4px;">导出日期：${today}　共 ${list.length} 条记录${sf ? '　筛选状态：' + sf : ''}</div>
-            </div>
-            <div style="text-align:right; font-size:13px; color:#4a90e2; font-weight:bold;">费用合计：¥${totalFees.toLocaleString()}</div>
-        </div>
-        <!-- 状态汇总 -->
-        <div style="margin-bottom:14px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
-            <span style="font-size:11px; color:#aaa; margin-right:4px;">状态汇总</span>${summaryTags}
-        </div>
-        <!-- 表格 -->
-        <table style="width:100%; border-collapse:collapse; font-size:11px;">
-            <thead>
-                <tr style="background:linear-gradient(135deg,#4a90e2,#5ba3f5);">
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:left; border:1px solid #3d7fcf; min-width:80px;">客户</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:left; border:1px solid #3d7fcf; min-width:90px;">内部单号</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:left; border:1px solid #3d7fcf; min-width:100px;">MBL</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:center; border:1px solid #3d7fcf; min-width:100px;">航线</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:center; border:1px solid #3d7fcf;">柜型</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:left; border:1px solid #3d7fcf; min-width:80px;">品名</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:center; border:1px solid #3d7fcf; min-width:72px;">ETD</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:center; border:1px solid #3d7fcf; min-width:72px;">ETA</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:center; border:1px solid #3d7fcf; min-width:80px;">合计费用</th>
-                    <th style="padding:10px 6px; color:#fff; font-size:11px; text-align:center; border:1px solid #3d7fcf; min-width:64px;">状态</th>
-                </tr>
-            </thead>
-            <tbody>${rowsHtml}</tbody>
-            <tfoot>
-                <tr style="background:#f0f6ff;">
-                    <td colspan="8" style="padding:8px 6px; border:1px solid #e0e8f0; font-size:11px; font-weight:bold; color:#2c3e50; text-align:right;">合计费用总计</td>
-                    <td style="padding:8px 6px; border:1px solid #e0e8f0; font-size:12px; font-weight:bold; color:#2c7be5; text-align:center;">¥${totalFees.toLocaleString()}</td>
-                    <td style="border:1px solid #e0e8f0;"></td>
-                </tr>
-            </tfoot>
-        </table>
-        <div style="margin-top:16px; font-size:10px; color:#bbb; text-align:right;">由 HGCD 物流工作台生成 · ${today}</div>
-        <!-- 打印按钮 -->
-        <div class="no-print" style="margin-top:20px; display:flex; gap:12px; justify-content:center;">
-            <button onclick="window.print()" style="padding:12px 32px; background:#4a90e2; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer;">🖨️ 打印 / 保存为PDF</button>
-            <button onclick="window.close()" style="padding:12px 24px; background:#95a5a6; color:#fff; border:none; border-radius:8px; font-size:14px; cursor:pointer;">关闭</button>
-        </div>
-    </div>
-    </body></html>`;
+    const totalRev  = list.reduce((s,r) => s + ((r.fees||{}).total||0), 0);
+    const totalCost = isClient ? 0 : list.reduce((s,r) => s + ((r.costs||{})._total||0), 0);
+    const totalProfit = isClient ? 0 : list.reduce((s,r) => s + (r.profit||0), 0);
 
-    const win = window.open('', '_blank');
-    if (!win) { showToast('请允许弹出窗口'); return; }
-    win.document.write(html);
-    win.document.close();
+    // table rows
+    const extraTh = isClient ? '' :
+        `<th style="${thS}min-width:72px;">成本</th><th style="${thS}min-width:72px;">毛利</th><th style="${thS}min-width:52px;">利润率</th>`;
+    const thS = 'padding:10px 6px;color:#fff;font-size:11px;border:1px solid #3d7fcf;';
+    const thSc = 'padding:10px 6px;color:#fff;font-size:11px;border:1px solid #2e6b3e;';
+
+    const headRow = isClient
+        ? `<tr style="background:linear-gradient(135deg,#4a90e2,#5ba3f5);">
+            <th style="${thS}text-align:left;min-width:80px;">客户</th>
+            <th style="${thS}text-align:left;min-width:90px;">内部单号</th>
+            <th style="${thS}text-align:left;min-width:100px;">MBL</th>
+            <th style="${thS}text-align:center;min-width:100px;">航线</th>
+            <th style="${thS}text-align:center;">柜型</th>
+            <th style="${thS}text-align:left;min-width:80px;">品名</th>
+            <th style="${thS}text-align:center;min-width:68px;">ETD</th>
+            <th style="${thS}text-align:center;min-width:68px;">ETA</th>
+            <th style="${thS}text-align:center;min-width:80px;">收费合计</th>
+            <th style="${thS}text-align:center;min-width:64px;">状态</th>
+           </tr>`
+        : `<tr style="background:linear-gradient(135deg,#2c3e50,#34495e);">
+            <th style="${thS}text-align:left;min-width:80px;">客户</th>
+            <th style="${thS}text-align:left;min-width:90px;">内部单号</th>
+            <th style="${thS}text-align:left;min-width:100px;">MBL</th>
+            <th style="${thS}text-align:center;min-width:90px;">航线</th>
+            <th style="${thS}text-align:center;">柜型</th>
+            <th style="${thS}text-align:center;min-width:64px;">ETD</th>
+            <th style="${thS}text-align:right;min-width:72px;">收入</th>
+            <th style="${thS}text-align:right;min-width:72px;">成本</th>
+            <th style="${thS}text-align:right;min-width:72px;">毛利</th>
+            <th style="${thS}text-align:center;min-width:52px;">利润率</th>
+            <th style="${thS}text-align:center;min-width:56px;">状态</th>
+           </tr>`;
+
+    const rowsHtml = list.map((r, i) => {
+        const f = r.fees || {};
+        const col = STATUS_COLOR[r.status] || '#888';
+        const bg = i%2===0 ? '#fff' : '#f8fbff';
+        const tdS = `padding:7px 6px;border:1px solid #e0e8f0;font-size:11px;`;
+        const statusBadge = `<span style="background:${col}22;color:${col};padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;white-space:nowrap;">${r.status}</span>`;
+        if (isClient) {
+            return `<tr style="background:${bg};">
+                <td style="${tdS}font-weight:600;color:#2c3e50;">${r.client||'—'}</td>
+                <td style="${tdS}color:#555;">${r.orderno||'—'}</td>
+                <td style="${tdS}color:#555;">${r.mbl||'—'}</td>
+                <td style="${tdS}text-align:center;">${fmt(r.pol)} → ${fmt(r.pod)}</td>
+                <td style="${tdS}text-align:center;color:#444;">${r.ctype||'—'}${r.cqty>1?' ×'+r.cqty:''}</td>
+                <td style="${tdS}color:#555;">${fmt(r.goods)}</td>
+                <td style="${tdS}text-align:center;color:#555;">${fmt(r.etd)}</td>
+                <td style="${tdS}text-align:center;color:#555;">${fmt(r.eta)}</td>
+                <td style="${tdS}text-align:center;font-weight:bold;color:#2c7be5;">${f.total ? '¥'+Number(f.total).toLocaleString() : '—'}</td>
+                <td style="${tdS}text-align:center;">${statusBadge}</td>
+            </tr>`;
+        } else {
+            const cost = (r.costs||{})._total || 0;
+            const pft  = r.profit !== undefined ? r.profit : ((f.total||0) - cost);
+            const mgn  = (f.total||0) > 0 ? pft/(f.total||0) : 0;
+            const pc   = pft >= 0 ? '#1f7a5c' : '#e74c3c';
+            const hasCost = (r.costs||{})._total;
+            return `<tr style="background:${bg};">
+                <td style="${tdS}font-weight:600;color:#2c3e50;">${r.client||'—'}</td>
+                <td style="${tdS}color:#555;">${r.orderno||'—'}</td>
+                <td style="${tdS}color:#555;">${r.mbl||'—'}</td>
+                <td style="${tdS}text-align:center;">${fmt(r.pol)} → ${fmt(r.pod)}</td>
+                <td style="${tdS}text-align:center;">${r.ctype||'—'}${r.cqty>1?' ×'+r.cqty:''}</td>
+                <td style="${tdS}text-align:center;color:#555;">${fmt(r.etd)}</td>
+                <td style="${tdS}text-align:right;color:#2980b9;font-weight:bold;">${f.total ? '¥'+Number(f.total).toLocaleString() : '—'}</td>
+                <td style="${tdS}text-align:right;color:#e67e22;">${hasCost ? '¥'+Number(cost).toLocaleString() : '—'}</td>
+                <td style="${tdS}text-align:right;font-weight:bold;color:${pc};">${hasCost ? (pft>=0?'':'- ')+'¥'+Math.abs(pft).toLocaleString() : '—'}</td>
+                <td style="${tdS}text-align:center;"><span style="background:${hasCost?(pft>=0?'#d4f1e4':'#fde0e0'):'#f5f5f5'};color:${hasCost?pc:'#bbb'};padding:2px 6px;border-radius:999px;font-size:10px;font-weight:bold;">${hasCost?(mgn*100).toFixed(1)+'%':'—'}</span></td>
+                <td style="${tdS}text-align:center;">${statusBadge}</td>
+            </tr>`;
+        }
+    }).join('');
+
+    const footerRow = isClient
+        ? `<tr style="background:#f0f6ff;">
+            <td colspan="8" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">收费合计</td>
+            <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#2c7be5;text-align:center;">¥${totalRev.toLocaleString()}</td>
+            <td style="border:1px solid #e0e8f0;"></td>
+          </tr>`
+        : `<tr style="background:#f0f6ff;">
+            <td colspan="6" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">合计</td>
+            <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#2980b9;text-align:right;">¥${totalRev.toLocaleString()}</td>
+            <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#e67e22;text-align:right;">¥${totalCost.toLocaleString()}</td>
+            <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:${totalProfit>=0?'#1f7a5c':'#e74c3c'};text-align:right;">${totalProfit>=0?'':'- '}¥${Math.abs(totalProfit).toLocaleString()}</td>
+            <td colspan="2" style="border:1px solid #e0e8f0;"></td>
+          </tr>`;
+
+    const headerColor = isClient ? '#4a90e2' : '#2c3e50';
+    const titleLabel  = isClient ? '📦 整柜台账（客户版）' : '📊 整柜台账（内部完整版）';
+    const watermark   = isClient ? '' : '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:48px;color:rgba(0,0,0,0.04);font-weight:bold;pointer-events:none;white-space:nowrap;z-index:0;">内部保密</div>';
+
+    const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<title>${titleLabel}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#fff;padding:20px;position:relative;}
+@media print{
+  body{padding:0;}
+  .no-print{display:none!important;}
+  @page{margin:10mm 8mm;size:A4 landscape;}
+}
+</style></head><body>
+${watermark}
+<div style="max-width:1100px;margin:0 auto;position:relative;z-index:1;">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:3px solid ${headerColor};">
+    <div>
+      <div style="font-size:20px;font-weight:bold;color:#2c3e50;letter-spacing:1px;">${titleLabel}</div>
+      <div style="font-size:11px;color:#888;margin-top:4px;">导出日期：${today}　共 ${list.length} 条记录</div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:${headerColor};font-weight:bold;">收入合计：¥${totalRev.toLocaleString()}${!isClient ? `<br><span style="color:#1f7a5c;">毛利：${totalProfit>=0?'':'- '}¥${Math.abs(totalProfit).toLocaleString()}</span>` : ''}</div>
+  </div>
+  <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+    <span style="font-size:11px;color:#aaa;margin-right:4px;">状态汇总</span>${summaryTags}
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:11px;">${headRow}<tbody>${rowsHtml}</tbody><tfoot>${footerRow}</tfoot></table>
+  <div style="margin-top:12px;font-size:9px;color:#ccc;text-align:right;">由 HGCD 物流工作台生成 · ${today}${isClient ? '' : ' · 内部资料，请勿外传'}</div>
+  <div class="no-print" style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+    <button onclick="window.print()" style="padding:12px 32px;background:${headerColor};color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ 打印 / 保存为PDF</button>
+    <button onclick="window.close()" style="padding:12px 24px;background:#95a5a6;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">关闭</button>
+  </div>
+</div>
+</body></html>`;
+
+    // Use Blob URL (works in WeChat / mobile browsers, avoids popup block)
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.target   = '_blank';
+    a.rel      = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 3000);
 }
 </script>
 </body>
