@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CRM系统</title>
+    <title>物流工作台 - 精简版</title>
     <!-- BUILD: 20260411-1243 -->
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
@@ -929,7 +929,7 @@
             <button onclick="crmClosePdfModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; line-height:1; padding:0; width:auto; flex:none;">×</button>
         </div>
         <div style="padding:18px;">
-            <div style="font-size:12px; color:#888; margin-bottom:14px;">请选择导出内容，客户版不含供应商成本与毛利数据。</div>
+            <div style="font-size:12px; color:#888; margin-bottom:14px;">请选择导出内容，客户版不含供应商应付与毛利数据。</div>
             <!-- 客户版 -->
             <div onclick="crmBuildAndDownloadPDF('client')" style="border:2px solid #4a90e2; border-radius:14px; padding:14px 16px; margin-bottom:12px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='#fff'">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
@@ -939,7 +939,7 @@
                         <div style="font-size:11px; color:#4a90e2; font-weight:bold;">可直接分享给客户</div>
                     </div>
                 </div>
-                <div style="font-size:11px; color:#888; line-height:1.6;">✅ 客户、MBL、航线、柜型、品名、ETD/ETA<br>✅ 客户收费合计、状态<br>❌ 不含供应商成本、毛利、内部单号</div>
+                <div style="font-size:11px; color:#888; line-height:1.6;">✅ 客户、MBL、航线、柜型、品名、ETD/ETA<br>✅ 客户应收合计、状态<br>❌ 不含供应商应付、毛利、内部单号</div>
             </div>
             <!-- 内部完整版 -->
             <div onclick="crmBuildAndDownloadPDF('full')" style="border:2px solid #2c3e50; border-radius:14px; padding:14px 16px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#f5f6f7'" onmouseout="this.style.background='#fff'">
@@ -947,10 +947,10 @@
                     <span style="font-size:22px;">🔒</span>
                     <div>
                         <div style="font-size:14px; font-weight:bold; color:#2c3e50;">内部完整版</div>
-                        <div style="font-size:11px; color:#e74c3c; font-weight:bold;">含成本&毛利，仅限内部使用</div>
+                        <div style="font-size:11px; color:#e74c3c; font-weight:bold;">含应付&毛利，仅限内部使用</div>
                     </div>
                 </div>
-                <div style="font-size:11px; color:#888; line-height:1.6;">✅ 全部字段<br>✅ 供应商成本明细、毛利、毛利率<br>✅ 带"内部保密"水印</div>
+                <div style="font-size:11px; color:#888; line-height:1.6;">✅ 全部字段<br>✅ 供应商应付明细、毛利、毛利率<br>✅ 带"内部保密"水印</div>
             </div>
         </div>
     </div>
@@ -1085,8 +1085,8 @@
                     </div>
                 </div>
 
-                <!-- 客户收入 -->
-                <div style="font-size:12px; font-weight:bold; color:#27ae60; margin-bottom:8px;">💰 客户收入 (CNY)</div>
+                <!-- 客户应收 -->
+                <div style="font-size:12px; font-weight:bold; color:#27ae60; margin-bottom:8px;">💰 客户应收</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">海运费</label>
@@ -1105,25 +1105,25 @@
                         <input type="number" id="crm-f-fee-tax" placeholder="0" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                     <div>
-                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">尾程派送费</label>
-                        <input type="number" id="crm-f-fee-delivery" placeholder="0" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
-                    </div>
-                    <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">其他费用</label>
                         <input type="number" id="crm-f-fee-other" placeholder="0" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
+                </div>
+                <div style="font-size:11px; color:#aaa; margin:-2px 0 8px;">ARRIVAL NOTICE費用、清关费、尾程派送费支持原币金额 + 币种 + 汇率自动换算</div>
+                <div id="crm-fee-fx-rows" style="margin-bottom:12px;"></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
-                        <label style="font-size:11px; color:#999; display:block; margin-bottom:4px;">收入合计（自动）</label>
+                        <label style="font-size:11px; color:#999; display:block; margin-bottom:4px;">应收合计（自动）</label>
                         <div id="crm-f-fee-total" style="padding:9px; background:#f7fbff; border:1px solid #d5e5f5; border-radius:8px; font-size:13px; font-weight:bold; color:#2c7be5;">¥ 0</div>
                     </div>
                 </div>
 
-                <!-- 供应商成本 -->
-                <div style="font-size:12px; font-weight:bold; color:#e67e22; margin-bottom:8px; margin-top:4px;">🏭 供应商成本</div>
+                <!-- 供应商应付 -->
+                <div style="font-size:12px; font-weight:bold; color:#e67e22; margin-bottom:8px; margin-top:4px;">🏭 供应商应付</div>
                 <div style="font-size:11px; color:#aaa; margin-bottom:8px;">每项填原币金额+币种+汇率，系统自动换算CNY合计</div>
                 <div id="crm-cost-rows" style="margin-bottom:12px;"></div>
                 <div style="background:#fff8f0; border:1px solid #f0d5a8; border-radius:10px; padding:10px 12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:12px; color:#e67e22; font-weight:bold;">供应商成本合计（CNY）</span>
+                    <span style="font-size:12px; color:#e67e22; font-weight:bold;">供应商应付合计（CNY）</span>
                     <span id="crm-f-cost-total" style="font-size:15px; font-weight:bold; color:#e67e22;">¥ 0</span>
                 </div>
                 <div style="background:linear-gradient(135deg,#f0fff4,#e8f8f0); border:1px solid #a8dfc0; border-radius:10px; padding:10px 12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -6775,7 +6775,7 @@ function crmShowAddModal() {
     ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod',
      'crm-f-carrier','crm-f-vessel','crm-f-goods','crm-f-weight','crm-f-pkgs','crm-f-cbm',
      'crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime',
-     'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-delivery','crm-f-fee-other',
+     'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other',
      'crm-f-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     document.getElementById('crm-f-ctype').value = '';
     document.getElementById('crm-f-cqty').value = '1';
@@ -6784,6 +6784,7 @@ function crmShowAddModal() {
     document.getElementById('crm-edit-id').value = '';
     document.getElementById('crm-f-fee-total').textContent = '¥ 0';
     document.getElementById('crm-modal-title').textContent = '新增整柜';
+    crmRenderFeeFxRows({});
     crmRenderCostRows({});
     document.getElementById('crm-modal').style.display = 'block';
     crmBindFeeCalc();
@@ -6794,15 +6795,18 @@ function crmCloseModal() {
 }
 
 function crmBindFeeCalc() {
-    ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-delivery','crm-f-fee-other'].forEach(id => {
+    ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other'].forEach(id => {
         const el = document.getElementById(id);
         if(el) el.oninput = crmUpdateFeeTotal;
     });
+    CRM_FEE_FX_ITEMS.forEach(item => crmFeeFxLineCalc(item.key));
 }
 
 function crmUpdateFeeTotal() {
-    const ids = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-port','crm-f-fee-other'];
-    const revenue = ids.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+    const ids = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other'];
+    const simpleReceivable = ids.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+    const fxReceivable = CRM_FEE_FX_ITEMS.reduce((s, item) => s + crmGetFeeFxLine(item.key).cny, 0);
+    const revenue = simpleReceivable + fxReceivable;
     const totalEl = document.getElementById('crm-f-fee-total');
     if (totalEl) totalEl.textContent = '¥ ' + revenue.toLocaleString('zh-CN', {minimumFractionDigits:0, maximumFractionDigits:0});
     crmUpdateCostTotal();
@@ -6818,6 +6822,63 @@ const CRM_COST_ITEMS = [
     { key: 'other',          label: '其他成本' },
 ];
 const CRM_CURRENCIES = ['CNY','JPY','USD','EUR','HKD','TWD'];
+const CRM_FEE_FX_ITEMS = [
+    { key: 'arrival_notice', label: 'ARRIVAL NOTICE費用' },
+    { key: 'clearance',      label: '清关费' },
+    { key: 'delivery',       label: '尾程派送费' },
+];
+
+function crmGetFeeFxLine(key) {
+    const amt = parseFloat(document.getElementById('crm-f-fee-amt-' + key)?.value) || 0;
+    const cur = document.getElementById('crm-f-fee-cur-' + key)?.value || 'CNY';
+    const rate = cur === 'CNY' ? 1 : (parseFloat(document.getElementById('crm-f-fee-rate-' + key)?.value) || 0);
+    const cny = amt * rate;
+    return { amt, cur, rate, cny };
+}
+
+function crmRenderFeeFxRows(feesFx) {
+    feesFx = feesFx || {};
+    const container = document.getElementById('crm-fee-fx-rows');
+    if (!container) return;
+    container.innerHTML = CRM_FEE_FX_ITEMS.map(item => {
+        const c = feesFx[item.key] || {};
+        const amt = c.amt || '';
+        const cur = c.cur || 'CNY';
+        const rate = c.rate || (cur === 'CNY' ? 1 : '');
+        const cnyVal = c.cny || '';
+        return `<div style="margin-bottom:10px;">
+            <div style="font-size:11px; color:#27ae60; font-weight:bold; margin-bottom:5px;">${item.label}</div>
+            <div style="display:grid; grid-template-columns:2fr 1fr 1.2fr 1.5fr; gap:6px; align-items:center;">
+                <input type="number" id="crm-f-fee-amt-${item.key}" value="${amt}" placeholder="金额"
+                    oninput="crmFeeFxLineCalc('${item.key}')"
+                    style="padding:8px; border:1px solid #bfe3cb; border-radius:7px; font-size:13px; width:100%;">
+                <select id="crm-f-fee-cur-${item.key}" onchange="crmFeeFxLineCalc('${item.key}')"
+                    style="padding:8px; border:1px solid #bfe3cb; border-radius:7px; font-size:12px; background:#fff; width:100%;">
+                    ${CRM_CURRENCIES.map(c2 => `<option${c2===cur?' selected':''}>${c2}</option>`).join('')}
+                </select>
+                <input type="number" id="crm-f-fee-rate-${item.key}" value="${rate}" placeholder="汇率" step="0.0001"
+                    oninput="crmFeeFxLineCalc('${item.key}')"
+                    style="padding:8px; border:1px solid #bfe3cb; border-radius:7px; font-size:12px; width:100%;">
+                <div id="crm-f-fee-cny-${item.key}" style="padding:8px; background:#f0fff4; border:1px solid #bfe3cb; border-radius:7px; font-size:12px; font-weight:bold; color:#27ae60; text-align:right;">
+                    ${cnyVal ? '¥'+Number(cnyVal).toLocaleString() : '—'}
+                </div>
+            </div>
+            <div style="display:flex; gap:4px; font-size:9px; color:#97b5a0; margin-top:2px; padding:0 1px;">
+                <span style="flex:2;">原币金额</span><span style="flex:1;">币种</span><span style="flex:1.2;">汇率</span><span style="flex:1.5; text-align:right;">≈ CNY</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function crmFeeFxLineCalc(key) {
+    const cur = document.getElementById('crm-f-fee-cur-' + key)?.value || 'CNY';
+    const rateEl = document.getElementById('crm-f-fee-rate-' + key);
+    if (cur === 'CNY' && rateEl) rateEl.value = 1;
+    const line = crmGetFeeFxLine(key);
+    const display = document.getElementById('crm-f-fee-cny-' + key);
+    if (display) display.textContent = line.cny > 0 ? '¥' + line.cny.toLocaleString('zh-CN', { maximumFractionDigits: 0 }) : '—';
+    crmUpdateFeeTotal();
+}
 
 function crmRenderCostRows(costs) {
     costs = costs || {};
@@ -6878,8 +6939,10 @@ function crmUpdateCostTotal() {
     if (ctEl) ctEl.textContent = '¥ ' + costTotal.toLocaleString('zh-CN',{maximumFractionDigits:0});
 
     // revenue
-    const revIds = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-delivery','crm-f-fee-other'];
-    const revenue = revIds.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+    const revIds = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other'];
+    const simpleReceivable = revIds.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
+    const fxReceivable = CRM_FEE_FX_ITEMS.reduce((s, item) => s + crmGetFeeFxLine(item.key).cny, 0);
+    const revenue = simpleReceivable + fxReceivable;
 
     const profit = revenue - costTotal;
     const margin = revenue > 0 ? (profit / revenue * 100) : 0;
@@ -6899,8 +6962,16 @@ function crmUpdateCostTotal() {
 function crmFormToRecord() {
     const g = id => (document.getElementById(id)?.value || '').trim();
     const n = id => parseFloat(document.getElementById(id)?.value) || 0;
-    const fees = { ocean: n('crm-f-fee-ocean'), truck: n('crm-f-fee-truck'), customs: n('crm-f-fee-customs'), tax: n('crm-f-fee-tax'), delivery: n('crm-f-fee-delivery'), other: n('crm-f-fee-other') };
-    fees.total = fees.ocean + fees.truck + fees.customs + fees.tax + fees.delivery + fees.other;
+    const fees = { ocean: n('crm-f-fee-ocean'), truck: n('crm-f-fee-truck'), customs: n('crm-f-fee-customs'), tax: n('crm-f-fee-tax'), other: n('crm-f-fee-other') };
+    const feesFx = {};
+    CRM_FEE_FX_ITEMS.forEach(item => {
+        const line = crmGetFeeFxLine(item.key);
+        fees[item.key] = line.cny;
+        if (line.amt) feesFx[item.key] = line;
+    });
+    fees.fx = feesFx;
+    fees.total = fees.ocean + fees.truck + fees.customs + fees.tax + fees.other +
+        CRM_FEE_FX_ITEMS.reduce((s, item) => s + (fees[item.key] || 0), 0);
     // gather costs
     const costs = {};
     let costTotal = 0;
@@ -6956,7 +7027,18 @@ function crmRecordToForm(r) {
     s('crm-f-pickup', r.pickup); s('crm-f-freetime', r.freetime);
     s('crm-f-fee-ocean', (r.fees||{}).ocean || ''); s('crm-f-fee-truck', (r.fees||{}).truck || '');
     s('crm-f-fee-customs', (r.fees||{}).customs || ''); s('crm-f-fee-tax', (r.fees||{}).tax || '');
-    s('crm-f-fee-delivery', (r.fees||{}).delivery || ''); s('crm-f-fee-other', (r.fees||{}).other || '');
+    s('crm-f-fee-other', (r.fees||{}).other || '');
+    const legacyFeesFx = {};
+    if ((r.fees||{}).delivery && !((r.fees||{}).fx || {}).delivery) {
+        legacyFeesFx.delivery = { amt: (r.fees||{}).delivery, cur: 'CNY', rate: 1, cny: (r.fees||{}).delivery };
+    }
+    if ((r.fees||{}).clearance && !((r.fees||{}).fx || {}).clearance) {
+        legacyFeesFx.clearance = { amt: (r.fees||{}).clearance, cur: 'CNY', rate: 1, cny: (r.fees||{}).clearance };
+    }
+    if ((r.fees||{}).arrival_notice && !((r.fees||{}).fx || {}).arrival_notice) {
+        legacyFeesFx.arrival_notice = { amt: (r.fees||{}).arrival_notice, cur: 'CNY', rate: 1, cny: (r.fees||{}).arrival_notice };
+    }
+    crmRenderFeeFxRows({ ...legacyFeesFx, ...((r.fees||{}).fx || {}) });
     s('crm-f-status', r.status); s('crm-f-incoterm', r.incoterm); s('crm-f-notes', r.notes);
     // render cost rows first, then populate values
     crmRenderCostRows(r.costs || {});
@@ -7031,6 +7113,16 @@ function crmShowDetail(id) {
             </div>
         </div>`;
     const fees = r.fees || {};
+    const feeFx = fees.fx || {};
+    const fmtFeeFx = (key, fallbackVal) => {
+        const line = feeFx[key];
+        if (line && line.amt) {
+            return line.cur !== 'CNY'
+                ? `${line.amt} ${line.cur} × ${line.rate} = ¥${Number(line.cny).toLocaleString()}`
+                : `¥${Number(line.cny).toLocaleString()}`;
+        }
+        return fmtMoney(fallbackVal);
+    };
     document.getElementById('crm-detail-body').innerHTML = `
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
             <div style="font-size:18px; font-weight:bold; color:#2c3e50;">${fmt(r.client)}</div>
@@ -7056,10 +7148,13 @@ function crmShowDetail(id) {
             ['预计到港 ETA', fmt(r.eta)], ['实际到港 ATA', fmt(r.ata)],
             ['提柜日', fmt(r.pickup)], ['免柜期截止', fmt(r.freetime)],
         ])}
-        ${section('💰 客户收入', [
+        ${section('💰 客户应收', [
             ['海运费', fmtMoney(fees.ocean)], ['拖车费', fmtMoney(fees.truck)],
             ['报关费', fmtMoney(fees.customs)], ['税金', fmtMoney(fees.tax)],
-            ['尾程派送费', fmtMoney(fees.delivery)], ['其他', fmtMoney(fees.other)], ['收入合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
+            ['ARRIVAL NOTICE費用', fmtFeeFx('arrival_notice', fees.arrival_notice)],
+            ['清关费', fmtFeeFx('clearance', fees.clearance)],
+            ['尾程派送费', fmtFeeFx('delivery', fees.delivery)],
+            ['其他', fmtMoney(fees.other)], ['应收合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
         ])}
         ${(() => {
             const costs = r.costs || {};
@@ -7068,7 +7163,7 @@ function crmShowDetail(id) {
             const margin = r.margin !== undefined ? r.margin : (fees.total > 0 ? profit/fees.total : 0);
             const pc = profit >= 0 ? '#1f7a5c' : '#e74c3c';
             const hasCosts = CRM_COST_ITEMS.some(item => costs[item.key]);
-            if (!hasCosts) return '<div style="background:#f8fbff;border-radius:8px;padding:10px;font-size:12px;color:#aaa;margin-bottom:14px;text-align:center;">暂未录入供应商成本</div>';
+            if (!hasCosts) return '<div style="background:#f8fbff;border-radius:8px;padding:10px;font-size:12px;color:#aaa;margin-bottom:14px;text-align:center;">暂未录入供应商应付</div>';
             const costRows = CRM_COST_ITEMS.filter(item => costs[item.key]).map(item => {
                 const c = costs[item.key];
                 const detail = c.cur !== 'CNY' ? `${c.amt} ${c.cur} × ${c.rate} = ¥${Number(c.cny).toLocaleString()}` : `¥${Number(c.cny).toLocaleString()}`;
@@ -7076,9 +7171,9 @@ function crmShowDetail(id) {
             }).join('');
             const bar = Math.min(Math.max(margin*100,0),100);
             return `<div style="margin-bottom:14px;">
-                <div style="font-size:11px;font-weight:bold;color:#e67e22;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f5dfc0;">🏭 供应商成本</div>
+                <div style="font-size:11px;font-weight:bold;color:#e67e22;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f5dfc0;">🏭 供应商应付</div>
                 <div style="background:#fff9f2;border-radius:8px;padding:10px 12px;">${costRows}
-                    <div style="display:flex;justify-content:space-between;padding-top:6px;margin-top:4px;font-size:13px;font-weight:bold;"><span style="color:#e67e22;">成本合计</span><span style="color:#e67e22;">¥${Number(costTotal).toLocaleString()}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding-top:6px;margin-top:4px;font-size:13px;font-weight:bold;"><span style="color:#e67e22;">应付合计</span><span style="color:#e67e22;">¥${Number(costTotal).toLocaleString()}</span></div>
                 </div></div>
             <div style="background:${profit>=0?'linear-gradient(135deg,#f0fff4,#e8f8f0)':'linear-gradient(135deg,#fff4f4,#fde8e8)'};border:1px solid ${profit>=0?'#a8dfc0':'#f5b8b8'};border-radius:12px;padding:14px 16px;margin-bottom:14px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -7223,7 +7318,7 @@ function crmRender() {
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;">
                         <span style="background:${col}22; color:${col}; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:bold;">${r.status}</span>
-                        ${fees.total ? `<span style="font-size:12px; font-weight:bold; color:#2c7be5;">收 ¥${Number(fees.total).toLocaleString()}</span>` : ''}
+                        ${fees.total ? `<span style="font-size:12px; font-weight:bold; color:#2c7be5;">应收 ¥${Number(fees.total).toLocaleString()}</span>` : ''}
                     ${(r.profit !== undefined && (r.costs||{})._total) ? `<span style="font-size:11px; font-weight:bold; color:${r.profit>=0?'#1f7a5c':'#e74c3c'};">利 ${r.profit>=0?'':'-'}¥${Math.abs(r.profit).toLocaleString()}${r.margin?` (${(r.margin*100).toFixed(0)}%)`:''}</span>` : ''}
                     </div>
                 </div>
@@ -7264,9 +7359,9 @@ function crmRenderStats() {
     // 总览
     const overview = document.getElementById('crm-stat-overview');
     if (overview) overview.innerHTML = [
-        {label:'总票数', val: data.length+'票', sub:'含'+withCosts.length+'票有成本数据', color:'#4a90e2'},
-        {label:'总收入', val:'¥'+totalRev.toLocaleString(), sub:'客户收费合计', color:'#2980b9'},
-        {label:'总成本', val:'¥'+totalCost.toLocaleString(), sub:'供应商成本合计', color:'#e67e22'},
+        {label:'总票数', val: data.length+'票', sub:'含'+withCosts.length+'票有应付数据', color:'#4a90e2'},
+        {label:'总应收', val:'¥'+totalRev.toLocaleString(), sub:'客户应收合计', color:'#2980b9'},
+        {label:'总应付', val:'¥'+totalCost.toLocaleString(), sub:'供应商应付合计', color:'#e67e22'},
         {label:'毛利 / 毛利率', val: fmtM(totalProfit), sub: fmtP(avgMargin)+' 综合毛利率', color: profitColor},
     ].map(c=>`<div class="stat-card" style="border-top:3px solid ${c.color};">
         <div class="stat-label">${c.label}</div>
@@ -7385,8 +7480,8 @@ function crmRenderStats() {
                     <span style="font-size:13px;font-weight:bold;color:${pc};">${fmtM(d.profit)}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
-                    <span>收入 ¥${d.rev.toLocaleString()}</span>
-                    <span>成本 ¥${d.cost.toLocaleString()}</span>
+                    <span>应收 ¥${d.rev.toLocaleString()}</span>
+                    <span>应付 ¥${d.cost.toLocaleString()}</span>
                     <span style="color:${pc};font-weight:bold;">${fmtP(margin)}</span>
                 </div>
                 <div style="background:#eee;border-radius:999px;height:4px;overflow:hidden;">
@@ -7405,8 +7500,8 @@ function crmRenderStats() {
             <thead><tr style="background:#f0f6ff;">
                 <th style="padding:7px 6px;text-align:left;border-bottom:2px solid #dde8f4;color:#4a90e2;">客户</th>
                 <th style="padding:7px 6px;text-align:center;border-bottom:2px solid #dde8f4;color:#4a90e2;">ETD</th>
-                <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#27ae60;">收入</th>
-                <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#e67e22;">成本</th>
+                <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#27ae60;">应收</th>
+                <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#e67e22;">应付</th>
                 <th style="padding:7px 6px;text-align:right;border-bottom:2px solid #dde8f4;color:#1f7a5c;">毛利</th>
                 <th style="padding:7px 6px;text-align:center;border-bottom:2px solid #dde8f4;color:#1f7a5c;">利润率</th>
             </tr></thead>
@@ -7438,12 +7533,12 @@ function crmExportCSV(selectionOnly = false) {
     if (!data.length) { showToast('暂无数据'); return; }
     const headers = ['客户','订单号','MBL','HBL','起运港','目的港','柜型','柜数','船公司','船名航次',
         '品名','毛重(kg)','件数','体积(CBM)','截关日','ETD','ETA','ATA','提柜日','免柜期',
-        '海运费','国内拖车费','报关费','税金','尾程派送费','其他费','合计费','状态','贸易术语','备注','创建日期'];
+        '海运费','国内拖车费','报关费','税金','ARRIVAL NOTICE費用','清关费','尾程派送费','其他费','应收合计','状态','贸易术语','备注','创建日期'];
     const rows = data.map(r => {
         const f = r.fees || {};
         return [r.client,r.orderno,r.mbl,r.hbl,r.pol,r.pod,r.ctype,r.cqty,r.carrier,r.vessel,
             r.goods,r.weight,r.pkgs,r.cbm,r.cutoff,r.etd,r.eta,r.ata,r.pickup,r.freetime,
-            f.ocean,f.truck,f.customs,f.tax,f.delivery,f.other,f.total,r.status,r.incoterm,
+            f.ocean,f.truck,f.customs,f.tax,f.arrival_notice,f.clearance,f.delivery,f.other,f.total,r.status,r.incoterm,
             (r.notes||'').replace(/\n/g,' '),(r.createdAt||'').slice(0,10)]
             .map(v => `"${v||''}"`).join(',');
     });
@@ -7482,7 +7577,7 @@ function crmClosePdfModal() {
 }
 
 function crmBuildAndDownloadPDF(mode) {
-    // mode: 'client' = 只含客户收入，'full' = 含供应商成本+毛利
+    // mode: 'client' = 只含客户应收，'full' = 含供应商应付+毛利
     const list = _crmPdfList;
     if (!list || !list.length) return;
     crmClosePdfModal();
@@ -7506,11 +7601,30 @@ function crmBuildAndDownloadPDF(mode) {
     const totalCost = isClient ? 0 : list.reduce((s,r) => s + ((r.costs||{})._total||0), 0);
     const totalProfit = isClient ? 0 : list.reduce((s,r) => s + (r.profit||0), 0);
 
-    // table rows
-    const extraTh = isClient ? '' :
-        `<th style="${thS}min-width:72px;">成本</th><th style="${thS}min-width:72px;">毛利</th><th style="${thS}min-width:52px;">利润率</th>`;
     const thS = 'padding:10px 6px;color:#fff;font-size:11px;border:1px solid #3d7fcf;';
-    const thSc = 'padding:10px 6px;color:#fff;font-size:11px;border:1px solid #2e6b3e;';
+    const feeDetailItems = [
+        ['海运费', 'ocean'],
+        ['拖车费', 'truck'],
+        ['报关费', 'customs'],
+        ['税金', 'tax'],
+        ['ARRIVAL NOTICE費用', 'arrival_notice'],
+        ['清关费', 'clearance'],
+        ['尾程派送费', 'delivery'],
+        ['其他', 'other']
+    ];
+    const buildFeeDetailHtml = (fees) => {
+        const rows = feeDetailItems
+            .filter(([, key]) => Number(fees?.[key]) > 0)
+            .map(([label, key]) =>
+                `<div style="display:flex;justify-content:space-between;gap:8px;white-space:nowrap;">
+                    <span style="color:#7f8c8d;">${label}</span>
+                    <span style="font-weight:600;color:#2c3e50;">¥${Number(fees[key]).toLocaleString()}</span>
+                </div>`
+            );
+        return rows.length
+            ? `<div style="display:flex;flex-direction:column;gap:3px;">${rows.join('')}</div>`
+            : '<span style="color:#bbb;">—</span>';
+    };
 
     const headRow = isClient
         ? `<tr style="background:linear-gradient(135deg,#4a90e2,#5ba3f5);">
@@ -7522,7 +7636,8 @@ function crmBuildAndDownloadPDF(mode) {
             <th style="${thS}text-align:left;min-width:80px;">品名</th>
             <th style="${thS}text-align:center;min-width:68px;">ETD</th>
             <th style="${thS}text-align:center;min-width:68px;">ETA</th>
-            <th style="${thS}text-align:center;min-width:80px;">收费合计</th>
+            <th style="${thS}text-align:left;min-width:170px;">明细金额</th>
+            <th style="${thS}text-align:center;min-width:80px;">应收合计</th>
             <th style="${thS}text-align:center;min-width:64px;">状态</th>
            </tr>`
         : `<tr style="background:linear-gradient(135deg,#2c3e50,#34495e);">
@@ -7532,8 +7647,8 @@ function crmBuildAndDownloadPDF(mode) {
             <th style="${thS}text-align:center;min-width:90px;">航线</th>
             <th style="${thS}text-align:center;">柜型</th>
             <th style="${thS}text-align:center;min-width:64px;">ETD</th>
-            <th style="${thS}text-align:right;min-width:72px;">收入</th>
-            <th style="${thS}text-align:right;min-width:72px;">成本</th>
+            <th style="${thS}text-align:right;min-width:72px;">应收</th>
+            <th style="${thS}text-align:right;min-width:72px;">应付</th>
             <th style="${thS}text-align:right;min-width:72px;">毛利</th>
             <th style="${thS}text-align:center;min-width:52px;">利润率</th>
             <th style="${thS}text-align:center;min-width:56px;">状态</th>
@@ -7555,6 +7670,7 @@ function crmBuildAndDownloadPDF(mode) {
                 <td style="${tdS}color:#555;">${fmt(r.goods)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.etd)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.eta)}</td>
+                <td style="${tdS}line-height:1.45;min-width:170px;">${buildFeeDetailHtml(f)}</td>
                 <td style="${tdS}text-align:center;font-weight:bold;color:#2c7be5;">${f.total ? '¥'+Number(f.total).toLocaleString() : '—'}</td>
                 <td style="${tdS}text-align:center;">${statusBadge}</td>
             </tr>`;
@@ -7582,7 +7698,7 @@ function crmBuildAndDownloadPDF(mode) {
 
     const footerRow = isClient
         ? `<tr style="background:#f0f6ff;">
-            <td colspan="8" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">收费合计</td>
+            <td colspan="9" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">应收合计</td>
             <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#2c7be5;text-align:center;">¥${totalRev.toLocaleString()}</td>
             <td style="border:1px solid #e0e8f0;"></td>
           </tr>`
@@ -7616,7 +7732,7 @@ ${watermark}
       <div style="font-size:20px;font-weight:bold;color:#2c3e50;letter-spacing:1px;">${titleLabel}</div>
       <div style="font-size:11px;color:#888;margin-top:4px;">导出日期：${today}　共 ${list.length} 条记录</div>
     </div>
-    <div style="text-align:right;font-size:12px;color:${headerColor};font-weight:bold;">收入合计：¥${totalRev.toLocaleString()}${!isClient ? `<br><span style="color:#1f7a5c;">毛利：${totalProfit>=0?'':'- '}¥${Math.abs(totalProfit).toLocaleString()}</span>` : ''}</div>
+    <div style="text-align:right;font-size:12px;color:${headerColor};font-weight:bold;">应收合计：¥${totalRev.toLocaleString()}${!isClient ? `<br><span style="color:#1f7a5c;">毛利：${totalProfit>=0?'':'- '}¥${Math.abs(totalProfit).toLocaleString()}</span>` : ''}</div>
   </div>
   <div style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
     <span style="font-size:11px;color:#aaa;margin-right:4px;">状态汇总</span>${summaryTags}
