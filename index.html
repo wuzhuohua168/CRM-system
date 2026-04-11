@@ -503,7 +503,13 @@
 
 <div id="tab9" class="tab-content active">
     <div class="module-card dashboard-hero">
-        <div class="dashboard-title-row"><div class="title">首页仪表盘</div><div class="backup-inline" id="dashboard-backup-inline">自动备份：未记录</div></div>
+        <div class="dashboard-title-row">
+            <div class="title">首页仪表盘</div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <div class="backup-inline" id="dashboard-backup-inline">自动备份：未记录</div>
+                <button class="btn-main" style="background:#4a90e2; padding:6px 10px; font-size:12px;" onclick="openStoragePanel()">数据存储</button>
+            </div>
+        </div>
         <div class="dashboard-grid">
             <div class="stat-card">
                 <div class="stat-label">当前默认首页</div>
@@ -816,7 +822,14 @@
 </div>
 
 <div id="tab12" class="tab-content fullpage-tab">
-    <iframe id="macro-online-frame" data-template="template-macro" src="about:blank" title="宏观系统" class="fullscreen-frame" loading="eager"></iframe>
+    <iframe
+        id="macro-online-frame"
+        src="https://hg-hongguan2.vercel.app/"
+        title="宏观系统"
+        style="width:100%; height:100vh; border:none; background:#fff; display:block;"
+        loading="eager">
+    </iframe>
+    <button class="floating-back-btn" onclick="switchTab(9)">返回工具</button>
 </div>
 
 <div id="tab14" class="tab-content fullpage-tab">
@@ -856,7 +869,7 @@
     <!-- 顶部操作栏 -->
     <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #4a90e2; padding-left:8px;">📦 CRM 整柜台账</div>
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #4a90e2; padding-left:8px;">📦 CRM 业务台账</div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button class="btn-main" style="background:#4a90e2; padding:8px 14px;" onclick="crmShowAddModal()">＋ 新增</button>
                 <button class="btn-main" id="crm-select-toggle" style="background:#f39c12; padding:8px 14px;" onclick="crmToggleSelectMode()">☑ 勾选</button>
@@ -973,6 +986,13 @@
                 <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px; margin-top:4px;">基本信息</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">业务类型</label>
+                        <select id="crm-f-biztype" onchange="crmToggleBizType()" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="fcl">整柜</option>
+                            <option value="lcl">散货</option>
+                        </select>
+                    </div>
+                    <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">客户名称 *</label>
                         <input type="text" id="crm-f-client" placeholder="客户公司名" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
@@ -991,10 +1011,14 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">分单号 (HBL)</label>
                         <input type="text" id="crm-f-hbl" placeholder="代理分提单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
+                    <div id="crm-lcl-ship-wrap">
+                        <label id="crm-lcl-ship-label" style="font-size:11px; color:#666; display:block; margin-bottom:4px;">运输方式</label>
+                        <input type="text" id="crm-f-shipmode" placeholder="如 空运 / 海运散货 / 快递" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
                 </div>
 
                 <!-- 航线/柜型 -->
-                <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">航线 & 柜型</div>
+                <div id="crm-route-title" style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">航线 & 柜型</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">起运港</label>
@@ -1004,7 +1028,7 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">目的港</label>
                         <input type="text" id="crm-f-pod" placeholder="如 NRT / OSA" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
-                    <div>
+                    <div id="crm-ctype-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">柜型</label>
                         <select id="crm-f-ctype" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
                             <option value="">请选择</option>
@@ -1021,7 +1045,7 @@
                             <option>其他</option>
                         </select>
                     </div>
-                    <div>
+                    <div id="crm-cqty-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">柜数量</label>
                         <input type="number" id="crm-f-cqty" value="1" min="1" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
@@ -1036,7 +1060,7 @@
                 </div>
 
                 <!-- 货物信息 -->
-                <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">货物信息</div>
+                <div id="crm-cargo-title" style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">货物信息</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">品名</label>
@@ -1053,6 +1077,14 @@
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">体积 (CBM)</label>
                         <input type="number" id="crm-f-cbm" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div id="crm-bill-weight-wrap">
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">计费重 (kg)</label>
+                        <input type="number" id="crm-f-billweight" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div id="crm-unit-price-wrap">
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">报价单价 (¥/kg)</label>
+                        <input type="number" id="crm-f-unitprice" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                 </div>
 
@@ -1085,6 +1117,7 @@
                     </div>
                 </div>
 
+                <div id="crm-fcl-fee-area">
                 <!-- 客户应收 -->
                 <div style="font-size:12px; font-weight:bold; color:#27ae60; margin-bottom:8px;">💰 客户应收</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
@@ -1131,6 +1164,53 @@
                     <div style="display:flex; gap:16px; align-items:center;">
                         <span id="crm-f-profit" style="font-size:15px; font-weight:bold; color:#1f7a5c;">¥ 0</span>
                         <span id="crm-f-margin" style="font-size:12px; color:#27ae60; background:#d4f1e4; padding:2px 10px; border-radius:999px;">0%</span>
+                    </div>
+                </div>
+                </div>
+
+                <div id="crm-lcl-fee-area" style="display:none;">
+                    <div style="font-size:12px; font-weight:bold; color:#27ae60; margin-bottom:8px;">💰 散货应收</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">计费重 (kg)</label>
+                            <input type="number" id="crm-f-lcl-billweight" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">应收单价 (¥/kg)</label>
+                            <input type="number" id="crm-f-lcl-price" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">附加费 / 杂费</label>
+                            <input type="number" id="crm-f-lcl-extra" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:#999; display:block; margin-bottom:4px;">应收合计（自动）</label>
+                            <div id="crm-f-lcl-total" style="padding:9px; background:#f7fbff; border:1px solid #d5e5f5; border-radius:8px; font-size:13px; font-weight:bold; color:#2c7be5;">¥ 0</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size:12px; font-weight:bold; color:#e67e22; margin-bottom:8px; margin-top:4px;">🏭 散货应付</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">应付单价 (¥/kg)</label>
+                            <input type="number" id="crm-f-lcl-cost-price" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">应付附加费</label>
+                            <input type="number" id="crm-f-lcl-cost-extra" placeholder="0.00" step="0.01" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; color:#999; display:block; margin-bottom:4px;">应付合计（自动）</label>
+                            <div id="crm-f-lcl-cost-total" style="padding:9px; background:#fff8f0; border:1px solid #f0d5a8; border-radius:8px; font-size:13px; font-weight:bold; color:#e67e22;">¥ 0</div>
+                        </div>
+                    </div>
+
+                    <div style="background:linear-gradient(135deg,#f0fff4,#e8f8f0); border:1px solid #a8dfc0; border-radius:10px; padding:10px 12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <span style="font-size:12px; color:#1f7a5c; font-weight:bold;">预计毛利（CNY）</span>
+                        <div style="display:flex; gap:16px; align-items:center;">
+                            <span id="crm-f-lcl-profit" style="font-size:15px; font-weight:bold; color:#1f7a5c;">¥ 0</span>
+                            <span id="crm-f-lcl-margin" style="font-size:12px; color:#27ae60; background:#d4f1e4; padding:2px 10px; border-radius:999px;">0%</span>
+                        </div>
                     </div>
                 </div>
 
@@ -3536,763 +3616,242 @@
 
 <template id="template-label">
 <!DOCTYPE html>
-
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>物流标签1.0-智能条码版</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>标签生成1.0</title>
 
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f4f7f9; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+        
+        #overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 10000;
+            flex-direction: column; align-items: center; justify-content: center; color: white;
+        }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        .controls { 
+            max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; 
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .row { margin-bottom: 12px; }
+        label { font-size: 12px; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: #fff; cursor: pointer; font-size: 16px; }
+        
+        /* 提示信息样式 */
+        .info-tip { background: #e7f3ff; border-left: 4px solid #4a90e2; padding: 10px; margin-top: 10px; font-size: 12px; color: #555; border-radius: 4px; line-height: 1.6; }
+        .copyright-info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; margin-top: 10px; font-size: 12px; border-radius: 8px; text-align: center; }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        /* 标签预览区域 */
+        #container { margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+        .page-wrapper { background: #fff; margin-bottom: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); overflow: hidden; }
+        .size-100 { width: 100mm; height: 100mm; }
+        .size-80 { width: 80mm; height: 80mm; }
+        .size-50 { width: 100mm; height: 50mm; }
 
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; background: #f4f7f9; }
-    
-    #container { margin: 0 auto; position: relative; }
+        .label-content { 
+            width: 100%; height: 100%; padding: 4mm; border: 1px solid #eee;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+        }
+        .header-mode { width: 100%; text-align: center; font-size: 20px; font-weight: bold; border-bottom: 4px solid #000; padding-bottom: 1.5mm; }
+        .big-qty { font-size: 38px; font-weight: 900; }
+        .big-tracking { font-size: 20px; font-weight: bold; font-family: monospace; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 1.5mm 0; width: 100%; text-align: center; margin: 1mm 0;}
+        .barcode-area { width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .barcode-area canvas, .barcode-area img { max-width: 100%; height: auto !important; }
+        .footer-made { width: 100%; border: 3px solid #000; text-align: center; font-size: 18px; font-weight: bold; padding: 1mm; }
 
-    .page-wrapper {
-        overflow: hidden;
-        position: relative;
-        background: #fff;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        margin: 0 auto 5px;
-    }
-
-    /* 100mm x 100mm 标准尺寸 */
-    .page-wrapper.size-100 {
-        width: 100mm;
-        height: 100mm;
-    }
-
-    /* 80mm x 80mm 中型尺寸 */
-    .page-wrapper.size-80 {
-        width: 80mm;
-        height: 80mm;
-    }
-
-    /* 100mm x 50mm 小型尺寸 */
-    .page-wrapper.size-50 {
-        width: 100mm;
-        height: 50mm;
-    }
-
-    .export-mode .page-wrapper {
-        margin-bottom: 0 !important;
-        box-shadow: none !important;
-        page-break-after: always;
-    }
-
-    .label-content {
-        width: 100%;
-        height: 100%;
-        padding: 4mm;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-between;
-        border: 1px solid #f0f0f0;
-    }
-
-    .label-content.size-80 {
-        padding: 3mm;
-    }
-
-    .label-content.size-50 {
-        padding: 2mm;
-    }
-
-    .header-mode {
-        width: 100%;
-        text-align: center;
-        font-size: 20px;
-        font-weight: bold;
-        border-bottom: 4px solid #000;
-        padding-bottom: 1.5mm;
-    }
-
-    .size-80 .header-mode {
-        font-size: 18px;
-        border-bottom: 3px solid #000;
-    }
-
-    .size-50 .header-mode {
-        font-size: 14px;
-        border-bottom: 2px solid #000;
-        padding-bottom: 1mm;
-    }
-
-    .mid-info { text-align: center; width: 100%; margin: 1mm 0; }
-    .big-qty { font-size: 38px; font-weight: 900; line-height: 1; }
-    
-    .size-80 .big-qty { font-size: 32px; }
-    .size-50 .big-qty { font-size: 20px; }
-
-    .big-tracking {
-        font-size: 22px; font-weight: 900; font-family: monospace;
-        display: block; border-top: 2px solid #000; border-bottom: 2px solid #000;
-        padding: 1.5mm 0; margin: 1.5mm 0;
-    }
-
-    .size-80 .big-tracking {
-        font-size: 18px;
-    }
-
-    .size-50 .big-tracking {
-        font-size: 14px;
-        padding: 1mm 0;
-        margin: 1mm 0;
-    }
-
-    .barcode-area { 
-        width: 100%; 
-        flex: 1;
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        min-height: 35mm;
-    }
-
-    .size-80 .barcode-area {
-        min-height: 30mm;
-    }
-
-    .size-50 .barcode-area {
-        min-height: 20mm;
-    }
-
-    .barcode-img, .qrcode-container { 
-        max-width: 100%; 
-        max-height: 100%; 
-        height: auto; 
-        display: block; 
-    }
-
-    .qrcode-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .qrcode-container canvas {
-        max-width: 100% !important;
-        max-height: 100% !important;
-        height: auto !important;
-    }
-
-    .footer-made {
-        width: 100%; border: 3px solid #000; text-align: center;
-        font-size: 18px; font-weight: bold; padding: 1mm;
-    }
-
-    .size-80 .footer-made {
-        font-size: 16px;
-        border: 2px solid #000;
-    }
-
-    .size-50 .footer-made {
-        font-size: 12px;
-        border: 2px solid #000;
-        padding: 0.5mm;
-    }
-
-    .controls { 
-        max-width: 450px; 
-        margin: 10px auto 20px; 
-        background: #fff; 
-        padding: 15px; 
-        border-radius: 12px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-    }
-    .row { margin-bottom: 10px; }
-    label { font-size: 12px; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-    #custom-mode-row { display: none; margin-top: 5px; }
-    .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-    button { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: #fff; cursor: pointer; }
-    
-    .info-tip {
-        background: #e7f3ff;
-        border-left: 4px solid #4a90e2;
-        padding: 10px;
-        margin-top: 10px;
-        font-size: 12px;
-        color: #555;
-        border-radius: 4px;
-    }
-
-    .copyright-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 12px;
-        margin-top: 10px;
-        font-size: 12px;
-        border-radius: 8px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    .copyright-title {
-        font-weight: bold;
-        font-size: 13px;
-        margin-bottom: 5px;
-        letter-spacing: 0.5px;
-    }
-
-    .copyright-company {
-        font-size: 13px;
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-
-    .copyright-contact {
-        font-size: 12px;
-        opacity: 0.95;
-    }
-
-    .copy-section {
-        max-width: 450px;
-        margin: 0 auto 20px;
-        background: #fff;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        display: none;
-    }
-
-    .copy-section.show {
-        display: block;
-    }
-
-    .copy-section h3 {
-        font-size: 16px;
-        color: #333;
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 10px;
-    }
-
-    .copy-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .copy-item {
-        display: flex;
-        gap: 8px;
-        align-items: stretch;
-    }
-
-    .copy-info {
-        flex: 1;
-        padding: 12px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        font-size: 14px;
-        color: #333;
-        font-family: monospace;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        border: 1px solid #e0e0e0;
-    }
-
-    .copy-info-main {
-        font-weight: bold;
-        color: #000;
-    }
-
-    .copy-info-sub {
-        font-size: 12px;
-        color: #666;
-    }
-
-    .copy-btn {
-        width: 90px;
-        padding: 12px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    .copy-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-    }
-
-    .copy-btn:active {
-        transform: translateY(0);
-    }
-
-    .copy-btn.copied {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    }
-
-    .copy-btn-icon {
-        font-size: 20px;
-    }
-
-    .toast {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-100px);
-        background: #28a745;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        z-index: 9999;
-        opacity: 0;
-        transition: all 0.3s ease;
-    }
-
-    .toast.show {
-        transform: translateX(-50%) translateY(0);
-        opacity: 1;
-    }
-</style>
-
+        @media print { .no-print { display: none; } }
+    </style>
 </head>
-
 <body>
+
+<div id="overlay">
+    <div style="font-size: 18px; margin-bottom: 10px;">正在导出高性能 PDF...</div>
+    <div id="progressText" style="font-size: 28px; font-weight: bold; color: #28a745;">0%</div>
+</div>
 
 <div class="controls no-print">
     <div class="row">
         <label>运输方式</label>
-        <select id="mode" onchange="toggleCustomMode()">
-            <option value="CUSTOM">-- 手动输入自定义 
-            <option>大陆飞日本</option>
-            <option>香港飞日本</option>
-            <option>国际快递</option>
-            <option>普船海运GS</option>
-            <option>普船海运包税</option>
-            <option>快船包税</option>
-            <option>普船商业件</option>
-            <option>快船商业件</option>
-            <option>20呎整柜商业件</option>
-            <option>40呎整柜商业件</option>
-  --</option>
+        <select id="modeSelect" onchange="checkCustomMode()">
+            <option value="CUSTOM" selected>-- 手动输入自定义 --</option>
+            <option value="大陆飞日本">大陆飞日本</option>
+            <option value="香港飞日本">香港飞日本</option>
+            <option value="国际快递">国际快递</option>
+            <option value="普船海运GS">普船海运GS</option>
+            <option value="快船包税">快船包税</option>
         </select>
-        <div id="custom-mode-row"><input type="text" id="custom-mode-input" placeholder="输入名称"></div>
+        <input type="text" id="customInput" placeholder="请输入自定义运输名称" style="display:block; margin-top:8px;">
     </div>
-    <div class="row">
-        <div style="display:flex; gap:10px;">
-            <div style="flex:1"><label>单号前缀</label><input type="text" id="prefix" value="  "></div>
-            <div style="flex:1"><label>生成件数</label><input type="number" id="qty" value="1"></div>
+    
+    <div class="row" style="display:flex; gap:10px;">
+        <div style="flex:1;"><label>单号前缀</label><input type="text" id="prefix" value="HGCD"></div>
+        <div style="flex:1;"><label>生成件数</label><input type="number" id="qty" value="1"></div>
+    </div>
+
+    <div class="row" style="display:flex; gap:10px;">
+        <div style="flex:1;"><label>标签尺寸</label>
+            <select id="labelSize">
+                <option value="100">100x100 (标准)</option>
+                <option value="80">80x80 (热敏)</option>
+                <option value="50">100x50 (快递)</option>
+            </select>
+        </div>
+        <div style="flex:1;"><label>码类型</label>
+            <select id="codeType">
+                <option value="barcode">条形码</option>
+                <option value="qrcode">二维码</option>
+            </select>
         </div>
     </div>
-    <div class="row">
-        <label>标签尺寸</label>
-        <select id="label-size">
-            <option value="100">100mm × 100mm (标准)</option>
-            <option value="80">80mm × 80mm (中型)</option>
-            <option value="50">100mm × 50mm (小型)</option>
-        </select>
-    </div>
-    <div class="row">
-        <label>码类型</label>
-        <select id="code-type">
-            <option value="barcode">条形码 (适合扫码枪)</option>
-            <option value="qrcode">二维码 (可含更多信息)</option>
-        </select>
-    </div>
-    <div class="btn-group">
-        <button style="background:#4a90e2" onclick="handleGenerate()">1. 生成预览</button>
-        <button style="background:#28a745" onclick="handleExport()">2. 导出 PDF</button>
-        <button style="background:#f59e0b" onclick="handleExportCsv()">3. 导出 CSV</button>
-    </div>
-    <div class="info-tip">
-        💡 <strong>尺寸说明：</strong>标准100×100适合普通打印机；80×80适合热敏打印机；100×50适合小包裹快递标签
-    </div>
-    <div class="info-tip">
-        💡 <strong>码类型说明：</strong>条形码适合扫码枪快速识别；二维码可以包含更多信息（如网址、地址等），手机也能扫描
-    </div>
-    <div class="copyright-info">
-        <div class="copyright-title">© 版权所有</div>
-        <div class="copyright-company">HCN Supply Chain (Shenzhen) Co., Ltd.</div>
-        <div class="copyright-contact">📞 联系方式：HG恒然 19867541192</div>
-    </div>
-</div>
 
-<div class="copy-section" id="copySection">
-    <h3>
-        <span>📋</span>
-        <span>快速复制信息</span>
-    </h3>
-    <div class="copy-buttons" id="copyButtons"></div>
+    <div class="btn-group">
+        <button style="background:#4a90e2" onclick="renderPreview()">1. 生成预览</button>
+        <button style="background:#28a745" onclick="exportToPDF()">2. 导出 PDF</button>
+    </div>
+
+    <div class="info-tip">
+        💡 <strong>尺寸说明：</strong>标准100×100适合普通打印机；80×80适合热敏打印机；100×50适合小包裹快递标签<br>
+        💡 <strong>码类型说明：</strong>条形码适合扫码枪快速识别；二维码可以包含更多信息，手机也能扫描
+    </div>
+
+    <div class="copyright-info">
+        <div style="font-weight:bold; margin-bottom:4px;">© 版权所有</div>
+        <div>HCN Supply Chain (Shenzhen) Co., Ltd.</div>
+        <div>国际物流清关派送📞 联系方式：Joyhua 19867541192</div>
+    </div>
 </div>
 
 <div id="container"></div>
-<canvas id="temp-canvas" style="display:none;"></canvas>
-<div id="temp-qrcode" style="display:none;"></div>
-
-<div class="toast" id="toast">复制成功！</div>
+<div id="temp-qr" style="display:none;"></div>
 
 <script>
-let fileNameData = { mode: "", mainTracking: "", total: 0 };
-let generatedData = [];
+    let currentMainTracking = "";
+    let finalModeName = "";
 
-function toggleCustomMode() {
-    const s = document.getElementById('mode');
-    document.getElementById('custom-mode-row').style.display = (s.value === "CUSTOM") ? "block" : "none";
-}
-
-function handleGenerate() {
-    const qty = parseInt(document.getElementById('qty').value) || 1;
-    const prefix = document.getElementById('prefix').value || "CN";
-    const modeSelect = document.getElementById('mode');
-    const modeText = (modeSelect.value === "CUSTOM") ? document.getElementById('custom-mode-input').value : modeSelect.options[modeSelect.selectedIndex].text;
-    const labelSize = document.getElementById('label-size').value;
-    const codeType = document.getElementById('code-type').value;
-    
-    const container = document.getElementById('container');
-    container.classList.remove('export-mode');
-    container.innerHTML = '';
-    
-    // 根据尺寸设置容器宽度
-    if (labelSize === '100') {
-        container.style.width = '100mm';
-    } else if (labelSize === '80') {
-        container.style.width = '80mm';
-    } else if (labelSize === '50') {
-        container.style.width = '100mm';
+    function checkCustomMode() {
+        const select = document.getElementById('modeSelect');
+        const input = document.getElementById('customInput');
+        input.style.display = (select.value === 'CUSTOM') ? 'block' : 'none';
     }
-    
-    const dateStr = new Date().toISOString().slice(2,10).replace(/-/g,'');
-    const randomSuffix = Math.floor(Math.random() * 9000 + 1000);
-    
-    fileNameData.mode = modeText;
-    fileNameData.mainTracking = `${prefix}${dateStr}${randomSuffix}`;
-    fileNameData.total = qty;
 
-    generatedData = [];
+    function renderPreview() {
+        const qty = parseInt(document.getElementById('qty').value) || 1;
+        const prefix = document.getElementById('prefix').value;
+        const size = document.getElementById('labelSize').value;
+        const codeType = document.getElementById('codeType').value;
+        finalModeName = document.getElementById('modeSelect').value === 'CUSTOM' ? 
+                        document.getElementById('customInput').value : document.getElementById('modeSelect').value;
 
-    for(let i=1; i<=qty; i++) {
-        const tracking = `${fileNameData.mainTracking}-${i}`;
-        const barcodeData = `${tracking} | ${i}/${qty}`;
-        
-        generatedData.push({
-            mode: modeText,
-            tracking: tracking,
-            index: i,
-            total: qty
-        });
-        
-        let codeHTML = '';
-        
-        if (codeType === 'barcode') {
-            // 生成条形码
-            const tempCanvas = document.getElementById('temp-canvas');
-            
-            // 根据尺寸调整条形码参数
-            let barcodeWidth = 3.5;
-            let barcodeHeight = 150;
-            if (labelSize === '80') {
-                barcodeWidth = 3;
-                barcodeHeight = 120;
-            } else if (labelSize === '50') {
-                barcodeWidth = 2.5;
-                barcodeHeight = 80;
-            }
-            
-            JsBarcode(tempCanvas, barcodeData, { 
-                format: "CODE128", 
-                width: barcodeWidth,
-                height: barcodeHeight,
-                displayValue: false, 
-                margin: 10
-            });
-            
-            const imgData = tempCanvas.toDataURL("image/png", 1.0);
-            codeHTML = `<img src="${imgData}" class="barcode-img">`;
-        } else {
-            // 生成二维码
-            const tempQR = document.getElementById('temp-qrcode');
-            tempQR.innerHTML = '';
-            
-            // 根据尺寸调整二维码大小
-            let qrSize = 180;
-            if (labelSize === '80') {
-                qrSize = 150;
-            } else if (labelSize === '50') {
-                qrSize = 100;
-            }
-            
-            const qr = new QRCode(tempQR, {
-                text: barcodeData,
-                width: qrSize,
-                height: qrSize,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            // 获取生成的canvas
-            const qrCanvas = tempQR.querySelector('canvas');
-            const qrImgData = qrCanvas.toDataURL("image/png", 1.0);
-            codeHTML = `<div class="qrcode-container"><img src="${qrImgData}" style="width: ${qrSize}px; height: ${qrSize}px;"></div>`;
-        }
+        const container = document.getElementById('container');
+        container.innerHTML = '';
 
-        const wrapper = document.createElement('div');
-        wrapper.className = `page-wrapper size-${labelSize}`;
-        wrapper.innerHTML = `
-            <div class="label-content size-${labelSize}">
-                <div class="header-mode">${modeText}</div>
-                <div class="mid-info">
+        const dateStr = new Date().toISOString().slice(2,10).replace(/-/g,'');
+        const randomSN = Math.floor(Math.random() * 9000 + 1000);
+        currentMainTracking = `${prefix}${dateStr}${randomSN}`;
+
+        for (let i = 1; i <= qty; i++) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `page-wrapper size-${size}`;
+            wrapper.innerHTML = `
+                <div class="label-content">
+                    <div class="header-mode">${finalModeName || 'LOGISTICS'}</div>
                     <div class="big-qty">${i} / ${qty}</div>
-                    <span class="big-tracking">${tracking}</span>
+                    <div class="big-tracking">${currentMainTracking}</div>
+                    <div class="barcode-area" id="code-area-${i}"></div>
+                    <div class="footer-made">MADE IN CHINA</div>
                 </div>
-                <div class="barcode-area">${codeHTML}</div>
-                <div class="footer-made">MADE IN CHINA</div>
-            </div>
-        `;
-        container.appendChild(wrapper);
-    }
+            `;
+            container.appendChild(wrapper);
 
-    updateCopyButtons();
-}
+            const codeArea = document.getElementById(`code-area-${i}`);
+            const barcodeData = `${currentMainTracking}-${i}`;
 
-function updateCopyButtons() {
-    const copySection = document.getElementById('copySection');
-    const copyButtons = document.getElementById('copyButtons');
-    
-    if (generatedData.length === 0) {
-        copySection.classList.remove('show');
-        return;
-    }
-
-    copySection.classList.add('show');
-    copyButtons.innerHTML = '';
-
-    if (generatedData.length > 0) {
-        const firstData = generatedData[0];
-        const totalQty = generatedData.length;
-        const trackingPrefix = fileNameData.mainTracking || firstData.tracking || '';
-        const copyText = `${firstData.mode} ${trackingPrefix} ${totalQty}件`;
-        
-        const item = document.createElement('div');
-        item.className = 'copy-item';
-        item.innerHTML = `
-            <div class="copy-info">
-                <div class="copy-info-main">${firstData.mode}</div>
-                <div class="copy-info-sub">${trackingPrefix} · 共${totalQty}件</div>
-            </div>
-            <button class="copy-btn" onclick="copyToClipboard('${copyText}', this, 0)">
-                <span class="copy-btn-icon">📋</span>
-                <span>复制</span>
-            </button>
-        `;
-        copyButtons.appendChild(item);
-    }
-}
-
-async function copyToClipboard(text, btn, index) {
-    try {
-        await navigator.clipboard.writeText(text);
-        
-        const originalHTML = btn.innerHTML;
-        btn.classList.add('copied');
-        
-        btn.innerHTML = `
-            <span class="copy-btn-icon">✓</span>
-            <span>已复制</span>
-        `;
-        
-        showToast('复制成功！');
-        
-        setTimeout(() => {
-            btn.classList.remove('copied');
-            btn.innerHTML = originalHTML;
-        }, 2000);
-        
-    } catch (err) {
-        console.error('复制失败:', err);
-        showToast('复制失败，请手动复制', true);
-    }
-}
-
-function showToast(message, isError = false) {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.style.background = isError ? '#dc3545' : '#28a745';
-    toast.classList.add('show');
-    
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 2000);
-}
-
-async function handleExport() {
-    const container = document.getElementById('container');
-    if(!container.hasChildNodes()) return alert("请先生成预览");
-
-    container.classList.add('export-mode');
-    window.scrollTo(0, 0);
-
-    const safeMode = String(fileNameData.mode || '物流标签').replace(/[\/:*?"<>|]+/g, '-').trim();
-    const safeTracking = String(fileNameData.mainTracking || generatedData[0]?.tracking || 'data').replace(/[\/:*?"<>|]+/g, '-').trim();
-    const safeQty = Number(fileNameData.total || generatedData.length || 0);
-    const name = `${safeMode}_${safeTracking}_${safeQty}件.pdf`;
-    const pages = container.querySelectorAll('.page-wrapper');
-    const labelSize = document.getElementById('label-size').value;
-    
-    // 根据尺寸设置PDF格式
-    let pdfWidth, pdfHeight;
-    if (labelSize === '100') {
-        pdfWidth = pdfHeight = 100;
-    } else if (labelSize === '80') {
-        pdfWidth = pdfHeight = 80;
-    } else if (labelSize === '50') {
-        pdfWidth = 100;
-        pdfHeight = 50;
-    }
-    
-    try {
-        const { jsPDF } = window.jspdf || { jsPDF: null };
-        const pdf = new jsPDF({ unit: 'mm', format: [pdfWidth, pdfHeight], orientation: 'portrait' });
-        
-        for (let i = 0; i < pages.length; i++) {
-            const page = pages[i];
-            
-            const canvas = await html2canvas(page, {
-                scale: 3,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                width: page.offsetWidth,
-                height: page.offsetHeight,
-                windowWidth: page.offsetWidth,
-                windowHeight: page.offsetHeight,
-                x: 0,
-                y: 0
-            });
-            
-            const imgData = canvas.toDataURL('image/jpeg', 1.0);
-            
-            if (i > 0) pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        }
-        
-        const pdfBlob = pdf.output('blob');
-        const file = new File([pdfBlob], name, { type: 'application/pdf' });
-
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: '分享物流标签' });
-        } else {
-            pdf.save(name);
-        }
-    } catch (err) {
-        console.error(err);
-        alert("导出失败：" + err.message);
-    } finally {
-        container.classList.remove('export-mode');
-    }
-}
-
-async function handleExportCsv() {
-    if (!generatedData.length) return alert("请先生成预览");
-
-    const rows = [
-        ['运输方式', '单号', '序号', '总件数']
-    ];
-
-    generatedData.forEach(item => {
-        rows.push([
-            item.mode || '',
-            item.tracking || '',
-            item.index || '',
-            item.total || ''
-        ]);
-    });
-
-    const csvString = '\uFEFF' + rows.map(row =>
-        row.map(value => {
-            const text = String(value ?? '').replace(/"/g, '""');
-            return `"${text}"`;
-        }).join(',')
-    ).join('\n');
-
-    const fileName = `${fileNameData.mode || '物流标签'}_${fileNameData.mainTracking || 'data'}_${fileNameData.total || generatedData.length || 0}件.csv`;
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const file = new File([blob], fileName, { type: 'text/csv;charset=utf-8;' });
-
-    try {
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: '分享物流标签CSV' });
-        } else {
-            downloadCsv(blob, fileName);
-        }
-    } catch (err) {
-        if (err.name !== 'AbortError') {
-            downloadCsv(blob, fileName);
+            if (codeType === 'barcode') {
+                const canvas = document.createElement('canvas');
+                codeArea.appendChild(canvas);
+                JsBarcode(canvas, barcodeData, {
+                    format: "CODE128", width: 2.2, height: 70, displayValue: false, margin: 0
+                });
+            } else {
+                const qrDiv = document.createElement('div');
+                new QRCode(qrDiv, {
+                    text: barcodeData,
+                    width: 120, height: 120,
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                setTimeout(() => {
+                    const qrImg = qrDiv.querySelector('img');
+                    if(qrImg) codeArea.appendChild(qrImg);
+                }, 50);
+            }
         }
     }
-}
 
-function downloadCsv(blob, fileName) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
+    async function exportToPDF() {
+        const pages = document.querySelectorAll('.page-wrapper');
+        if (pages.length === 0) return alert("请先生成预览！");
+
+        const overlay = document.getElementById('overlay');
+        const progressText = document.getElementById('progressText');
+        overlay.style.display = 'flex';
+
+        const size = document.getElementById('labelSize').value;
+        let pW = 100, pH = 100;
+        if(size === '80') { pW = 80; pH = 80; }
+        if(size === '50') { pW = 100; pH = 50; }
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ unit: 'mm', format: [pW, pH], compress: true });
+
+            for (let i = 0; i < pages.length; i++) {
+                progressText.innerText = Math.round((i / pages.length) * 100) + "%";
+
+                const canvas = await html2canvas(pages[i], {
+                    scale: 1.5, // 进一步优化内存，1.5倍足够清晰
+                    useCORS: true,
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.75);
+                if (i > 0) pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, 0, pW, pH);
+
+                canvas.width = 0; canvas.height = 0;
+                if (i % 5 === 0) await new Promise(r => setTimeout(r, 10));
+            }
+
+            // 修改点：导出文件名格式：运输方式_单号_件数
+            const fileName = `${finalModeName || '标签'}_${currentMainTracking}_${pages.length}件.pdf`;
+            pdf.save(fileName);
+        } catch (e) {
+            alert("导出异常：" + e.message);
+        } finally {
+            overlay.style.display = 'none';
+        }
+    }
 </script>
-
 <script>
 (function () {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('from') !== 'workbench') return;
     const btn = document.createElement('button');
     btn.textContent = '返回工作台';
     btn.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:99999;background:rgba(31,122,92,0.94);color:#fff;border:none;border-radius:999px;padding:12px 16px;font-size:13px;font-weight:bold;box-shadow:0 10px 30px rgba(0,0,0,0.16);';
     btn.onclick = function () {
-        window.location.href = new URL('物流工作台.html', window.location.href).href;
+        try { window.parent.postMessage({ type: 'switchTab', tab: 9 }, '*'); } catch(e) {}
     };
     document.body.appendChild(btn);
 })();
-
-// postMessage from embedded iframes (macro system back button)
-window.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'switchTab' && typeof e.data.tab === 'number') switchTab(e.data.tab);
-});
-
-// CRM 自动生成订单号: HGCD-YYYY-NNNN
-function crmGenOrderNo() {
-    const data = crmLoad();
-    const year = new Date().getFullYear();
-    const prefix = 'HGCD-' + year + '-';
-    const nums = data.map(r => r.orderno||'').filter(n=>n.startsWith(prefix))
-        .map(n=>parseInt(n.replace(prefix,''))||0);
-    const next = nums.length ? Math.max(...nums)+1 : 1;
-    const el = document.getElementById('crm-f-orderno');
-    if (el) el.value = prefix + String(next).padStart(4,'0');
-}
 </script>
 </body>
 </html>
@@ -4365,6 +3924,31 @@ async function idbGet(key) {
     }).catch(() => null);
     db.close();
     return value;
+}
+
+async function idbDelete(key) {
+    const db = await openAppDb();
+    if (!db) return;
+    await new Promise((resolve, reject) => {
+        const tx = db.transaction(APP_DB_STORE, 'readwrite');
+        tx.objectStore(APP_DB_STORE).delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+    }).catch(() => null);
+    db.close();
+}
+
+function clearSensitiveLocalCache() {
+    const keys = [APP_STATE_KEY, ...APP_EXTRA_STORAGE_KEYS];
+    keys.forEach(key => localStorage.removeItem(key));
+    memos = {};
+    lastSavedAt = '';
+}
+
+async function purgePersistedAppState() {
+    clearSensitiveLocalCache();
+    await idbDelete(APP_STATE_KEY);
 }
 
 function gatherExtraStorageState() {
@@ -4710,7 +4294,6 @@ window.onload = async () => {
     renderHomeQuoteGrid();
     updateDashboardNow();
     setInterval(updateDashboardNow, 1000);
-    initAutoSave();
     updateStorageStatus();
 };
 
@@ -4727,7 +4310,6 @@ function switchTab(idx) {
     }
     if (idx === 10) ensureEmbeddedFrameLoaded('quotation-tool-frame');
     if (idx === 11) ensureEmbeddedFrameLoaded('fee-tool-frame');
-    if (idx === 12) ensureEmbeddedFrameLoaded('macro-online-frame');
     if (idx === 14) ensureEmbeddedFrameLoaded('label-tool-mobile-frame');
     if (idx !== 9) {
         const panel = document.getElementById('timeis-panel');
@@ -6254,26 +5836,28 @@ function initAutoSave() {
 }
 
 function handleAutoBackupLifecycle(evt) {
-    if (evt && evt.type === 'visibilitychange' && document.visibilityState !== 'hidden') return;
-    try {
-        const payload = saveAppStateSync();
-        idbSet(APP_STATE_KEY, payload).catch(() => null);
-    } catch (e) {}
+    // 页面隐藏/关闭时自动保存
+    if (evt.type === 'pagehide' || evt.type === 'beforeunload' ||
+        (evt.type === 'visibilitychange' && document.visibilityState === 'hidden')) {
+        try {
+            const payload = saveAppStateSync();
+            localStorage.setItem(APP_STATE_KEY, payload);
+        } catch(e) {}
+    }
 }
 
 function handleAutoSaveEvent(event) {
-    const target = event.target;
-    if (!target || !target.id) return;
-    if (target.id === 'state-import-file') return;
-    queueSaveAppState();
+    // 跳过 file input 和 iframe 内部事件
+    if (!event.target || event.target.type === 'file') return;
+    if (!document.getElementById(event.target.id || '_')) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        saveAppStateToLocal().catch(() => {});
+    }, 2000);
 }
 
 function queueSaveAppState() {
-    if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-        saveAppStateToLocal();
-        updateStorageStatus();
-    }, 400);
+    return;
 }
 
 function gatherAppState() {
@@ -6297,7 +5881,6 @@ function gatherAppState() {
 function saveAppStateSync() {
     const state = gatherAppState();
     const payload = JSON.stringify(state);
-    localStorage.setItem(APP_STATE_KEY, payload);
     lastSavedAt = state.savedAt;
     return payload;
 }
@@ -6305,6 +5888,7 @@ function saveAppStateSync() {
 async function saveAppStateToLocal() {
     const payload = saveAppStateSync();
     try {
+        localStorage.setItem(APP_STATE_KEY, payload);
         await idbSet(APP_STATE_KEY, payload);
     } catch (e) {}
 }
@@ -6316,18 +5900,18 @@ async function saveAppStateNow() {
 }
 
 async function restoreAppState() {
-    let raw = localStorage.getItem(APP_STATE_KEY);
-    if (!raw) {
-        try {
-            raw = await idbGet(APP_STATE_KEY);
-            if (raw) localStorage.setItem(APP_STATE_KEY, raw);
-        } catch (e) {}
-    }
-    if (!raw) return;
     try {
+        let raw = localStorage.getItem(APP_STATE_KEY);
+        if (!raw) {
+            raw = await idbGet(APP_STATE_KEY);
+        }
+        if (!raw) return;
         const state = JSON.parse(raw);
         applyAppState(state);
-        lastSavedAt = state.savedAt || '';
+        renderDashboardTodos(JSON.parse(localStorage.getItem('dashboard_todos_v1') || '[]'));
+        loadShipmentNotes();
+        crmRender();
+        updateStorageStatus();
     } catch (e) {}
 }
 
@@ -6453,18 +6037,18 @@ async function updateStorageStatus() {
     }
     const cloudName = cloudFileHandle ? cloudFileHandle.name : '未绑定';
     const inlineEl = document.getElementById('dashboard-backup-inline');
-    let localInfo = '本地自动保存：未初始化';
-    let inlineText = '自动备份：未记录';
+    let localInfo = '本地自动保存：已关闭';
+    let inlineText = '自动备份：已关闭';
     if (localState) {
         try {
             const state = JSON.parse(localState);
             const savedText = formatReadableTime(state.savedAt || lastSavedAt);
-            localInfo = `本地自动保存：已启用
+            localInfo = `本地手动保存：已存在
 最后保存：${savedText}`;
-            inlineText = `自动备份：${savedText}`;
+            inlineText = `手动备份：${savedText}`;
         } catch (e) {
-            localInfo = '本地自动保存：已启用';
-            inlineText = '自动备份：已启用';
+            localInfo = '本地手动保存：已存在';
+            inlineText = '手动备份：已存在';
         }
     }
     el.innerText = `${localInfo}
@@ -6629,6 +6213,22 @@ function toggleToolSection(name) {
     button.style.background = opening ? '#95a5a6' : '#1f7a5c';
 }
 
+function openStoragePanel() {
+    const storageSection = document.getElementById('section-storage');
+    const storageBtn = document.getElementById('toggle-storage');
+    if (storageSection && storageBtn && storageSection.style.display === 'none') {
+        toggleToolSection('storage');
+    }
+    const tab = document.getElementById('tab9');
+    if (tab) {
+        tab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    const storageCard = document.getElementById('section-storage');
+    if (storageCard) {
+        storageCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
 function openLabelTool() {
     switchTab(14);
 }
@@ -6765,6 +6365,32 @@ function crmLoad() {
 function crmSave(data) {
     localStorage.setItem(CRM_KEY, JSON.stringify(data));
 }
+function crmToggleBizType() {
+    const bizType = document.getElementById('crm-f-biztype')?.value || 'fcl';
+    const isLcl = bizType === 'lcl';
+    const modalTitle = document.getElementById('crm-modal-title');
+    const editId = document.getElementById('crm-edit-id')?.value;
+    if (modalTitle) modalTitle.textContent = editId ? `编辑${isLcl ? '散货' : '整柜'}` : `新增${isLcl ? '散货' : '整柜'}`;
+    const routeTitle = document.getElementById('crm-route-title');
+    const cargoTitle = document.getElementById('crm-cargo-title');
+    if (routeTitle) routeTitle.textContent = isLcl ? '航线 & 运输' : '航线 & 柜型';
+    if (cargoTitle) cargoTitle.textContent = isLcl ? '货物信息 & 计费' : '货物信息';
+    const ctypeWrap = document.getElementById('crm-ctype-wrap');
+    const cqtyWrap = document.getElementById('crm-cqty-wrap');
+    const billWeightWrap = document.getElementById('crm-bill-weight-wrap');
+    const unitPriceWrap = document.getElementById('crm-unit-price-wrap');
+    const shipWrap = document.getElementById('crm-lcl-ship-wrap');
+    const fclFeeArea = document.getElementById('crm-fcl-fee-area');
+    const lclFeeArea = document.getElementById('crm-lcl-fee-area');
+    if (ctypeWrap) ctypeWrap.style.display = isLcl ? 'none' : 'block';
+    if (cqtyWrap) cqtyWrap.style.display = isLcl ? 'none' : 'block';
+    if (billWeightWrap) billWeightWrap.style.display = 'none';
+    if (unitPriceWrap) unitPriceWrap.style.display = 'none';
+    if (shipWrap) shipWrap.style.display = isLcl ? 'block' : 'block';
+    if (fclFeeArea) fclFeeArea.style.display = isLcl ? 'none' : 'block';
+    if (lclFeeArea) lclFeeArea.style.display = isLcl ? 'block' : 'none';
+    crmUpdateFeeTotal();
+}
 function crmNextId(data) {
     const max = data.reduce((m, r) => Math.max(m, r.id || 0), 0);
     return max + 1;
@@ -6772,11 +6398,13 @@ function crmNextId(data) {
 
 function crmShowAddModal() {
     // clear form
-    ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod',
+    ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipmode',
      'crm-f-carrier','crm-f-vessel','crm-f-goods','crm-f-weight','crm-f-pkgs','crm-f-cbm',
-     'crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime',
+     'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime',
+     'crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-cost-price','crm-f-lcl-cost-extra',
      'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other',
      'crm-f-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    document.getElementById('crm-f-biztype').value = 'fcl';
     document.getElementById('crm-f-ctype').value = '';
     document.getElementById('crm-f-cqty').value = '1';
     document.getElementById('crm-f-status').value = '询价';
@@ -6786,6 +6414,7 @@ function crmShowAddModal() {
     document.getElementById('crm-modal-title').textContent = '新增整柜';
     crmRenderFeeFxRows({});
     crmRenderCostRows({});
+    crmToggleBizType();
     document.getElementById('crm-modal').style.display = 'block';
     crmBindFeeCalc();
 }
@@ -6799,10 +6428,27 @@ function crmBindFeeCalc() {
         const el = document.getElementById(id);
         if(el) el.oninput = crmUpdateFeeTotal;
     });
+    ['crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-billweight','crm-f-unitprice'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.oninput = crmUpdateFeeTotal;
+    });
     CRM_FEE_FX_ITEMS.forEach(item => crmFeeFxLineCalc(item.key));
 }
 
 function crmUpdateFeeTotal() {
+    const isLcl = (document.getElementById('crm-f-biztype')?.value || 'fcl') === 'lcl';
+    if (isLcl) {
+        const billWeight = parseFloat(document.getElementById('crm-f-lcl-billweight')?.value || '0') || 0;
+        const price = parseFloat(document.getElementById('crm-f-lcl-price')?.value || '0') || 0;
+        const extra = parseFloat(document.getElementById('crm-f-lcl-extra')?.value || '0') || 0;
+        const total = billWeight * price + extra;
+        const totalEl = document.getElementById('crm-f-lcl-total');
+        const mirrorTotalEl = document.getElementById('crm-f-fee-total');
+        if (totalEl) totalEl.textContent = '¥ ' + total.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+        if (mirrorTotalEl) mirrorTotalEl.textContent = '¥ ' + total.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+        crmUpdateCostTotal();
+        return;
+    }
     const ids = ['crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other'];
     const simpleReceivable = ids.reduce((s, id) => s + (parseFloat(document.getElementById(id)?.value)||0), 0);
     const fxReceivable = CRM_FEE_FX_ITEMS.reduce((s, item) => s + crmGetFeeFxLine(item.key).cny, 0);
@@ -6928,6 +6574,39 @@ function crmCostLineCalc(key) {
 }
 
 function crmUpdateCostTotal() {
+    const isLcl = (document.getElementById('crm-f-biztype')?.value || 'fcl') === 'lcl';
+    if (isLcl) {
+        const billWeight = parseFloat(document.getElementById('crm-f-lcl-billweight')?.value || '0') || 0;
+        const revenuePrice = parseFloat(document.getElementById('crm-f-lcl-price')?.value || '0') || 0;
+        const revenueExtra = parseFloat(document.getElementById('crm-f-lcl-extra')?.value || '0') || 0;
+        const revenue = billWeight * revenuePrice + revenueExtra;
+        const costPrice = parseFloat(document.getElementById('crm-f-lcl-cost-price')?.value || '0') || 0;
+        const costExtra = parseFloat(document.getElementById('crm-f-lcl-cost-extra')?.value || '0') || 0;
+        const costTotal = billWeight * costPrice + costExtra;
+        const ctEl = document.getElementById('crm-f-lcl-cost-total');
+        const mirrorCostEl = document.getElementById('crm-f-cost-total');
+        if (ctEl) ctEl.textContent = '¥ ' + costTotal.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+        if (mirrorCostEl) mirrorCostEl.textContent = '¥ ' + costTotal.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+
+        const profit = revenue - costTotal;
+        const margin = revenue > 0 ? (profit / revenue * 100) : 0;
+        const profitEl = document.getElementById('crm-f-lcl-profit');
+        const marginEl = document.getElementById('crm-f-lcl-margin');
+        const mirrorProfitEl = document.getElementById('crm-f-profit');
+        const mirrorMarginEl = document.getElementById('crm-f-margin');
+        [profitEl, mirrorProfitEl].forEach(el => {
+            if (!el) return;
+            el.textContent = (profit >= 0 ? '¥ ' : '- ¥ ') + Math.abs(profit).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+            el.style.color = profit >= 0 ? '#1f7a5c' : '#e74c3c';
+        });
+        [marginEl, mirrorMarginEl].forEach(el => {
+            if (!el) return;
+            el.textContent = margin.toFixed(1) + '%';
+            el.style.background = profit >= 0 ? '#d4f1e4' : '#fde8e8';
+            el.style.color = profit >= 0 ? '#27ae60' : '#e74c3c';
+        });
+        return;
+    }
     let costTotal = 0;
     CRM_COST_ITEMS.forEach(item => {
         const amt  = parseFloat(document.getElementById('crm-cost-amt-'+item.key)?.value) || 0;
@@ -6962,34 +6641,60 @@ function crmUpdateCostTotal() {
 function crmFormToRecord() {
     const g = id => (document.getElementById(id)?.value || '').trim();
     const n = id => parseFloat(document.getElementById(id)?.value) || 0;
-    const fees = { ocean: n('crm-f-fee-ocean'), truck: n('crm-f-fee-truck'), customs: n('crm-f-fee-customs'), tax: n('crm-f-fee-tax'), other: n('crm-f-fee-other') };
+    const bizType = g('crm-f-biztype') || 'fcl';
+    const isLcl = bizType === 'lcl';
+    const fees = isLcl
+        ? {
+            billWeight: parseFloat(document.getElementById('crm-f-lcl-billweight').value || '0') || 0,
+            unitPrice: parseFloat(document.getElementById('crm-f-lcl-price').value || '0') || 0,
+            extra: n('crm-f-lcl-extra'),
+            mode: 'lcl_simple'
+        }
+        : { ocean: n('crm-f-fee-ocean'), truck: n('crm-f-fee-truck'), customs: n('crm-f-fee-customs'), tax: n('crm-f-fee-tax'), other: n('crm-f-fee-other') };
     const feesFx = {};
-    CRM_FEE_FX_ITEMS.forEach(item => {
-        const line = crmGetFeeFxLine(item.key);
-        fees[item.key] = line.cny;
-        if (line.amt) feesFx[item.key] = line;
-    });
-    fees.fx = feesFx;
-    fees.total = fees.ocean + fees.truck + fees.customs + fees.tax + fees.other +
-        CRM_FEE_FX_ITEMS.reduce((s, item) => s + (fees[item.key] || 0), 0);
+    if (isLcl) {
+        fees.total = (fees.billWeight || 0) * (fees.unitPrice || 0) + (fees.extra || 0);
+    } else {
+        CRM_FEE_FX_ITEMS.forEach(item => {
+            const line = crmGetFeeFxLine(item.key);
+            fees[item.key] = line.cny;
+            if (line.amt) feesFx[item.key] = line;
+        });
+        fees.fx = feesFx;
+        fees.total = fees.ocean + fees.truck + fees.customs + fees.tax + fees.other +
+            CRM_FEE_FX_ITEMS.reduce((s, item) => s + (fees[item.key] || 0), 0);
+    }
     // gather costs
     const costs = {};
     let costTotal = 0;
-    CRM_COST_ITEMS.forEach(item => {
-        const amt  = parseFloat(document.getElementById('crm-cost-amt-'+item.key)?.value) || 0;
-        const cur  = document.getElementById('crm-cost-cur-'+item.key)?.value || 'CNY';
-        const rate = cur === 'CNY' ? 1 : (parseFloat(document.getElementById('crm-cost-rate-'+item.key)?.value) || 0);
-        const cny  = amt * rate;
-        if (amt) { costs[item.key] = { amt, cur, rate, cny }; costTotal += cny; }
-    });
+    if (isLcl) {
+        const billWeight = fees.billWeight || 0;
+        const unitPrice = n('crm-f-lcl-cost-price');
+        const extra = n('crm-f-lcl-cost-extra');
+        costTotal = billWeight * unitPrice + extra;
+        costs.mode = 'lcl_simple';
+        costs.billWeight = billWeight;
+        costs.unitPrice = unitPrice;
+        costs.extra = extra;
+    } else {
+        CRM_COST_ITEMS.forEach(item => {
+            const amt  = parseFloat(document.getElementById('crm-cost-amt-'+item.key)?.value) || 0;
+            const cur  = document.getElementById('crm-cost-cur-'+item.key)?.value || 'CNY';
+            const rate = cur === 'CNY' ? 1 : (parseFloat(document.getElementById('crm-cost-rate-'+item.key)?.value) || 0);
+            const cny  = amt * rate;
+            if (amt) { costs[item.key] = { amt, cur, rate, cny }; costTotal += cny; }
+        });
+    }
     costs._total = costTotal;
     const profit = fees.total - costTotal;
     const margin = fees.total > 0 ? profit / fees.total : 0;
     return {
+        bizType,
         client:   g('crm-f-client'),
         orderno:  g('crm-f-orderno'),
         mbl:      g('crm-f-mbl'),
         hbl:      g('crm-f-hbl'),
+        shipMode: g('crm-f-shipmode'),
         pol:      g('crm-f-pol'),
         pod:      g('crm-f-pod'),
         ctype:    g('crm-f-ctype'),
@@ -7000,6 +6705,8 @@ function crmFormToRecord() {
         weight:   n('crm-f-weight'),
         pkgs:     n('crm-f-pkgs'),
         cbm:      parseFloat(document.getElementById('crm-f-cbm').value) || 0,
+        billWeight: parseFloat(document.getElementById('crm-f-billweight').value) || 0,
+        unitPrice:  parseFloat(document.getElementById('crm-f-unitprice').value) || 0,
         cutoff:   g('crm-f-cutoff'),
         etd:      g('crm-f-etd'),
         eta:      g('crm-f-eta'),
@@ -7019,10 +6726,18 @@ function crmFormToRecord() {
 
 function crmRecordToForm(r) {
     const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v || ''; };
+    s('crm-f-biztype', r.bizType || 'fcl');
     s('crm-f-client', r.client); s('crm-f-orderno', r.orderno); s('crm-f-mbl', r.mbl); s('crm-f-hbl', r.hbl);
+    s('crm-f-shipmode', r.shipMode);
     s('crm-f-pol', r.pol); s('crm-f-pod', r.pod); s('crm-f-ctype', r.ctype); s('crm-f-cqty', r.cqty || 1);
     s('crm-f-carrier', r.carrier); s('crm-f-vessel', r.vessel); s('crm-f-goods', r.goods);
     s('crm-f-weight', r.weight || ''); s('crm-f-pkgs', r.pkgs || ''); s('crm-f-cbm', r.cbm || '');
+    s('crm-f-billweight', r.billWeight || ''); s('crm-f-unitprice', r.unitPrice || '');
+    s('crm-f-lcl-billweight', (r.fees||{}).billWeight || r.billWeight || '');
+    s('crm-f-lcl-price', (r.fees||{}).unitPrice || r.unitPrice || '');
+    s('crm-f-lcl-extra', (r.fees||{}).extra || '');
+    s('crm-f-lcl-cost-price', (r.costs||{}).unitPrice || '');
+    s('crm-f-lcl-cost-extra', (r.costs||{}).extra || '');
     s('crm-f-cutoff', r.cutoff); s('crm-f-etd', r.etd); s('crm-f-eta', r.eta); s('crm-f-ata', r.ata);
     s('crm-f-pickup', r.pickup); s('crm-f-freetime', r.freetime);
     s('crm-f-fee-ocean', (r.fees||{}).ocean || ''); s('crm-f-fee-truck', (r.fees||{}).truck || '');
@@ -7052,6 +6767,7 @@ function crmRecordToForm(r) {
         if (cEl) cEl.value = c.cur || 'CNY';
         if (rEl) rEl.value = c.rate || (c.cur === 'CNY' || !c.cur ? 1 : '');
     });
+    crmToggleBizType();
     crmUpdateFeeTotal();
 }
 
@@ -7114,6 +6830,7 @@ function crmShowDetail(id) {
         </div>`;
     const fees = r.fees || {};
     const feeFx = fees.fx || {};
+    const isLcl = (r.bizType || 'fcl') === 'lcl';
     const fmtFeeFx = (key, fallbackVal) => {
         const line = feeFx[key];
         if (line && line.amt) {
@@ -7126,13 +6843,14 @@ function crmShowDetail(id) {
     document.getElementById('crm-detail-body').innerHTML = `
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
             <div style="font-size:18px; font-weight:bold; color:#2c3e50;">${fmt(r.client)}</div>
+            <span style="background:${isLcl?'#16a08522':'#4a90e222'}; color:${isLcl?'#16a085':'#4a90e2'}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${isLcl?'散货':'整柜'}</span>
             <span style="background:${color}22; color:${color}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${r.status}</span>
             ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px;">${r.orderno}</span>` : ''}
         </div>
-        ${section('提单 & 单号', [['主单号 MBL', fmt(r.mbl)], ['分单号 HBL', fmt(r.hbl)]])}
+        ${section(isLcl ? '运单 & 单号' : '提单 & 单号', [[isLcl ? '运单号' : '主单号 MBL', fmt(r.mbl)], [isLcl ? '参考单号' : '分单号 HBL', fmt(r.hbl)]])}
         ${section('航线 & 船务', [
             ['起运港', fmt(r.pol)], ['目的港', fmt(r.pod)],
-            ['柜型/数量', r.ctype ? `${r.ctype} × ${r.cqty||1}` : '—'],
+            [isLcl ? '运输方式' : '柜型/数量', isLcl ? fmt(r.shipMode) : (r.ctype ? `${r.ctype} × ${r.cqty||1}` : '—')],
             ['船公司', fmt(r.carrier)],
             ['船名/航次', fmt(r.vessel)],
             ['贸易术语', fmt(r.incoterm)],
@@ -7142,36 +6860,50 @@ function crmShowDetail(id) {
             ['毛重', r.weight ? r.weight + ' kg' : '—'],
             ['件数', r.pkgs ? r.pkgs + ' 件' : '—'],
             ['体积', r.cbm ? r.cbm + ' CBM' : '—'],
+            ...(isLcl ? [['计费重', r.billWeight ? r.billWeight + ' kg' : '—'], ['报价单价', r.unitPrice ? `¥${Number(r.unitPrice).toLocaleString()}/kg` : '—']] : []),
         ])}
         ${section('关键日期', [
             ['截关日', fmt(r.cutoff)], ['开船 ETD', fmt(r.etd)],
             ['预计到港 ETA', fmt(r.eta)], ['实际到港 ATA', fmt(r.ata)],
             ['提柜日', fmt(r.pickup)], ['免柜期截止', fmt(r.freetime)],
         ])}
-        ${section('💰 客户应收', [
-            ['海运费', fmtMoney(fees.ocean)], ['拖车费', fmtMoney(fees.truck)],
-            ['报关费', fmtMoney(fees.customs)], ['税金', fmtMoney(fees.tax)],
-            ['ARRIVAL NOTICE費用', fmtFeeFx('arrival_notice', fees.arrival_notice)],
-            ['清关费', fmtFeeFx('clearance', fees.clearance)],
-            ['尾程派送费', fmtFeeFx('delivery', fees.delivery)],
-            ['其他', fmtMoney(fees.other)], ['应收合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
-        ])}
+        ${isLcl
+            ? section('💰 散货应收', [
+                ['计费重', fees.billWeight ? `${fees.billWeight} kg` : '—'],
+                ['应收单价', fees.unitPrice ? `¥${Number(fees.unitPrice).toLocaleString()}/kg` : '—'],
+                ['附加费 / 杂费', fmtMoney(fees.extra)],
+                ['应收合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
+            ])
+            : section('💰 客户应收', [
+                ['海运费', fmtMoney(fees.ocean)], ['拖车费', fmtMoney(fees.truck)],
+                ['报关费', fmtMoney(fees.customs)], ['税金', fmtMoney(fees.tax)],
+                ['ARRIVAL NOTICE費用', fmtFeeFx('arrival_notice', fees.arrival_notice)],
+                ['清关费', fmtFeeFx('clearance', fees.clearance)],
+                ['尾程派送费', fmtFeeFx('delivery', fees.delivery)],
+                ['其他', fmtMoney(fees.other)], ['应收合计', `<b style="color:#2c7be5;">${fmtMoney(fees.total)}</b>`],
+            ])}
         ${(() => {
             const costs = r.costs || {};
             const costTotal = costs._total || 0;
             const profit = r.profit !== undefined ? r.profit : (fees.total - costTotal);
             const margin = r.margin !== undefined ? r.margin : (fees.total > 0 ? profit/fees.total : 0);
             const pc = profit >= 0 ? '#1f7a5c' : '#e74c3c';
-            const hasCosts = CRM_COST_ITEMS.some(item => costs[item.key]);
+            const hasCosts = isLcl ? (costTotal > 0 || costs.unitPrice || costs.extra) : CRM_COST_ITEMS.some(item => costs[item.key]);
             if (!hasCosts) return '<div style="background:#f8fbff;border-radius:8px;padding:10px;font-size:12px;color:#aaa;margin-bottom:14px;text-align:center;">暂未录入供应商应付</div>';
-            const costRows = CRM_COST_ITEMS.filter(item => costs[item.key]).map(item => {
+            const costRows = isLcl
+                ? [
+                    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">计费重</span><span style="color:#444;">${costs.billWeight ? costs.billWeight + ' kg' : '—'}</span></div>`,
+                    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">应付单价</span><span style="color:#444;">${costs.unitPrice ? `¥${Number(costs.unitPrice).toLocaleString()}/kg` : '—'}</span></div>`,
+                    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">应付附加费</span><span style="color:#444;">${fmtMoney(costs.extra)}</span></div>`
+                ].join('')
+                : CRM_COST_ITEMS.filter(item => costs[item.key]).map(item => {
                 const c = costs[item.key];
                 const detail = c.cur !== 'CNY' ? `${c.amt} ${c.cur} × ${c.rate} = ¥${Number(c.cny).toLocaleString()}` : `¥${Number(c.cny).toLocaleString()}`;
                 return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0e8dc;font-size:12px;"><span style="color:#c0762a;">${item.label}</span><span style="color:#444;">${detail}</span></div>`;
             }).join('');
             const bar = Math.min(Math.max(margin*100,0),100);
             return `<div style="margin-bottom:14px;">
-                <div style="font-size:11px;font-weight:bold;color:#e67e22;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f5dfc0;">🏭 供应商应付</div>
+                <div style="font-size:11px;font-weight:bold;color:#e67e22;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #f5dfc0;">🏭 ${isLcl ? '散货应付' : '供应商应付'}</div>
                 <div style="background:#fff9f2;border-radius:8px;padding:10px 12px;">${costRows}
                     <div style="display:flex;justify-content:space-between;padding-top:6px;margin-top:4px;font-size:13px;font-weight:bold;"><span style="color:#e67e22;">应付合计</span><span style="color:#e67e22;">¥${Number(costTotal).toLocaleString()}</span></div>
                 </div></div>
@@ -7196,6 +6928,7 @@ function crmShowDetail(id) {
         </div>
         <div style="display:flex; gap:10px;">
             <button class="btn-main" style="background:#4a90e2; flex:1; padding:11px;" onclick="crmEditRecord(${r.id})">✏️ 编辑</button>
+            <button class="btn-main" style="background:#27ae60; flex:1; padding:11px;" onclick="crmShareClientPdf(${r.id})">📤 客户版PDF</button>
             <button class="btn-main" style="background:#e74c3c; flex:1; padding:11px;" onclick="crmDeleteRecord(${r.id})">🗑 删除</button>
         </div>`;
     document.getElementById('crm-detail-modal').style.display = 'block';
@@ -7225,7 +6958,7 @@ function crmSelectAll() {
     const q = (document.getElementById('crm-search').value || '').toLowerCase();
     const sf = document.getElementById('crm-filter-status').value;
     data.filter(r => {
-        const matchQ = !q || [r.client,r.orderno,r.mbl,r.hbl,r.pol,r.pod,r.goods,r.carrier,r.vessel].join(' ').toLowerCase().includes(q);
+        const matchQ = !q || [r.client,r.orderno,r.mbl,r.hbl,r.pol,r.pod,r.goods,r.carrier,r.vessel,r.shipMode,r.bizType].join(' ').toLowerCase().includes(q);
         const matchS = !sf || r.status === sf;
         return matchQ && matchS;
     }).forEach(r => crmSelectedIds.add(r.id));
@@ -7278,7 +7011,7 @@ function crmRender() {
 
     // filter
     let list = data.filter(r => {
-        const matchQ = !q || [r.client, r.orderno, r.mbl, r.hbl, r.pol, r.pod, r.goods, r.carrier, r.vessel].join(' ').toLowerCase().includes(q);
+        const matchQ = !q || [r.client, r.orderno, r.mbl, r.hbl, r.pol, r.pod, r.goods, r.carrier, r.vessel, r.shipMode, r.bizType].join(' ').toLowerCase().includes(q);
         const matchS = !sf || r.status === sf;
         return matchQ && matchS;
     });
@@ -7295,10 +7028,13 @@ function crmRender() {
     container.innerHTML = list.map(r => {
         const col = CRM_STATUS_COLOR[r.status] || '#888';
         const fees = r.fees || {};
+        const isLcl = (r.bizType || 'fcl') === 'lcl';
         const etdStr = r.etd ? `ETD ${r.etd}` : '';
         const etaStr = r.eta ? `ETA ${r.eta}` : '';
         const route = [r.pol, r.pod].filter(Boolean).join(' → ') || '—';
-        const cinfo = [r.ctype, r.cqty > 1 ? `×${r.cqty}` : ''].filter(Boolean).join('');
+        const cinfo = isLcl
+            ? [r.shipMode, r.billWeight ? `计费重${Number(r.billWeight).toLocaleString()}kg` : ''].filter(Boolean).join('　')
+            : [r.ctype, r.cqty > 1 ? `×${r.cqty}` : ''].filter(Boolean).join('');
         const selected = crmSelectedIds.has(r.id);
         const selStyle = selected ? 'background:rgba(74,144,226,0.08); box-shadow:0 0 0 2px #4a90e2 inset, 0 12px 28px rgba(31,58,93,0.08);' : '';
         const cbHtml = crmSelectMode
@@ -7312,7 +7048,7 @@ function crmRender() {
                 ${cbHtml}
                 <div style="flex:1; min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; flex-wrap:wrap;">
                     <div style="min-width:0;">
-                        <div style="font-size:14px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">${r.client || '（无客户名）'}</div>
+                        <div style="font-size:14px; font-weight:bold; color:#2c3e50; margin-bottom:4px;">${r.client || '（无客户名）'}${isLcl ? ' · 散货' : ''}</div>
                         <div style="font-size:12px; color:#607d8b;">${route}${cinfo ? '　' + cinfo : ''}</div>
                         ${r.orderno || r.mbl ? `<div style="font-size:11px; color:#aaa; margin-top:3px;">${[r.orderno, r.mbl].filter(Boolean).join(' | ')}</div>` : ''}
                     </div>
@@ -7531,13 +7267,13 @@ function crmExportCSV(selectionOnly = false) {
         data = data.filter(r => crmSelectedIds.has(r.id));
     }
     if (!data.length) { showToast('暂无数据'); return; }
-    const headers = ['客户','订单号','MBL','HBL','起运港','目的港','柜型','柜数','船公司','船名航次',
-        '品名','毛重(kg)','件数','体积(CBM)','截关日','ETD','ETA','ATA','提柜日','免柜期',
+    const headers = ['业务类型','客户','订单号','MBL','HBL','运输方式','起运港','目的港','柜型','柜数','船公司','船名航次',
+        '品名','毛重(kg)','件数','体积(CBM)','计费重(kg)','单价(¥/kg)','截关日','ETD','ETA','ATA','提柜日','免柜期',
         '海运费','国内拖车费','报关费','税金','ARRIVAL NOTICE費用','清关费','尾程派送费','其他费','应收合计','状态','贸易术语','备注','创建日期'];
     const rows = data.map(r => {
         const f = r.fees || {};
-        return [r.client,r.orderno,r.mbl,r.hbl,r.pol,r.pod,r.ctype,r.cqty,r.carrier,r.vessel,
-            r.goods,r.weight,r.pkgs,r.cbm,r.cutoff,r.etd,r.eta,r.ata,r.pickup,r.freetime,
+        return [r.bizType === 'lcl' ? '散货' : '整柜', r.client,r.orderno,r.mbl,r.hbl,r.shipMode,r.pol,r.pod,r.ctype,r.cqty,r.carrier,r.vessel,
+            r.goods,r.weight,r.pkgs,r.cbm,r.billWeight,r.unitPrice,r.cutoff,r.etd,r.eta,r.ata,r.pickup,r.freetime,
             f.ocean,f.truck,f.customs,f.tax,f.arrival_notice,f.clearance,f.delivery,f.other,f.total,r.status,r.incoterm,
             (r.notes||'').replace(/\n/g,' '),(r.createdAt||'').slice(0,10)]
             .map(v => `"${v||''}"`).join(',');
@@ -7556,13 +7292,14 @@ let _crmPdfList = null;
 function crmExportPDF(selectionOnly = false) {
     const data = crmLoad();
     let list;
-    if (selectionOnly && crmSelectedIds.size > 0) {
+    const shouldUseSelection = crmSelectedIds.size > 0 && (selectionOnly || crmSelectMode);
+    if (shouldUseSelection) {
         list = data.filter(r => crmSelectedIds.has(r.id));
     } else {
         const q = (document.getElementById('crm-search').value || '').toLowerCase();
         const sf = document.getElementById('crm-filter-status').value;
         list = data.filter(r => {
-            const mQ = !q || [r.client,r.orderno,r.mbl,r.hbl,r.pol,r.pod,r.goods,r.carrier,r.vessel].join(' ').toLowerCase().includes(q);
+            const mQ = !q || [r.client,r.orderno,r.mbl,r.hbl,r.pol,r.pod,r.goods,r.carrier,r.vessel,r.shipMode,r.bizType].join(' ').toLowerCase().includes(q);
             return mQ && (!sf || r.status === sf);
         });
     }
@@ -7576,12 +7313,7 @@ function crmClosePdfModal() {
     _crmPdfList = null;
 }
 
-function crmBuildAndDownloadPDF(mode) {
-    // mode: 'client' = 只含客户应收，'full' = 含供应商应付+毛利
-    const list = _crmPdfList;
-    if (!list || !list.length) return;
-    crmClosePdfModal();
-
+function crmBuildPdfHtml(list, mode, opts = {}) {
     const STATUS_COLOR = {
         '询价':'#8e44ad','已订舱':'#2980b9','已装柜':'#e67e22','已开船':'#16a085',
         '已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'
@@ -7589,6 +7321,7 @@ function crmBuildAndDownloadPDF(mode) {
     const fmt = v => v || '—';
     const today = new Date().toLocaleDateString('zh-CN');
     const isClient = mode === 'client';
+    const includeActions = opts.includeActions !== false;
 
     const statusSummary = {};
     list.forEach(r => { statusSummary[r.status] = (statusSummary[r.status]||0)+1; });
@@ -7600,6 +7333,10 @@ function crmBuildAndDownloadPDF(mode) {
     const totalRev  = list.reduce((s,r) => s + ((r.fees||{}).total||0), 0);
     const totalCost = isClient ? 0 : list.reduce((s,r) => s + ((r.costs||{})._total||0), 0);
     const totalProfit = isClient ? 0 : list.reduce((s,r) => s + (r.profit||0), 0);
+    const bizTypes = [...new Set(list.map(r => r.bizType || 'fcl'))];
+    const bizLabel = bizTypes.length === 1
+        ? (bizTypes[0] === 'lcl' ? '散货费用单' : '整柜费用单')
+        : '业务费用单';
 
     const thS = 'padding:10px 6px;color:#fff;font-size:11px;border:1px solid #3d7fcf;';
     const feeDetailItems = [
@@ -7628,11 +7365,12 @@ function crmBuildAndDownloadPDF(mode) {
 
     const headRow = isClient
         ? `<tr style="background:linear-gradient(135deg,#4a90e2,#5ba3f5);">
+            <th style="${thS}text-align:center;min-width:56px;">类型</th>
             <th style="${thS}text-align:left;min-width:80px;">客户</th>
             <th style="${thS}text-align:left;min-width:90px;">内部单号</th>
             <th style="${thS}text-align:left;min-width:100px;">MBL</th>
             <th style="${thS}text-align:center;min-width:100px;">航线</th>
-            <th style="${thS}text-align:center;">柜型</th>
+            <th style="${thS}text-align:center;">柜型/方式</th>
             <th style="${thS}text-align:left;min-width:80px;">品名</th>
             <th style="${thS}text-align:center;min-width:68px;">ETD</th>
             <th style="${thS}text-align:center;min-width:68px;">ETA</th>
@@ -7641,11 +7379,12 @@ function crmBuildAndDownloadPDF(mode) {
             <th style="${thS}text-align:center;min-width:64px;">状态</th>
            </tr>`
         : `<tr style="background:linear-gradient(135deg,#2c3e50,#34495e);">
+            <th style="${thS}text-align:center;min-width:56px;">类型</th>
             <th style="${thS}text-align:left;min-width:80px;">客户</th>
             <th style="${thS}text-align:left;min-width:90px;">内部单号</th>
             <th style="${thS}text-align:left;min-width:100px;">MBL</th>
             <th style="${thS}text-align:center;min-width:90px;">航线</th>
-            <th style="${thS}text-align:center;">柜型</th>
+            <th style="${thS}text-align:center;">柜型/方式</th>
             <th style="${thS}text-align:center;min-width:64px;">ETD</th>
             <th style="${thS}text-align:right;min-width:72px;">应收</th>
             <th style="${thS}text-align:right;min-width:72px;">应付</th>
@@ -7656,17 +7395,19 @@ function crmBuildAndDownloadPDF(mode) {
 
     const rowsHtml = list.map((r, i) => {
         const f = r.fees || {};
+        const isLcl = (r.bizType || 'fcl') === 'lcl';
         const col = STATUS_COLOR[r.status] || '#888';
         const bg = i%2===0 ? '#fff' : '#f8fbff';
         const tdS = `padding:7px 6px;border:1px solid #e0e8f0;font-size:11px;`;
         const statusBadge = `<span style="background:${col}22;color:${col};padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;white-space:nowrap;">${r.status}</span>`;
         if (isClient) {
             return `<tr style="background:${bg};">
+                <td style="${tdS}text-align:center;color:${isLcl?'#16a085':'#4a90e2'};font-weight:bold;">${isLcl?'散货':'整柜'}</td>
                 <td style="${tdS}font-weight:600;color:#2c3e50;">${r.client||'—'}</td>
                 <td style="${tdS}color:#555;">${r.orderno||'—'}</td>
                 <td style="${tdS}color:#555;">${r.mbl||'—'}</td>
                 <td style="${tdS}text-align:center;">${fmt(r.pol)} → ${fmt(r.pod)}</td>
-                <td style="${tdS}text-align:center;color:#444;">${r.ctype||'—'}${r.cqty>1?' ×'+r.cqty:''}</td>
+                <td style="${tdS}text-align:center;color:#444;">${isLcl ? (r.shipMode||'—') : `${r.ctype||'—'}${r.cqty>1?' ×'+r.cqty:''}`}</td>
                 <td style="${tdS}color:#555;">${fmt(r.goods)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.etd)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.eta)}</td>
@@ -7681,11 +7422,12 @@ function crmBuildAndDownloadPDF(mode) {
             const pc   = pft >= 0 ? '#1f7a5c' : '#e74c3c';
             const hasCost = (r.costs||{})._total;
             return `<tr style="background:${bg};">
+                <td style="${tdS}text-align:center;color:${isLcl?'#16a085':'#4a90e2'};font-weight:bold;">${isLcl?'散货':'整柜'}</td>
                 <td style="${tdS}font-weight:600;color:#2c3e50;">${r.client||'—'}</td>
                 <td style="${tdS}color:#555;">${r.orderno||'—'}</td>
                 <td style="${tdS}color:#555;">${r.mbl||'—'}</td>
                 <td style="${tdS}text-align:center;">${fmt(r.pol)} → ${fmt(r.pod)}</td>
-                <td style="${tdS}text-align:center;">${r.ctype||'—'}${r.cqty>1?' ×'+r.cqty:''}</td>
+                <td style="${tdS}text-align:center;">${isLcl ? (r.shipMode||'—') : `${r.ctype||'—'}${r.cqty>1?' ×'+r.cqty:''}`}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.etd)}</td>
                 <td style="${tdS}text-align:right;color:#2980b9;font-weight:bold;">${f.total ? '¥'+Number(f.total).toLocaleString() : '—'}</td>
                 <td style="${tdS}text-align:right;color:#e67e22;">${hasCost ? '¥'+Number(cost).toLocaleString() : '—'}</td>
@@ -7698,12 +7440,12 @@ function crmBuildAndDownloadPDF(mode) {
 
     const footerRow = isClient
         ? `<tr style="background:#f0f6ff;">
-            <td colspan="9" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">应收合计</td>
+            <td colspan="10" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">应收合计</td>
             <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#2c7be5;text-align:center;">¥${totalRev.toLocaleString()}</td>
             <td style="border:1px solid #e0e8f0;"></td>
           </tr>`
         : `<tr style="background:#f0f6ff;">
-            <td colspan="6" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">合计</td>
+            <td colspan="7" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">合计</td>
             <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#2980b9;text-align:right;">¥${totalRev.toLocaleString()}</td>
             <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#e67e22;text-align:right;">¥${totalCost.toLocaleString()}</td>
             <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:${totalProfit>=0?'#1f7a5c':'#e74c3c'};text-align:right;">${totalProfit>=0?'':'- '}¥${Math.abs(totalProfit).toLocaleString()}</td>
@@ -7711,10 +7453,15 @@ function crmBuildAndDownloadPDF(mode) {
           </tr>`;
 
     const headerColor = isClient ? '#4a90e2' : '#2c3e50';
-    const titleLabel  = isClient ? '📦 整柜台账（客户版）' : '📊 整柜台账（内部完整版）';
+    const titleLabel  = isClient ? `📦 ${bizLabel}（客户版）` : `📊 ${bizLabel}（内部完整版）`;
     const watermark   = isClient ? '' : '<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:48px;color:rgba(0,0,0,0.04);font-weight:bold;pointer-events:none;white-space:nowrap;z-index:0;">内部保密</div>';
+    const actionHtml = includeActions ? `
+  <div class="no-print" style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
+    <button onclick="window.print()" style="padding:12px 32px;background:${headerColor};color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ 打印 / 保存为PDF</button>
+    <button onclick="window.close()" style="padding:12px 24px;background:#95a5a6;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">关闭</button>
+  </div>` : '';
 
-    const html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+    return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
 <title>${titleLabel}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -7738,13 +7485,19 @@ ${watermark}
     <span style="font-size:11px;color:#aaa;margin-right:4px;">状态汇总</span>${summaryTags}
   </div>
   <table style="width:100%;border-collapse:collapse;font-size:11px;">${headRow}<tbody>${rowsHtml}</tbody><tfoot>${footerRow}</tfoot></table>
-  <div style="margin-top:12px;font-size:9px;color:#ccc;text-align:right;">由 HGCD 物流工作台生成 · ${today}${isClient ? '' : ' · 内部资料，请勿外传'}</div>
-  <div class="no-print" style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
-    <button onclick="window.print()" style="padding:12px 32px;background:${headerColor};color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;">🖨️ 打印 / 保存为PDF</button>
-    <button onclick="window.close()" style="padding:12px 24px;background:#95a5a6;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">关闭</button>
-  </div>
+  <div style="margin-top:12px;font-size:9px;color:#ccc;text-align:right;">由 HGCD CRM系统生成 · ${today}${isClient ? '' : ' · 内部资料，请勿外传'}</div>
+  ${actionHtml}
 </div>
 </body></html>`;
+}
+
+function crmBuildAndDownloadPDF(mode) {
+    // mode: 'client' = 只含客户应收，'full' = 含供应商应付+毛利
+    const list = _crmPdfList;
+    if (!list || !list.length) return;
+    crmClosePdfModal();
+
+    const html = crmBuildPdfHtml(list, mode, { includeActions: true });
 
     // Use Blob URL (works in WeChat / mobile browsers, avoids popup block)
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
@@ -7756,6 +7509,87 @@ ${watermark}
     document.body.appendChild(a);
     a.click();
     setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 3000);
+}
+
+async function crmShareClientPdf(id) {
+    const data = crmLoad();
+    const record = data.find(x => x.id === id);
+    if (!record) { showToast('未找到订单', true); return; }
+
+    const html = crmBuildPdfHtml([record], 'client', { includeActions: false });
+    const styleMatch = html.match(/<style>([\s\S]*?)<\/style>/i);
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const wrap = document.createElement('div');
+    wrap.style.position = 'fixed';
+    wrap.style.left = '0';
+    wrap.style.top = '0';
+    wrap.style.width = '1120px';
+    wrap.style.background = '#fff';
+    wrap.style.opacity = '1';
+    wrap.style.pointerEvents = 'none';
+    wrap.style.zIndex = '99999';
+    wrap.innerHTML = `${styleMatch ? `<style>${styleMatch[1]}</style>` : ''}${bodyMatch ? bodyMatch[1] : html}`;
+    document.body.appendChild(wrap);
+
+    const safeClient = String(record.client || '客户').replace(/[\/:*?"<>|]+/g, '-').trim();
+    const safeOrder = String(record.orderno || record.mbl || record.id || 'record').replace(/[\/:*?"<>|]+/g, '-').trim();
+    const bizLabel = (record.bizType || 'fcl') === 'lcl' ? '散货费用单' : '整柜费用单';
+    const fileName = `客户版${bizLabel}_${safeClient}_${safeOrder}.pdf`;
+    const prevScrollX = window.scrollX;
+    const prevScrollY = window.scrollY;
+
+    try {
+        showToast('正在生成客户版PDF...');
+        await new Promise(resolve => setTimeout(resolve, 120));
+        const { jsPDF } = window.jspdf || {};
+        if (!jsPDF) throw new Error('PDF 组件未加载');
+
+        const canvas = await html2canvas(wrap, {
+            scale: isIOS ? 1.5 : 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            width: wrap.scrollWidth,
+            height: wrap.scrollHeight,
+            windowWidth: wrap.scrollWidth,
+            windowHeight: wrap.scrollHeight,
+            scrollX: 0,
+            scrollY: 0
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgHeight = (canvas.height * pageWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+        while (heightLeft > 0) {
+            position -= pageHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        const canUseShare = navigator.share && navigator.canShare && navigator.canShare({ files: [file] });
+
+        if (canUseShare && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            await navigator.share({ files: [file], title: fileName });
+        } else {
+            downloadLocal(pdfBlob, fileName);
+        }
+        showToast(canUseShare ? '客户版PDF已生成' : '客户版PDF已下载');
+    } catch (err) {
+        console.error(err);
+        showToast(`客户版PDF生成失败: ${err.message || '未知错误'}`, true);
+    } finally {
+        window.scrollTo(prevScrollX, prevScrollY);
+        wrap.remove();
+    }
 }
 </script>
 
