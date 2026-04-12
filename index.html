@@ -4862,8 +4862,8 @@ function switchTab(idx) {
     if(idx === 15) crmRender();
     if(idx === 16) clientRender();
     if(idx === 17) supplierRender();
-    if(idx === 18) reminderRefresh();
-    if(idx === 19) reconciliationRender();
+    if(idx === 18) { reminderGenerateFromCRM(); reminderRefresh(); }
+    if(idx === 19) { reconciliationGenerateFromCRM(); reconciliationRender(); }
     if(idx === 20) freightRender();
 }
 
@@ -6608,11 +6608,10 @@ function updateDashboardNow() {
 }
 
 function appendHomeQuoteWidget(container, symbol) {
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
+    // Use textContent (not innerHTML) to set script config — innerHTML is blocked by CSP in modern browsers
+    const config = document.createElement('script');
+    config.type = 'application/json';
+    config.textContent = JSON.stringify({
         symbol: HOME_QUOTE_TV_SYMBOL_MAP[symbol] || symbol,
         width: '100%',
         colorTheme: 'light',
@@ -6621,6 +6620,11 @@ function appendHomeQuoteWidget(container, symbol) {
         showSymbolLogo: false,
         fontSize: '10'
     });
+    container.appendChild(config);
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
+    script.async = true;
     container.appendChild(script);
 }
 
@@ -7324,6 +7328,9 @@ function crmSaveRecord() {
     crmSave(data);
     crmCloseModal();
     crmRender();
+    // Refresh linked modules after CRM data changes
+    reminderGenerateFromCRM();
+    reconciliationGenerateFromCRM();
     showToast(editId ? '已更新' : '已保存');
 }
 
@@ -7345,6 +7352,8 @@ function crmDeleteRecord(id) {
     crmSave(data);
     document.getElementById('crm-detail-modal').style.display = 'none';
     crmRender();
+    reminderGenerateFromCRM();
+    reconciliationGenerateFromCRM();
     showToast('已删除');
 }
 
@@ -8616,7 +8625,7 @@ function reminderGenerateFromCRM(){
                 newReminders.push({
                     id: `etd-${r.id}`,
                     type: 'etd',
-                    title: `ETD提醒: ${r.customer || r.id}`,
+                    title: `ETD提醒: ${r.client || r.orderno || r.id}`,
                     date: r.etd,
                     daysLeft: daysDiff,
                     orderId: r.id,
@@ -8631,7 +8640,7 @@ function reminderGenerateFromCRM(){
                 newReminders.push({
                     id: `eta-${r.id}`,
                     type: 'eta',
-                    title: `ETA提醒: ${r.customer || r.id}`,
+                    title: `ETA提醒: ${r.client || r.orderno || r.id}`,
                     date: r.eta,
                     daysLeft: daysDiff,
                     orderId: r.id,
@@ -8639,15 +8648,15 @@ function reminderGenerateFromCRM(){
                 });
             }
         }
-        if(r.freetimeEnd){
-            const ftDate = new Date(r.freetimeEnd);
+        if(r.freetime){
+            const ftDate = new Date(r.freetime);
             const daysDiff = Math.ceil((ftDate - today) / (1000*60*60*24));
             if(daysDiff >= 0 && daysDiff <= 30){
                 newReminders.push({
                     id: `ft-${r.id}`,
                     type: 'freetime',
-                    title: `免柜期到期: ${r.customer || r.id}`,
-                    date: r.freetimeEnd,
+                    title: `免柜期到期: ${r.client || r.orderno || r.id}`,
+                    date: r.freetime,
                     daysLeft: daysDiff,
                     orderId: r.id,
                     status: daysDiff <= 3 ? 'urgent' : (daysDiff <= 7 ? 'warning' : 'normal')
@@ -8758,27 +8767,37 @@ function reconciliationGenerateFromCRM(){
     const payableMap = {};
     const crmData = crmLoad();
     crmData.forEach(r => {
-        if(r.customer && r.totalReceivable){
-            if(!receivableMap[r.customer]) receivableMap[r.customer] = { customer: r.customer, orders: [], totalAmount: 0, paidAmount: 0 };
-            receivableMap[r.customer].orders.push({
+        // ── 应收：按客户名汇总 ──
+        const clientName = r.client;
+        const receivableAmt = (r.fees||{}).total || 0;
+        if(clientName && receivableAmt > 0){
+            if(!receivableMap[clientName]) receivableMap[clientName] = { customer: clientName, orders: [], totalAmount: 0, paidAmount: 0 };
+            const isPaid = r.paymentStatus === 'paid';
+            receivableMap[clientName].orders.push({
                 orderId: r.id,
-                date: r.createdAt,
-                amount: parseFloat(r.totalReceivable) || 0,
+                orderno: r.orderno || r.id,
+                date: r.etd || r.createdAt,
+                amount: receivableAmt,
                 status: r.paymentStatus || 'unpaid'
             });
-            receivableMap[r.customer].totalAmount += parseFloat(r.totalReceivable) || 0;
-            if(r.paymentStatus === 'paid') receivableMap[r.customer].paidAmount += parseFloat(r.totalReceivable) || 0;
+            receivableMap[clientName].totalAmount += receivableAmt;
+            if(isPaid) receivableMap[clientName].paidAmount += receivableAmt;
         }
-        if(r.supplier && r.totalPayable){
-            if(!payableMap[r.supplier]) payableMap[r.supplier] = { supplier: r.supplier, orders: [], totalAmount: 0, paidAmount: 0 };
-            payableMap[r.supplier].orders.push({
+        // ── 应付：按船公司/承运人汇总（CRM无独立供应商字段，用 carrier 作为应付对象） ──
+        const payableAmt = (r.costs||{})._total || 0;
+        const carrierName = r.carrier;
+        if(carrierName && payableAmt > 0){
+            if(!payableMap[carrierName]) payableMap[carrierName] = { supplier: carrierName, orders: [], totalAmount: 0, paidAmount: 0 };
+            const isPaid = r.paymentStatus === 'paid';
+            payableMap[carrierName].orders.push({
                 orderId: r.id,
-                date: r.createdAt,
-                amount: parseFloat(r.totalPayable) || 0,
+                orderno: r.orderno || r.id,
+                date: r.etd || r.createdAt,
+                amount: payableAmt,
                 status: r.paymentStatus || 'unpaid'
             });
-            payableMap[r.supplier].totalAmount += parseFloat(r.totalPayable) || 0;
-            if(r.paymentStatus === 'paid') payableMap[r.supplier].paidAmount += parseFloat(r.totalPayable) || 0;
+            payableMap[carrierName].totalAmount += payableAmt;
+            if(isPaid) payableMap[carrierName].paidAmount += payableAmt;
         }
     });
     reconciliationData.receivable = Object.values(receivableMap);
@@ -8894,7 +8913,7 @@ function reconciliationShowDetail(name, type){
             ${item.orders.map(o => `
                 <div style="padding:10px; margin-bottom:8px; background:#f8f9fa; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <div style="font-size:12px; color:#666;">订单: ${o.orderId}</div>
+                        <div style="font-size:12px; color:#666;">订单: ${o.orderno || o.orderId}</div>
                         <div style="font-size:11px; color:#999;">${o.date || ''}</div>
                     </div>
                     <div style="text-align:right;">
@@ -9223,7 +9242,7 @@ function getPreviewHtml_Client(client){
     };
     const lc = levelColors[client.level] || levelColors['B'];
     const crmData = crmLoad();
-    const orders = crmData.filter(r => r.customer === client.name);
+    const orders = crmData.filter(r => r.client === client.name);
     const totalRevenue = orders.reduce((sum, r) => sum + ((r.fees||{}).total||0), 0);
     const totalProfit = orders.reduce((sum, r) => sum + (r.profit||0), 0);
     return `
@@ -9278,7 +9297,7 @@ function getPreviewHtml_Supplier(supplier){
     };
     const tc = typeColors[supplier.type] || { bg: '#f5f5f5', color: '#666' };
     const crmData = crmLoad();
-    const orders = crmData.filter(r => r.supplier === supplier.name);
+    const orders = crmData.filter(r => r.carrier === supplier.name);
     const totalCost = orders.reduce((sum, r) => sum + ((r.costs||{})._total||0), 0);
     return `
         <div class="preview-card-header">
