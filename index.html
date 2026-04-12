@@ -129,7 +129,10 @@
         .stat-value { font-size: 18px; font-weight: bold; color: #2c3e50; }
         .stat-sub { font-size: 11px; color: #6f7d8a; margin-top: 4px; line-height: 1.5; }
         .backup-inline { font-size: 10px; color: #7f8c8d; white-space: nowrap; }
-        .dashboard-title-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+        .dashboard-title-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:nowrap; }
+        .dashboard-title-row .title { flex-shrink:0; }
+        .dashboard-title-row .title-btns { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+        .dashboard-title-row .title-btns button { white-space:nowrap; }
         .market-quote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .market-quote-tile { position: relative; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; min-height: 34px; padding: 4px 8px; border-radius: 10px; border: 1px solid #dfe8f2; background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%); box-shadow: 0 4px 10px rgba(31, 58, 93, 0.04); overflow: hidden; cursor: pointer; gap: 6px; }
         .market-quote-label { font-size: 10px; color: #607080; margin-bottom: 0; font-weight: 700; line-height: 1; white-space: nowrap; }
@@ -712,10 +715,12 @@
     <div class="module-card dashboard-hero">
         <div class="dashboard-title-row">
             <div class="title" style="background:linear-gradient(135deg, rgba(74,144,226,0.12), rgba(74,144,226,0.06)); padding:8px 14px; border-radius:10px; border-left:none;">首页仪表盘</div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                <div class="backup-inline" id="dashboard-backup-inline" style="background:linear-gradient(135deg, rgba(149,165,166,0.15), rgba(149,165,166,0.08)); padding:6px 12px; border-radius:8px; font-size:11px;">自动备份：未记录</div>
-                <button style="background:linear-gradient(135deg, rgba(231,76,60,0.12), rgba(231,76,60,0.06)); color:#5d6d7e; border:1px solid rgba(231,76,60,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="quickBackup()">📥 一键备份</button>
-                <button style="background:linear-gradient(135deg, rgba(155,89,182,0.12), rgba(155,89,182,0.06)); color:#5d6d7e; border:1px solid rgba(155,89,182,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="lockSystem()">🔒 快捷上锁</button>
+            <div class="title-btns" style="flex-direction:column; align-items:flex-end; gap:4px;">
+                <div style="display:flex; gap:6px;">
+                    <button style="background:linear-gradient(135deg, rgba(231,76,60,0.12), rgba(231,76,60,0.06)); color:#5d6d7e; border:1px solid rgba(231,76,60,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="quickBackup()">📥 一键备份</button>
+                    <button style="background:linear-gradient(135deg, rgba(155,89,182,0.12), rgba(155,89,182,0.06)); color:#5d6d7e; border:1px solid rgba(155,89,182,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="lockSystem()">🔒 快捷上锁</button>
+                </div>
+                <div style="font-size:10px; color:#7f8c8d;" id="dashboard-backup-inline">自动备份：未记录</div>
             </div>
         </div>
         <div class="dashboard-grid">
