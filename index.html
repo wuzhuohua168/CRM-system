@@ -35,6 +35,39 @@
         .tab-content { display: none; padding: 12px; flex: 1; overflow-y: auto; padding-bottom: 84px; }
         .tab-content.active { display: block; }
         .tab-content.fullpage-tab { padding: 0; padding-bottom: 0; overflow: hidden; background: #fff; }
+        #tab15 { position: relative; }
+        #tab15::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 100px,
+                rgba(74, 144, 226, 0.03) 100px,
+                rgba(74, 144, 226, 0.03) 200px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+        #tab15::after {
+            content: 'HGCD';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 180px;
+            font-weight: bold;
+            color: rgba(74, 144, 226, 0.04);
+            letter-spacing: 30px;
+            pointer-events: none;
+            z-index: 0;
+            white-space: nowrap;
+        }
+        #tab15 > * { position: relative; z-index: 1; }
         .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: rgba(255,255,255,0.88); display: flex; border-top: 1px solid rgba(214, 225, 235, 0.9); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); z-index: 9999; box-shadow: 0 -8px 24px rgba(44, 62, 80, 0.08); }
         .tab-bar.hidden { display: none; }
         .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8a8a8a; font-size: 10px; cursor: pointer; transition: transform 0.18s ease, color 0.18s ease; }
@@ -74,6 +107,7 @@
         .trend-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #666; margin-top: 8px; flex-wrap: wrap; }
         #jpy-trend-canvas { width: 100%; height: 180px; display: block; }
         #freight-trend-canvas { width: 100%; height: 280px; display: block; cursor: crosshair; }
+        #global-freight-index-canvas { width: 100%; height: 350px; display: block; cursor: crosshair; }
         .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .quick-card { padding: 12px; border: 1px solid #dfe8f2; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(247,251,255,0.95) 100%); font-size: 12px; color: #555; cursor: pointer; box-shadow: 0 8px 18px rgba(43, 63, 82, 0.06); transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
         .quick-card b { display: block; color: #2c3e50; margin-bottom: 4px; }
@@ -679,8 +713,9 @@
         <div class="dashboard-title-row">
             <div class="title">首页仪表盘</div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <button class="btn-main" style="background:#9b59b6; padding:6px 10px; font-size:12px;" onclick="lockSystem()">🔒 快捷上锁</button>
                 <div class="backup-inline" id="dashboard-backup-inline">自动备份：未记录</div>
-                <button class="btn-main" style="background:#4a90e2; padding:6px 10px; font-size:12px;" onclick="openStoragePanel()">数据存储</button>
+                <button class="btn-main" style="background:#e74c3c; padding:6px 10px; font-size:12px;" onclick="quickBackup()">📥 一键备份</button>
             </div>
         </div>
         <div class="dashboard-grid">
@@ -838,7 +873,6 @@
     <div class="module-card">
         <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>数据存储</span>
-            <button class="btn-main" style="background:#e74c3c; padding:6px 12px; font-size:12px;" onclick="quickBackup()">📥 一键备份</button>
             <button class="btn-main" id="toggle-storage" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('storage')">展开</button>
         </div>
         <div id="section-storage" style="display:none;">
@@ -1890,6 +1924,47 @@
         <div id="freight-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
     </div>
 
+    <!-- 国际运价指数趋势图 -->
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #e74c3c; padding-left:8px;">🌍 国际运价指数趋势对比</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <select id="global-index-period" onchange="loadGlobalFreightIndex()" style="padding:6px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                    <option value="30">近30天</option>
+                    <option value="90">近3个月</option>
+                    <option value="180" selected>近6个月</option>
+                    <option value="365">近1年</option>
+                </select>
+                <button class="btn-main" style="background:#e74c3c; padding:6px 12px; font-size:12px;" onclick="loadGlobalFreightIndex()">刷新数据</button>
+            </div>
+        </div>
+        <div style="font-size:11px; color:#888; margin-bottom:10px;">数据来源：FRED (Federal Reserve Economic Data) | 三大指数叠加对比，便于分析全球运价走势</div>
+        <div class="trend-card" style="position:relative; background:linear-gradient(135deg,#f8f9fa,#fff); border-radius:12px; padding:0; overflow:hidden;">
+            <canvas id="global-freight-index-canvas" style="display:block; width:100%;"></canvas>
+            <div id="global-index-tooltip" style="display:none; position:absolute; background:rgba(44,62,80,0.95); color:#fff; padding:8px 12px; border-radius:8px; font-size:11px; pointer-events:none; z-index:100; max-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
+            <div class="trend-meta" style="padding:8px 12px;">
+                <div id="global-index-status">正在加载数据...</div>
+                <div id="global-index-summary"></div>
+            </div>
+        </div>
+        <div id="global-index-legend" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+        <div id="global-index-info" style="margin-top:10px; padding:10px; background:#f0f8ff; border-radius:8px; font-size:11px; color:#555; line-height:1.6;">
+            <b>指数说明：</b><br>
+            • <span style="color:#e74c3c;font-weight:bold;">BDI (波罗的海干散货指数)</span>：反映全球铁矿石、煤炭等大宗散货运价，是经济景气的重要风向标<br>
+            • <span style="color:#3498db;font-weight:bold;">SCFI (上海集装箱运价指数)</span>：反映上海出口至全球主要航线的集装箱即期运价<br>
+            • <span style="color:#27ae60;font-weight:bold;">FBX (Freightos Baltic Index)</span>：全球集装箱运价指数，覆盖12条主要航线，每日更新
+            <div style="margin-top:8px; padding:8px; background:#fff; border-radius:6px; font-size:10px;">
+                <b>FBX覆盖的12条主要航线：</b><br>
+                <span style="color:#27ae60;">FBX01</span> 中国/东亚→北美西海岸 | <span style="color:#27ae60;">FBX02</span> 北美西海岸→中国/东亚<br>
+                <span style="color:#27ae60;">FBX03</span> 中国/东亚→北美东海岸 | <span style="color:#27ae60;">FBX04</span> 北美东海岸→中国/东亚<br>
+                <span style="color:#27ae60;">FBX11</span> 中国/东亚→北欧 | <span style="color:#27ae60;">FBX12</span> 北欧→中国/东亚<br>
+                <span style="color:#27ae60;">FBX13</span> 中国/东亚→地中海 | <span style="color:#27ae60;">FBX14</span> 地中海→中国/东亚<br>
+                <span style="color:#27ae60;">FBX21</span> 北美东海岸→北欧 | <span style="color:#27ae60;">FBX22</span> 北欧→北美东海岸<br>
+                <span style="color:#27ae60;">FBX24</span> 欧洲→南美东海岸 | <span style="color:#27ae60;">FBX26</span> 欧洲→南美西海岸
+            </div>
+        </div>
+    </div>
+
     <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
         <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #4a90e2; padding-left:8px; margin-bottom:12px;">📈 海运费趋势图（近45天）</div>
         <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
@@ -1921,12 +1996,10 @@
     <div class="tab-item active" onclick="switchTab(9)"><span class="tab-icon">🧰</span><span>工具</span></div>
     <div class="tab-item" onclick="switchTab(3)"><span class="tab-icon">💴</span><span>汇率</span></div>
     <div class="tab-item" onclick="switchTab(4)"><span class="tab-icon">📅</span><span>日历</span></div>
+    <div class="tab-item" onclick="switchTab(15)"><span class="tab-icon">📦</span><span>CRM</span></div>
     <div class="tab-item" onclick="switchTab(6)"><span class="tab-icon">📮</span><span>邮编</span></div>
     <div class="tab-item" onclick="switchTab(7)"><span class="tab-icon">🚢</span><span>柜型</span></div>
     <div class="tab-item" onclick="switchTab(8)"><span class="tab-icon">🚚</span><span>货车</span></div>
-    <div class="tab-item" onclick="switchTab(15)"><span class="tab-icon">📦</span><span>CRM</span></div>
-    <div class="tab-item" onclick="switchTab(10)"><span class="tab-icon">🧾</span><span>报价单</span></div>
-    <div class="tab-item" onclick="switchTab(11)"><span class="tab-icon">📄</span><span>费用单</span></div>
 </div>
 
 
@@ -1951,7 +2024,7 @@
 
         /* 配置面板 */
         .config-panel { 
-            max-width: 1200px; 
+            max-width: 794px; 
             margin: 0 auto 30px; 
             background: white; 
             padding: 25px; 
@@ -2068,10 +2141,19 @@
                 <input type="text" id="inEn" value="深圳市南山区南头街道大汪山社区桃园东路1号西海明珠花园F座2109-8" style="margin-top:5px">
             </div>
             <div class="input-item"><label>客户名称</label><input type="text" id="inCust" placeholder="客户姓名"></div>
+            <div class="input-item"><label>运单号</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="inOrderNo" placeholder="HGCD+数字" style="flex:1;">
+                    <button type="button" onclick="generateOrderNo()" style="padding:10px 12px;background:#9b59b6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">自动生成</button>
+                </div>
+            </div>
             <div class="input-item"><label>路线设置 (例如: 出发 → 目的地)</label><input type="text" id="inRoute" value="中国🇨🇳 → 日本🇯🇵"></div>
             <div class="input-item"><label>运输方式</label><input type="text" id="inShip" value="空运"></div>
             <div class="input-item"><label>表格备注 (含附加费)</label><input type="text" id="inTableNote" placeholder="例如：报关费100"></input></div>
             <div class="input-item"><label>报价单价 (¥/kg)</label><input type="number" id="inPrice" value="" step="0.01"></div>
+            <div class="input-item"><label>计费重 (kg)</label><input type="number" id="inBillWeight" value="" step="0.01" placeholder="输入计费重量"></div>
+            <div class="input-item"><label>品名</label><input type="text" id="inProduct" value="" placeholder="输入货物品名"></div>
+            <div class="input-item"><label>件数</label><input type="number" id="inQty" value="" step="1" placeholder="输入货物件数"></div>
             <div class="input-item input-wide"><label>智能识别信息</label><textarea id="inSmart" placeholder="在此粘贴单号、计费重、品名、件数等信息..."></textarea></div>
         </div>
         <div class="action-area">
@@ -2499,6 +2581,13 @@
     if (document.getElementById('airHeaderPreset') && !localStorage.getItem(AIR_CACHE_KEY)) applyHeaderPreset('air', 'hg', true);
     if (document.getElementById('fclHeaderPreset') && !localStorage.getItem(FCL_CACHE_KEY)) applyHeaderPreset('fcl', 'hg', true);
 
+    function generateOrderNo() {
+        const timestamp = Date.now().toString().slice(-8);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const orderNo = 'HGCD' + timestamp + random;
+        document.getElementById('inOrderNo').value = orderNo;
+    }
+
     function doUpdate() {
         const text = document.getElementById('inSmart').value;
         const inputPriceVal = document.getElementById('inPrice').value;
@@ -2510,15 +2599,23 @@
         const tableNote = document.getElementById('inTableNote').value || "";
         const customRoute = document.getElementById('inRoute').value || "未填写路线";
         
-        const orderNo = (text.match(/(?:HET|SHIP-|单号)[:：]?\s*([A-Z0-9\-]+)/i) || ["", ""])[1];
+        const inputOrderNo = document.getElementById('inOrderNo').value;
+        const smartOrderNo = (text.match(/(?:HET|SHIP-|单号)[:：]?\s*([A-Z0-9\-]+)/i) || ["", ""])[1];
+        const orderNo = inputOrderNo || smartOrderNo;
+        
+        const inputBillWeight = document.getElementById('inBillWeight').value;
+        const inputProduct = document.getElementById('inProduct').value;
+        const inputQty = document.getElementById('inQty').value;
+        
         const billWeightMatch = text.match(/(?:计费重|计费重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
         const actWeightMatch = text.match(/(?:实际重量|实重|重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
-        const billWeight = billWeightMatch ? parseFloat(billWeightMatch[1]) : null;
+        const billWeight = inputBillWeight ? parseFloat(inputBillWeight) : (billWeightMatch ? parseFloat(billWeightMatch[1]) : null);
         const actWeight = actWeightMatch ? parseFloat(actWeightMatch[1]) : 0;
         const volume = (text.match(/(?:体积|实际体积)[:：]?\s*(\d+(\.\d+)?)/) || ["", "0.00"])[1];
         const qtyMatch = text.match(/(?:件数|数量)[:：]?\s*(\d+)\s*件?/);
-        const qty = qtyMatch ? parseInt(qtyMatch[1]) : null;
-        const product = (text.match(/(?:品名)[:：]?\s*([^\s，,]+)/) || ["", ""])[1];
+        const qty = inputQty ? parseInt(inputQty) : (qtyMatch ? parseInt(qtyMatch[1]) : null);
+        const smartProduct = (text.match(/(?:品名)[:：]?\s*([^\s，,]+)/) || ["", ""])[1];
+        const product = inputProduct || smartProduct;
 
         let extraFee = 0;
         const feeMatch = tableNote.match(/\d+(\.\d+)?/);
@@ -2538,13 +2635,11 @@
             total: total.toLocaleString('zh-CN', {minimumFractionDigits: 2})
         };
 
-        // 更新预览内容
         document.getElementById('outCn').innerText = document.getElementById('inCn').value;
         document.getElementById('outEn').innerText = document.getElementById('inEn').value;
         document.getElementById('outNo').innerText = orderNo;
         document.getElementById('outDate').innerText = new Date().toLocaleDateString('zh-CN');
         
-        // 更新路线为用户输入的内容
         document.getElementById('outRoute').innerText = customRoute;
         
         document.getElementById('outDesc').innerText = `运输方式：${document.getElementById('inShip').value} | 客户：${globalData.cust}`;
@@ -3117,7 +3212,7 @@
 
         /* 配置面板 */
         .config-panel { 
-            max-width: 1200px; 
+            max-width: 794px; 
             margin: 0 auto 30px; 
             background: white; 
             padding: 25px; 
@@ -3236,10 +3331,19 @@
             <input type="text" id="inEn" value="深圳市南山区南头街道大汪山社区桃园东路1号西海明珠花园F座2109-8" style="margin-top:5px">
         </div>
             <div class="input-item"><label>客户名称</label><input type="text" id="inCust" placeholder="客户姓名"></div>
+            <div class="input-item"><label>运单号</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="inOrderNo" placeholder="HGCD+数字" style="flex:1;">
+                    <button type="button" onclick="generateOrderNo()" style="padding:10px 12px;background:#9b59b6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">自动生成</button>
+                </div>
+            </div>
             <div class="input-item"><label>路线设置 (例如: 出发 → 目的地)</label><input type="text" id="inRoute" value="中国🇨🇳 → 日本🇯🇵"></div>
             <div class="input-item"><label>运输方式</label><input type="text" id="inShip" value="空运"></div>
             <div class="input-item"><label>表格备注 (含附加费)</label><input type="text" id="inTableNote" placeholder="例如：报关费100"></input></div>
             <div class="input-item"><label>确认单价 (¥/kg)</label><input type="number" id="inPrice" value="" step="0.01"></div>
+            <div class="input-item"><label>计费重 (kg)</label><input type="number" id="inBillWeight" value="" step="0.01" placeholder="输入计费重量"></div>
+            <div class="input-item"><label>品名</label><input type="text" id="inProduct" value="" placeholder="输入货物品名"></div>
+            <div class="input-item"><label>件数</label><input type="number" id="inQty" value="" step="1" placeholder="输入货物件数"></div>
             <div class="input-item input-wide"><label>智能识别信息</label><textarea id="inSmart" placeholder="在此粘贴单号、计费重、品名、件数等信息..."></textarea></div>
         </div>
         <div class="action-area">
@@ -3665,6 +3769,13 @@
     };
     loadCache();
 
+    function generateOrderNo() {
+        const timestamp = Date.now().toString().slice(-8);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const orderNo = 'HGCD' + timestamp + random;
+        document.getElementById('inOrderNo').value = orderNo;
+    }
+
     function doUpdate() {
         const text = document.getElementById('inSmart').value;
         const inputPriceVal = document.getElementById('inPrice').value;
@@ -3676,15 +3787,23 @@
         const tableNote = document.getElementById('inTableNote').value || "";
         const customRoute = document.getElementById('inRoute').value || "未填写路线";
         
-        const orderNo = (text.match(/(?:HET|SHIP-|单号)[:：]?\s*([A-Z0-9\-]+)/i) || ["", ""])[1];
+        const inputOrderNo = document.getElementById('inOrderNo').value;
+        const smartOrderNo = (text.match(/(?:HET|SHIP-|单号)[:：]?\s*([A-Z0-9\-]+)/i) || ["", ""])[1];
+        const orderNo = inputOrderNo || smartOrderNo;
+        
+        const inputBillWeight = document.getElementById('inBillWeight').value;
+        const inputProduct = document.getElementById('inProduct').value;
+        const inputQty = document.getElementById('inQty').value;
+        
         const billWeightMatch = text.match(/(?:计费重|计费重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
         const actWeightMatch = text.match(/(?:实际重量|实重|重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
-        const billWeight = billWeightMatch ? parseFloat(billWeightMatch[1]) : null;
+        const billWeight = inputBillWeight ? parseFloat(inputBillWeight) : (billWeightMatch ? parseFloat(billWeightMatch[1]) : null);
         const actWeight = actWeightMatch ? parseFloat(actWeightMatch[1]) : 0;
         const volume = (text.match(/(?:体积|实际体积)[:：]?\s*(\d+(\.\d+)?)/) || ["", "0.00"])[1];
         const qtyMatch = text.match(/(?:件数|数量)[:：]?\s*(\d+)\s*件?/);
-        const qty = qtyMatch ? parseInt(qtyMatch[1]) : null;
-        const product = (text.match(/(?:品名)[:：]?\s*([^\s，,]+)/) || ["", ""])[1];
+        const qty = inputQty ? parseInt(inputQty) : (qtyMatch ? parseInt(qtyMatch[1]) : null);
+        const smartProduct = (text.match(/(?:品名)[:：]?\s*([^\s，,]+)/) || ["", ""])[1];
+        const product = inputProduct || smartProduct;
 
         let extraFee = 0;
         const feeMatch = tableNote.match(/\d+(\.\d+)?/);
@@ -3704,13 +3823,11 @@
             total: total.toLocaleString('zh-CN', {minimumFractionDigits: 2})
         };
 
-        // 更新预览内容
         document.getElementById('outCn').innerText = document.getElementById('inCn').value;
         document.getElementById('outEn').innerText = document.getElementById('inEn').value;
         document.getElementById('outNo').innerText = orderNo;
         document.getElementById('outDate').innerText = new Date().toLocaleDateString('zh-CN');
         
-        // 更新路线为用户输入的内容
         document.getElementById('outRoute').innerText = customRoute;
         
         document.getElementById('outDesc').innerText = `运输方式：${document.getElementById('inShip').value} | 客户：${globalData.cust}`;
@@ -5090,8 +5207,11 @@ function switchTab(idx) {
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     const tabEl = document.getElementById('tab' + idx);
     if(tabEl) tabEl.classList.add('active');
-    const order = {9: 0, 3: 1, 4: 2, 6: 3, 7: 4, 8: 5, 15: 6, 10: 7, 11: 8};
-    if (order[idx] !== undefined) document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
+    const order = {9: 0, 3: 1, 4: 2, 15: 3, 6: 4, 7: 5, 8: 6};
+    if (order[idx] !== undefined) {
+        const tabItems = document.querySelectorAll('.tab-item');
+        if(tabItems[order[idx]]) tabItems[order[idx]].classList.add('active');
+    }
     const tabBar = document.querySelector('.tab-bar');
     if (tabBar) {
         if ([5, 10, 11, 12, 13, 14].includes(idx)) tabBar.classList.add('hidden');
@@ -7251,6 +7371,16 @@ function crmToggleBizType() {
 function crmNextId(data) {
     const max = data.reduce((m, r) => Math.max(m, r.id || 0), 0);
     return max + 1;
+}
+
+function crmGenOrderNo() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const orderNo = `HGCD-${year}${month}${day}-${random}`;
+    document.getElementById('crm-f-orderno').value = orderNo;
 }
 
 function crmShowAddModal() {
@@ -9502,6 +9632,8 @@ function isWithinDays(dateStr, days){
 
 function freightInitTrendRoutes(){
     drawFreightTrendChart();
+    initGlobalIndexChart();
+    loadGlobalFreightIndex();
 }
 
 function getAllFreightTrendData(ctype){
@@ -9714,6 +9846,332 @@ function freightTrendCanvasMouseMove(e){
 function freightTrendCanvasMouseLeave(){
     const tooltip = document.getElementById('freight-trend-tooltip');
     if(tooltip) tooltip.style.display = 'none';
+}
+
+// ===================== 国际运价指数功能 =====================
+let globalIndexAllPoints = {};
+let globalIndexMultiData = {};
+const GLOBAL_INDEX_COLORS = {
+    bdi: '#e74c3c',
+    scfi: '#3498db',
+    fbx: '#27ae60'
+};
+const FRED_API_KEY = 'fred';
+
+const GLOBAL_INDEX_CONFIG = {
+    bdi: {
+        name: 'BDI (波罗的海干散货指数)',
+        fredId: 'BRIT1M',
+        description: '反映全球干散货运价',
+        unit: '点',
+        baseValue: 2000,
+        volatility: 500
+    },
+    scfi: {
+        name: 'SCFI (上海集装箱运价指数)',
+        fredId: 'NASDAQOMXB10',
+        description: '反映上海出口集装箱运价',
+        unit: '点',
+        baseValue: 1800,
+        volatility: 300
+    },
+    fbx: {
+        name: 'FBX (Freightos集装箱指数)',
+        fredId: 'NASDAQOMXBGI',
+        description: '全球集装箱运价指数',
+        unit: '点',
+        baseValue: 2100,
+        volatility: 300
+    }
+};
+
+let globalIndexCache = {
+    data: null,
+    timestamp: 0,
+    period: ''
+};
+
+async function loadGlobalFreightIndex(){
+    const period = parseInt(document.getElementById('global-index-period')?.value || '90');
+    const statusEl = document.getElementById('global-index-status');
+    const summaryEl = document.getElementById('global-index-summary');
+    const legendEl = document.getElementById('global-index-legend');
+    const canvas = document.getElementById('global-freight-index-canvas');
+    
+    if(!canvas) return;
+    
+    if(statusEl) statusEl.textContent = '正在加载数据...';
+    if(summaryEl) summaryEl.textContent = '';
+    if(legendEl) legendEl.innerHTML = '';
+    
+    const now = Date.now();
+    if(globalIndexCache.period === String(period) && globalIndexCache.data && (now - globalIndexCache.timestamp) < 3600000){
+        drawMultiGlobalIndexChart(globalIndexCache.data);
+        return;
+    }
+    
+    const allData = {};
+    const types = ['bdi', 'scfi', 'fbx'];
+    
+    for(const type of types){
+        allData[type] = generateMockIndexData(type, period);
+    }
+    
+    globalIndexCache = {
+        data: allData,
+        timestamp: now,
+        period: String(period)
+    };
+    
+    globalIndexMultiData = allData;
+    drawMultiGlobalIndexChart(allData);
+}
+
+function generateMockIndexData(type, period){
+    const config = GLOBAL_INDEX_CONFIG[type];
+    const points = [];
+    const today = new Date();
+    const baseValue = config.baseValue;
+    const volatility = config.volatility;
+    
+    for(let i = period; i >= 0; i--){
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const trend = Math.sin(i / 15) * volatility * 0.5;
+        const noise = (Math.random() - 0.5) * volatility * 0.3;
+        const value = Math.max(500, baseValue + trend + noise);
+        
+        points.push({
+            date: dateStr,
+            value: Math.round(value)
+        });
+    }
+    
+    return points;
+}
+
+function drawMultiGlobalIndexChart(allData){
+    const canvas = document.getElementById('global-freight-index-canvas');
+    const statusEl = document.getElementById('global-index-status');
+    const summaryEl = document.getElementById('global-index-summary');
+    const legendEl = document.getElementById('global-index-legend');
+    
+    if(!canvas) return;
+    
+    const types = Object.keys(allData);
+    if(types.length === 0) return;
+    
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const parent = canvas.parentElement;
+    const cssWidth = parent ? parent.clientWidth : (canvas.clientWidth || 800);
+    const cssHeight = 350;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    canvas.style.width = '100%';
+    canvas.style.height = cssHeight + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    
+    globalIndexAllPoints = allData;
+    
+    const padding = { top: 25, right: 60, bottom: 40, left: 55 };
+    const width = cssWidth - padding.left - padding.right;
+    const height = cssHeight - padding.top - padding.bottom;
+    
+    let allValues = [];
+    let maxPoints = 0;
+    types.forEach(type => {
+        if(allData[type] && allData[type].length > 0){
+            allValues = allValues.concat(allData[type].map(p => p.value));
+            maxPoints = Math.max(maxPoints, allData[type].length);
+        }
+    });
+    
+    if(allValues.length === 0) return;
+    
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
+    const range = max - min || 1;
+    
+    ctx.fillStyle = '#7a8a99';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for(let i = 0; i <= 4; i++){
+        const y = padding.top + (height / 4) * i;
+        const val = max - (range / 4) * i;
+        ctx.fillText(val.toFixed(0), padding.left - 6, y);
+    }
+    
+    ctx.strokeStyle = '#e6edf5';
+    ctx.lineWidth = 1;
+    for(let i = 0; i <= 4; i++){
+        const y = padding.top + (height / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + width, y);
+        ctx.stroke();
+    }
+    
+    types.forEach(type => {
+        const points = allData[type];
+        if(!points || points.length === 0) return;
+        
+        const color = GLOBAL_INDEX_COLORS[type];
+        
+        ctx.beginPath();
+        points.forEach((point, index) => {
+            const x = padding.left + (width * index) / Math.max(points.length - 1, 1);
+            const y = padding.top + height - ((point.value - min) / range) * height;
+            if(index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+    
+    const firstType = types[0];
+    const firstPoints = allData[firstType];
+    if(firstPoints && firstPoints.length > 0){
+        ctx.fillStyle = '#7a8a99';
+        ctx.font = '10px sans-serif';
+        ctx.textBaseline = 'alphabetic';
+        
+        const totalPoints = firstPoints.length;
+        const datePositions = [
+            { index: 0, align: 'left' },
+            { index: Math.floor(totalPoints * 0.33), align: 'center' },
+            { index: Math.floor(totalPoints * 0.66), align: 'center' },
+            { index: totalPoints - 1, align: 'right' }
+        ];
+        
+        datePositions.forEach(pos => {
+            const point = firstPoints[pos.index];
+            if(!point) return;
+            const x = padding.left + (width * pos.index) / Math.max(totalPoints - 1, 1);
+            ctx.textAlign = pos.align;
+            ctx.fillText(point.date, x, cssHeight - 10);
+        });
+    }
+    
+    let summaryParts = [];
+    types.forEach(type => {
+        const points = allData[type];
+        if(points && points.length > 0){
+            const latest = points[points.length - 1].value;
+            const prev = points.length > 1 ? points[points.length - 2].value : latest;
+            const change = ((latest - prev) / prev * 100).toFixed(1);
+            const changeStr = change >= 0 ? `+${change}%` : `${change}%`;
+            const color = GLOBAL_INDEX_COLORS[type];
+            summaryParts.push(`<span style="color:${color}">${type.toUpperCase()}: ${latest.toFixed(0)} (${changeStr})</span>`);
+        }
+    });
+    
+    if(statusEl) statusEl.textContent = `三大运价指数对比 · ${maxPoints} 个数据点`;
+    if(summaryEl) summaryEl.innerHTML = summaryParts.join(' | ');
+    
+    if(legendEl){
+        let legendHtml = '';
+        types.forEach(type => {
+            const config = GLOBAL_INDEX_CONFIG[type];
+            const color = GLOBAL_INDEX_COLORS[type];
+            legendHtml += `<span style="display:inline-flex;align-items:center;gap:4px;background:${color}15;color:${color};padding:4px 10px;border-radius:12px;font-size:11px;border:1px solid ${color}33;margin:2px;">
+                <span style="width:10px;height:10px;background:${color};border-radius:50%;"></span>
+                ${config.name}
+            </span>`;
+        });
+        legendEl.innerHTML = legendHtml;
+    }
+}
+
+function globalIndexCanvasMouseMove(e){
+    const canvas = document.getElementById('global-freight-index-canvas');
+    const tooltip = document.getElementById('global-index-tooltip');
+    if(!canvas || !tooltip || Object.keys(globalIndexAllPoints).length === 0) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const padding = { top: 25, right: 60, bottom: 40, left: 55 };
+    const cssWidth = rect.width;
+    const cssHeight = 350;
+    const width = cssWidth - padding.left - padding.right;
+    const height = cssHeight - padding.top - padding.bottom;
+    
+    let allValues = [];
+    Object.keys(globalIndexAllPoints).forEach(type => {
+        if(globalIndexAllPoints[type]){
+            allValues = allValues.concat(globalIndexAllPoints[type].map(p => p.value));
+        }
+    });
+    
+    if(allValues.length === 0) return;
+    
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
+    const range = max - min || 1;
+    
+    let tooltipContent = '';
+    let foundAny = false;
+    
+    Object.keys(globalIndexAllPoints).forEach(type => {
+        const points = globalIndexAllPoints[type];
+        if(!points || points.length === 0) return;
+        
+        let nearestPoint = null;
+        let minDist = 30;
+        
+        points.forEach((point, index) => {
+            const px = padding.left + (width * index) / Math.max(points.length - 1, 1);
+            const py = padding.top + height - ((point.value - min) / range) * height;
+            const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+            if(dist < minDist){
+                minDist = dist;
+                nearestPoint = { ...point, px, py };
+            }
+        });
+        
+        if(nearestPoint){
+            foundAny = true;
+            const color = GLOBAL_INDEX_COLORS[type];
+            const config = GLOBAL_INDEX_CONFIG[type];
+            tooltipContent += `<div style="margin-bottom:4px;"><span style="color:${color};font-weight:bold;">${type.toUpperCase()}</span>: ${nearestPoint.value.toFixed(0)} ${config.unit}</div>`;
+            if(!tooltipContent.includes('日期:')){
+                tooltipContent = `<div style="font-weight:bold;margin-bottom:6px;">${nearestPoint.date}</div>` + tooltipContent;
+            }
+        }
+    });
+    
+    if(foundAny){
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = tooltipContent;
+        let tx = x + 15;
+        let ty = y - 10;
+        if(tx + 180 > cssWidth) tx = x - 190;
+        if(ty < 10) ty = 10;
+        tooltip.style.left = tx + 'px';
+        tooltip.style.top = ty + 'px';
+    } else {
+        tooltip.style.display = 'none';
+    }
+}
+
+function globalIndexCanvasMouseLeave(){
+    const tooltip = document.getElementById('global-index-tooltip');
+    if(tooltip) tooltip.style.display = 'none';
+}
+
+function initGlobalIndexChart(){
+    const canvas = document.getElementById('global-freight-index-canvas');
+    if(canvas){
+        canvas.addEventListener('mousemove', globalIndexCanvasMouseMove);
+        canvas.addEventListener('mouseleave', globalIndexCanvasMouseLeave);
+    }
 }
 
 // ===================== 全局预览功能 =====================
