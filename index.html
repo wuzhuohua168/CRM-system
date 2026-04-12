@@ -908,34 +908,6 @@
         <div id="sensitive-result" class="tool-result" style="margin-top:10px;"></div>
         </div>
     </div>
-
-    <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
-            <span>费用模板</span>
-            <button class="btn-main" id="toggle-fee" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('fee')">展开</button>
-        </div>
-        <div id="section-fee" style="display:none;">
-        <div class="row"><label>海运费+国内港杂</label><input type="number" id="fee-ocean" value="0"></div>
-        <div class="row"><label>拖车费</label><input type="number" id="fee-truck" value="0"></div>
-        <div class="row"><label>报关费</label><input type="number" id="fee-customs" value="0"></div>
-        <div class="row"><label>目的港杂</label><input type="number" id="fee-dest-port" value="0"></div>
-        <div class="row"><label>清关费</label><input type="number" id="fee-clearance" value="0"></div>
-        <div class="row"><label>派送费</label><input type="number" id="fee-delivery" value="0"></div>
-        <div style="display:flex; gap:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="calcFees()">汇总</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyToolResult('fee-result')">复制</button></div>
-        <div id="fee-result" class="tool-result" style="margin-top:10px;"></div>
-        </div>
-    </div>
-
-    <div class="module-card">
-        <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
-            <span>物流节点记录</span>
-            <button class="btn-main" id="toggle-shipment" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('shipment')">展开</button>
-        </div>
-        <div id="section-shipment" style="display:none;">
-        <textarea id="shipment-notes" rows="8" placeholder="记录：订舱 / 放舱 / 提柜 / 报关 / 进港 / 开船 / 到港 / 清关 / 派送"></textarea>
-        <div style="display:flex; gap:10px; margin-top:10px;"><button class="btn-main" style="background:#4a90e2; flex:1;" onclick="saveShipmentNotes()">保存</button><button class="btn-main" style="background:#27ae60; flex:1;" onclick="copyText(document.getElementById('shipment-notes').value)">复制</button></div>
-        </div>
-    </div>
 </div>
 
 <div id="tab10" class="tab-content fullpage-tab">
@@ -6509,6 +6481,17 @@ async function importAppStateFromFile(event) {
             updateDashboard();
             updateStorageStatus();
             crmRender();
+            clientLoadData();
+            clientRender();
+            supplierLoadData();
+            supplierRender();
+            reminderLoadData();
+            reminderRefresh();
+            reconciliationLoadData();
+            reconciliationGenerateFromCRM();
+            reconciliationRender();
+            freightLoadData();
+            freightRender();
             showToast('已导入数据');
         } catch (e) {
             showToast('导入失败');
@@ -6608,23 +6591,18 @@ function updateDashboardNow() {
 }
 
 function appendHomeQuoteWidget(container, symbol) {
-    // Use textContent (not innerHTML) to set script config — innerHTML is blocked by CSP in modern browsers
-    const config = document.createElement('script');
-    config.type = 'application/json';
-    config.textContent = JSON.stringify({
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
+    script.async = true;
+    script.innerHTML = JSON.stringify({
         symbol: HOME_QUOTE_TV_SYMBOL_MAP[symbol] || symbol,
         width: '100%',
         colorTheme: 'light',
         isTransparent: true,
         locale: 'zh_CN',
-        showSymbolLogo: false,
-        fontSize: '10'
+        showSymbolLogo: false
     });
-    container.appendChild(config);
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
-    script.async = true;
     container.appendChild(script);
 }
 
