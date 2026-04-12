@@ -1454,7 +1454,7 @@
                 <div style="font-size:15px; font-weight:bold;" id="client-modal-title">新增客户</div>
                 <button onclick="clientCloseModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0; line-height:1; flex:none; width:auto;">×</button>
             </div>
-            <div style="padding:16px; overflow-y:auto; max-height:80vh;">
+            <div style="padding:16px;">
                 <input type="hidden" id="client-edit-id">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
@@ -1511,7 +1511,7 @@
                 <div style="font-size:15px; font-weight:bold;" id="supplier-modal-title">新增供应商</div>
                 <button onclick="supplierCloseModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0; line-height:1; flex:none; width:auto;">×</button>
             </div>
-            <div style="padding:16px; overflow-y:auto; max-height:80vh;">
+            <div style="padding:16px;">
                 <input type="hidden" id="supplier-edit-id">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
@@ -1588,7 +1588,7 @@
                 <div style="font-size:15px; font-weight:bold;" id="freight-modal-title">新增运价</div>
                 <button onclick="freightCloseModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0; line-height:1; flex:none; width:auto;">×</button>
             </div>
-            <div style="padding:16px; overflow-y:auto; max-height:80vh;">
+            <div style="padding:16px;">
                 <input type="hidden" id="freight-edit-id">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
@@ -7582,7 +7582,7 @@ function crmRender() {
                </div>`
             : '';
         const cardClick = crmSelectMode ? `crmToggleSelect(${r.id}, event)` : `crmShowDetail(${r.id})`;
-        return `<div id="crm-card-${r.id}" class="module-card hover-trigger" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" onclick="${cardClick}" onmouseenter="showPreview(getPreviewHtml_CRMOrder(crmLoad().find(x=>x.id===${r.id})||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+        return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" onclick="${cardClick}">
             <div style="display:flex; align-items:flex-start; gap:8px;">
                 ${cbHtml}
                 <div style="flex:1; min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; flex-wrap:wrap;">
@@ -8230,7 +8230,14 @@ function clientLoadData(){
 }
 
 function clientSaveData(){
-    localStorage.setItem(CLIENT_STORAGE_KEY, JSON.stringify(clientData));
+    try {
+        localStorage.setItem(CLIENT_STORAGE_KEY, JSON.stringify(clientData));
+        return true;
+    } catch(e) {
+        console.error('客户档案保存失败:', e);
+        showToast('保存失败，请检查浏览器存储权限', true);
+        return false;
+    }
 }
 
 function clientShowAddModal(){
@@ -8293,7 +8300,9 @@ function clientSaveRecord(){
     }else{
         clientData.unshift(record);
     }
-    clientSaveData();
+    if(clientSaveData()){
+        showToast(editId ? '客户已更新' : '客户已添加');
+    }
     clientCloseModal();
     clientRender();
 }
@@ -8342,7 +8351,7 @@ function clientRender(){
         const levelBg = c.level === 'A' ? '#fdeaea' : (c.level === 'B' ? '#e8f8f0' : '#fef5e7');
         const clientJson = JSON.stringify(c).replace(/"/g, '&quot;');
         return `
-        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px;" onmouseenter="showPreview(getPreviewHtml_Client(clientData.find(x=>x.id==='${c.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+        <div class="module-card" style="padding:12px 14px; margin-bottom:8px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                 <div style="flex:1;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
@@ -8400,7 +8409,14 @@ function supplierLoadData(){
 }
 
 function supplierSaveData(){
-    localStorage.setItem(SUPPLIER_STORAGE_KEY, JSON.stringify(supplierData));
+    try {
+        localStorage.setItem(SUPPLIER_STORAGE_KEY, JSON.stringify(supplierData));
+        return true;
+    } catch(e) {
+        console.error('供应商保存失败:', e);
+        showToast('保存失败，请检查浏览器存储权限', true);
+        return false;
+    }
 }
 
 function supplierShowAddModal(){
@@ -8466,7 +8482,9 @@ function supplierSaveRecord(){
     }else{
         supplierData.unshift(record);
     }
-    supplierSaveData();
+    if(supplierSaveData()){
+        showToast(editId ? '供应商已更新' : '供应商已添加');
+    }
     supplierCloseModal();
     supplierRender();
 }
@@ -8511,7 +8529,7 @@ function supplierRender(){
     listEl.innerHTML = filtered.map(s => {
         const typeColor = s.type === '船代理' ? '#3498db' : (s.type === '拖车行' ? '#9b59b6' : (s.type === '报关行' ? '#1abc9c' : '#e67e22'));
         return `
-        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px;" onmouseenter="showPreview(getPreviewHtml_Supplier(supplierData.find(x=>x.id==='${s.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+        <div class="module-card" style="padding:12px 14px; margin-bottom:8px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                 <div style="flex:1;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
@@ -8570,7 +8588,14 @@ function reminderLoadData(){
 }
 
 function reminderSaveData(){
-    localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminderData));
+    try {
+        localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminderData));
+        return true;
+    } catch(e) {
+        console.error('提醒保存失败:', e);
+        showToast('保存失败，请检查浏览器存储权限', true);
+        return false;
+    }
 }
 
 function reminderRefresh(){
@@ -8676,7 +8701,7 @@ function reminderRender(){
         const textColor = r.status === 'urgent' ? '#c0392b' : (r.status === 'warning' ? '#d68910' : '#1e8449');
         const reminderJson = JSON.stringify(r).replace(/"/g, '&quot;');
         return `
-        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px; border-left:4px solid ${borderColor}; background:${bgColor};" onmouseenter="showPreview(getPreviewHtml_Reminder(reminderData.find(x=>x.id==='${r.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+        <div class="module-card" style="padding:12px 14px; margin-bottom:8px; border-left:4px solid ${borderColor}; background:${bgColor};">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
                 <div style="flex:1;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
@@ -8718,7 +8743,14 @@ function reconciliationLoadData(){
 }
 
 function reconciliationSaveData(){
-    localStorage.setItem(RECON_STORAGE_KEY, JSON.stringify(reconciliationData));
+    try {
+        localStorage.setItem(RECON_STORAGE_KEY, JSON.stringify(reconciliationData));
+        return true;
+    } catch(e) {
+        console.error('对账保存失败:', e);
+        showToast('保存失败，请检查浏览器存储权限', true);
+        return false;
+    }
 }
 
 function reconciliationGenerateFromCRM(){
@@ -8918,7 +8950,14 @@ function freightLoadData(){
 }
 
 function freightSaveData(){
-    localStorage.setItem(FREIGHT_STORAGE_KEY, JSON.stringify(freightData));
+    try {
+        localStorage.setItem(FREIGHT_STORAGE_KEY, JSON.stringify(freightData));
+        return true;
+    } catch(e) {
+        console.error('运价保存失败:', e);
+        showToast('保存失败，请检查浏览器存储权限', true);
+        return false;
+    }
 }
 
 function freightShowAddModal(){
@@ -8980,7 +9019,9 @@ function freightSaveRecord(){
     }else{
         freightData.unshift(record);
     }
-    freightSaveData();
+    if(freightSaveData()){
+        showToast(editId ? '运价已更新' : '运价已添加');
+    }
     freightCloseModal();
     freightRender();
 }
@@ -9031,7 +9072,7 @@ function freightRender(){
         const isExpired = f.validTo && f.validTo < today;
         const expireColor = isExpired ? '#e74c3c' : (f.validTo ? '#27ae60' : '#666');
         return `
-        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px; ${isExpired ? 'opacity:0.6;' : ''}" onmouseenter="showPreview(getPreviewHtml_Freight(freightData.find(x=>x.id==='${f.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+        <div class="module-card" style="padding:12px 14px; margin-bottom:8px; ${isExpired ? 'opacity:0.6;' : ''}">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                 <div style="flex:1;">
                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
