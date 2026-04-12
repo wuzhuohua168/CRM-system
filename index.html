@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CRM系统</title>
+    <title>物流工作台 - 精简版</title>
     <!-- BUILD: 20260411-1243 -->
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
@@ -4368,7 +4368,7 @@ let trendPoints = [];
 const APP_STATE_KEY = 'logistics_workbench_state_v1';
 const APP_DB_NAME = 'logistics_workbench_db';
 const APP_DB_STORE = 'kv';
-const APP_EXTRA_STORAGE_KEYS = ['hcn_calendar_memos','hcn_rates_cache','shipment_notes_v1','dashboard_todos_v1','freight_air_cache_v1','freight_fcl_cache_v1','hgcd_crm_fcl_v1','macro_manual_overrides','macro_consistency_history','macro_ui_state','macro_score_state','macro_alloc_state','macro_cache_last'];
+const APP_EXTRA_STORAGE_KEYS = ['hcn_calendar_memos','hcn_rates_cache','shipment_notes_v1','dashboard_todos_v1','freight_air_cache_v1','freight_fcl_cache_v1','hgcd_crm_fcl_v1','macro_manual_overrides','macro_consistency_history','macro_ui_state','macro_score_state','macro_alloc_state','macro_cache_last','logistics_client_data','logistics_supplier_data','logistics_reminder_data','logistics_reconciliation_data','logistics_freight_data'];
 let saveTimer = null;
 let cloudFileHandle = null;
 let lastSavedAt = '';
@@ -6480,6 +6480,17 @@ async function importAppStateFromFile(event) {
             updateDashboard();
             updateStorageStatus();
             crmRender();
+            clientLoadData();
+            clientRender();
+            supplierLoadData();
+            supplierRender();
+            reminderLoadData();
+            reminderRefresh();
+            reconciliationLoadData();
+            reconciliationGenerateFromCRM();
+            reconciliationRender();
+            freightLoadData();
+            freightRender();
             showToast('已导入数据');
         } catch (e) {
             showToast('导入失败');
