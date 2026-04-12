@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>物流工作台 - 精简版</title>
+    <title>CRM系统</title>
     <!-- BUILD: 20260411-1243 -->
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
@@ -162,14 +162,37 @@
             max-width: 360px;
             box-shadow: 0 20px 50px rgba(31, 58, 93, 0.18);
             font-size: 13px;
-            pointer-events: none;
+            pointer-events: auto;
             opacity: 0;
             transform: translateY(8px);
             transition: opacity 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
         }
         .preview-card.show {
             opacity: 1;
             transform: translateY(0);
+        }
+        .preview-card-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #f0f3f7;
+            border: none;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .preview-card-close:hover {
+            opacity: 1;
+            background: #e8ecf0;
         }
         .preview-card-header {
             display: flex;
@@ -4368,7 +4391,7 @@ let trendPoints = [];
 const APP_STATE_KEY = 'logistics_workbench_state_v1';
 const APP_DB_NAME = 'logistics_workbench_db';
 const APP_DB_STORE = 'kv';
-const APP_EXTRA_STORAGE_KEYS = ['hcn_calendar_memos','hcn_rates_cache','shipment_notes_v1','dashboard_todos_v1','freight_air_cache_v1','freight_fcl_cache_v1','hgcd_crm_fcl_v1','macro_manual_overrides','macro_consistency_history','macro_ui_state','macro_score_state','macro_alloc_state','macro_cache_last','logistics_client_data','logistics_supplier_data','logistics_reminder_data','logistics_reconciliation_data','logistics_freight_data'];
+const APP_EXTRA_STORAGE_KEYS = ['hcn_calendar_memos','hcn_rates_cache','shipment_notes_v1','dashboard_todos_v1','freight_air_cache_v1','freight_fcl_cache_v1','hgcd_crm_fcl_v1','macro_manual_overrides','macro_consistency_history','macro_ui_state','macro_score_state','macro_alloc_state','macro_cache_last'];
 let saveTimer = null;
 let cloudFileHandle = null;
 let lastSavedAt = '';
@@ -4801,7 +4824,8 @@ function initAllModules(){
 function switchTab(idx) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
-    document.getElementById('tab' + idx).classList.add('active');
+    const tabEl = document.getElementById('tab' + idx);
+    if(tabEl) tabEl.classList.add('active');
     const order = {9: 0, 3: 1, 4: 2, 6: 3, 7: 4, 8: 5, 15: 6, 10: 7, 11: 8};
     if (order[idx] !== undefined) document.querySelectorAll('.tab-item')[order[idx]].classList.add('active');
     const tabBar = document.querySelector('.tab-bar');
@@ -4836,6 +4860,11 @@ function switchTab(idx) {
         updateDashboardNow();
     }
     if(idx === 15) crmRender();
+    if(idx === 16) clientRender();
+    if(idx === 17) supplierRender();
+    if(idx === 18) reminderRefresh();
+    if(idx === 19) reconciliationRender();
+    if(idx === 20) freightRender();
 }
 
 // 汇率转换功能
@@ -6480,17 +6509,6 @@ async function importAppStateFromFile(event) {
             updateDashboard();
             updateStorageStatus();
             crmRender();
-            clientLoadData();
-            clientRender();
-            supplierLoadData();
-            supplierRender();
-            reminderLoadData();
-            reminderRefresh();
-            reconciliationLoadData();
-            reconciliationGenerateFromCRM();
-            reconciliationRender();
-            freightLoadData();
-            freightRender();
             showToast('已导入数据');
         } catch (e) {
             showToast('导入失败');
@@ -8288,8 +8306,14 @@ function clientDeleteRecord(id){
 }
 
 function clientRender(){
-    const search = document.getElementById('client-search').value.toLowerCase();
-    const levelFilter = document.getElementById('client-filter-level').value;
+    const statsBar = document.getElementById('client-stats-bar');
+    const listEl = document.getElementById('client-list');
+    const emptyEl = document.getElementById('client-empty');
+    const searchEl = document.getElementById('client-search');
+    const levelFilterEl = document.getElementById('client-filter-level');
+    if(!statsBar || !listEl || !emptyEl) return;
+    const search = searchEl ? searchEl.value.toLowerCase() : '';
+    const levelFilter = levelFilterEl ? levelFilterEl.value : '';
     let filtered = clientData.filter(c => {
         const matchSearch = !search || 
             (c.name && c.name.toLowerCase().includes(search)) ||
@@ -8298,7 +8322,6 @@ function clientRender(){
         const matchLevel = !levelFilter || c.level === levelFilter;
         return matchSearch && matchLevel;
     });
-    const statsBar = document.getElementById('client-stats-bar');
     const totalA = clientData.filter(c => c.level === 'A').length;
     const totalB = clientData.filter(c => c.level === 'B').length;
     const totalC = clientData.filter(c => c.level === 'C').length;
@@ -8308,8 +8331,6 @@ function clientRender(){
         <span style="background:#fef5e7; color:#f39c12; padding:4px 10px; border-radius:12px; font-size:11px;">C级: ${totalC}</span>
         <span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${clientData.length} 条</span>
     `;
-    const listEl = document.getElementById('client-list');
-    const emptyEl = document.getElementById('client-empty');
     if(filtered.length === 0){
         listEl.innerHTML = '';
         emptyEl.style.display = 'block';
@@ -8458,8 +8479,14 @@ function supplierDeleteRecord(id){
 }
 
 function supplierRender(){
-    const search = document.getElementById('supplier-search').value.toLowerCase();
-    const typeFilter = document.getElementById('supplier-filter-type').value;
+    const statsBar = document.getElementById('supplier-stats-bar');
+    const listEl = document.getElementById('supplier-list');
+    const emptyEl = document.getElementById('supplier-empty');
+    const searchEl = document.getElementById('supplier-search');
+    const typeFilterEl = document.getElementById('supplier-filter-type');
+    if(!statsBar || !listEl || !emptyEl) return;
+    const search = searchEl ? searchEl.value.toLowerCase() : '';
+    const typeFilter = typeFilterEl ? typeFilterEl.value : '';
     let filtered = supplierData.filter(s => {
         const matchSearch = !search || 
             (s.name && s.name.toLowerCase().includes(search)) ||
@@ -8468,7 +8495,6 @@ function supplierRender(){
         const matchType = !typeFilter || s.type === typeFilter;
         return matchSearch && matchType;
     });
-    const statsBar = document.getElementById('supplier-stats-bar');
     const typeCounts = {};
     supplierData.forEach(s => { typeCounts[s.type] = (typeCounts[s.type] || 0) + 1; });
     let statsHtml = `<span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${supplierData.length} 条</span>`;
@@ -8476,8 +8502,6 @@ function supplierRender(){
         statsHtml += `<span style="background:#fef5e7; color:#e67e22; padding:4px 10px; border-radius:12px; font-size:11px;">${type}: ${count}</span>`;
     });
     statsBar.innerHTML = statsHtml;
-    const listEl = document.getElementById('supplier-list');
-    const emptyEl = document.getElementById('supplier-empty');
     if(filtered.length === 0){
         listEl.innerHTML = '';
         emptyEl.style.display = 'block';
@@ -8611,8 +8635,14 @@ function reminderGenerateFromCRM(){
 }
 
 function reminderRender(){
-    const typeFilter = document.getElementById('reminder-filter-type').value;
-    const daysFilter = document.getElementById('reminder-filter-days').value;
+    const statsBar = document.getElementById('reminder-stats-bar');
+    const listEl = document.getElementById('reminder-list');
+    const emptyEl = document.getElementById('reminder-empty');
+    const typeFilterEl = document.getElementById('reminder-filter-type');
+    const daysFilterEl = document.getElementById('reminder-filter-days');
+    if(!statsBar || !listEl || !emptyEl) return;
+    const typeFilter = typeFilterEl ? typeFilterEl.value : '';
+    const daysFilter = daysFilterEl ? daysFilterEl.value : 'all';
     let filtered = reminderData.filter(r => {
         const matchType = !typeFilter || r.type === typeFilter;
         let matchDays = true;
@@ -8623,7 +8653,6 @@ function reminderRender(){
         return matchType && matchDays;
     });
     filtered.sort((a,b) => a.daysLeft - b.daysLeft);
-    const statsBar = document.getElementById('reminder-stats-bar');
     const urgentCount = filtered.filter(r => r.status === 'urgent').length;
     const warningCount = filtered.filter(r => r.status === 'warning').length;
     const normalCount = filtered.filter(r => r.status === 'normal').length;
@@ -8633,8 +8662,6 @@ function reminderRender(){
         <span style="background:#e8f8f0; color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">正常: ${normalCount}</span>
         <span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${filtered.length} 条</span>
     `;
-    const listEl = document.getElementById('reminder-list');
-    const emptyEl = document.getElementById('reminder-empty');
     if(filtered.length === 0){
         listEl.innerHTML = '';
         emptyEl.style.display = 'block';
@@ -8728,9 +8755,16 @@ function reconciliationGenerateFromCRM(){
 }
 
 function reconciliationRender(){
-    const typeFilter = document.getElementById('recon-filter-type').value;
-    const statusFilter = document.getElementById('recon-filter-status').value;
-    const search = document.getElementById('recon-search').value.toLowerCase();
+    const statsBar = document.getElementById('recon-stats-bar');
+    const listEl = document.getElementById('recon-list');
+    const emptyEl = document.getElementById('recon-empty');
+    const typeFilterEl = document.getElementById('recon-filter-type');
+    const statusFilterEl = document.getElementById('recon-filter-status');
+    const searchEl = document.getElementById('recon-search');
+    if(!statsBar || !listEl || !emptyEl) return;
+    const typeFilter = typeFilterEl ? typeFilterEl.value : 'receivable';
+    const statusFilter = statusFilterEl ? statusFilterEl.value : '';
+    const search = searchEl ? searchEl.value.toLowerCase() : '';
     let data = typeFilter === 'receivable' ? reconciliationData.receivable : reconciliationData.payable;
     let filtered = data.filter(item => {
         const name = item.customer || item.supplier || '';
@@ -8742,7 +8776,6 @@ function reconciliationRender(){
         const matchStatus = !statusFilter || status === statusFilter;
         return matchSearch && matchStatus;
     });
-    const statsBar = document.getElementById('recon-stats-bar');
     const totalReceivable = reconciliationData.receivable.reduce((sum, r) => sum + r.totalAmount, 0);
     const totalReceivablePaid = reconciliationData.receivable.reduce((sum, r) => sum + r.paidAmount, 0);
     const totalPayable = reconciliationData.payable.reduce((sum, r) => sum + r.totalAmount, 0);
@@ -8753,8 +8786,6 @@ function reconciliationRender(){
         <span style="background:#fef5e7; color:#e67e22; padding:4px 10px; border-radius:12px; font-size:11px;">应付: ¥${totalPayable.toFixed(2)}</span>
         <span style="background:#fdeaea; color:#e74c3c; padding:4px 10px; border-radius:12px; font-size:11px;">已付: ¥${totalPayablePaid.toFixed(2)}</span>
     `;
-    const listEl = document.getElementById('recon-list');
-    const emptyEl = document.getElementById('recon-empty');
     if(filtered.length === 0){
         listEl.innerHTML = '';
         emptyEl.style.display = 'block';
@@ -8962,9 +8993,16 @@ function freightDeleteRecord(id){
 }
 
 function freightRender(){
-    const search = document.getElementById('freight-search').value.toLowerCase();
-    const typeFilter = document.getElementById('freight-filter-type').value;
-    const routeFilter = document.getElementById('freight-filter-route').value;
+    const statsBar = document.getElementById('freight-stats-bar');
+    const listEl = document.getElementById('freight-list');
+    const emptyEl = document.getElementById('freight-empty');
+    const searchEl = document.getElementById('freight-search');
+    const typeFilterEl = document.getElementById('freight-filter-type');
+    const routeFilterEl = document.getElementById('freight-filter-route');
+    if(!statsBar || !listEl || !emptyEl) return;
+    const search = searchEl ? searchEl.value.toLowerCase() : '';
+    const typeFilter = typeFilterEl ? typeFilterEl.value : '';
+    const routeFilter = routeFilterEl ? routeFilterEl.value : '';
     let filtered = freightData.filter(f => {
         const matchSearch = !search || 
             (f.route && f.route.toLowerCase().includes(search)) ||
@@ -8975,7 +9013,6 @@ function freightRender(){
         const matchRoute = !routeFilter || f.route === routeFilter;
         return matchSearch && matchType && matchRoute;
     });
-    const statsBar = document.getElementById('freight-stats-bar');
     const routeCounts = {};
     freightData.forEach(f => { routeCounts[f.route] = (routeCounts[f.route] || 0) + 1; });
     let statsHtml = `<span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${freightData.length} 条</span>`;
@@ -8983,8 +9020,6 @@ function freightRender(){
         statsHtml += `<span style="background:#e8f8f0; color:#16a085; padding:4px 10px; border-radius:12px; font-size:11px;">${route}: ${count}</span>`;
     });
     statsBar.innerHTML = statsHtml;
-    const listEl = document.getElementById('freight-list');
-    const emptyEl = document.getElementById('freight-empty');
     if(filtered.length === 0){
         listEl.innerHTML = '';
         emptyEl.style.display = 'block';
@@ -9044,24 +9079,37 @@ function freightExportCSV(){
 // ===================== 全局预览功能 =====================
 let previewTimeout = null;
 let previewCard = null;
+let previewAutoHideTimer = null;
 
 function initPreviewCard(){
     previewCard = document.getElementById('global-preview-card');
+    if(previewCard){
+        previewCard.addEventListener('click', function(e){
+            if(e.target.classList.contains('preview-card-close') || e.target === previewCard){
+                hidePreview();
+            }
+        });
+    }
 }
 
 function showPreview(html, event){
     if(!previewCard) initPreviewCard();
     clearTimeout(previewTimeout);
+    clearTimeout(previewAutoHideTimer);
     previewTimeout = setTimeout(() => {
-        previewCard.innerHTML = html;
+        previewCard.innerHTML = '<button class="preview-card-close" onclick="hidePreview()">×</button>' + html;
         previewCard.classList.add('show');
         positionPreview(event);
+        previewAutoHideTimer = setTimeout(() => {
+            hidePreview();
+        }, 4000);
     }, 300);
 }
 
 function hidePreview(){
     if(!previewCard) initPreviewCard();
     clearTimeout(previewTimeout);
+    clearTimeout(previewAutoHideTimer);
     previewCard.classList.remove('show');
 }
 
