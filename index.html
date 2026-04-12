@@ -711,11 +711,11 @@
 <div id="tab9" class="tab-content active">
     <div class="module-card dashboard-hero">
         <div class="dashboard-title-row">
-            <div class="title">首页仪表盘</div>
+            <div class="title" style="background:linear-gradient(135deg, rgba(74,144,226,0.12), rgba(74,144,226,0.06)); padding:8px 14px; border-radius:10px; border-left:none;">首页仪表盘</div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                <button class="btn-main" style="background:#9b59b6; padding:6px 10px; font-size:12px;" onclick="lockSystem()">🔒 快捷上锁</button>
-                <div class="backup-inline" id="dashboard-backup-inline">自动备份：未记录</div>
-                <button class="btn-main" style="background:#e74c3c; padding:6px 10px; font-size:12px;" onclick="quickBackup()">📥 一键备份</button>
+                <div class="backup-inline" id="dashboard-backup-inline" style="background:linear-gradient(135deg, rgba(149,165,166,0.15), rgba(149,165,166,0.08)); padding:6px 12px; border-radius:8px; font-size:11px;">自动备份：未记录</div>
+                <button style="background:linear-gradient(135deg, rgba(231,76,60,0.12), rgba(231,76,60,0.06)); color:#5d6d7e; border:1px solid rgba(231,76,60,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="quickBackup()">📥 一键备份</button>
+                <button style="background:linear-gradient(135deg, rgba(155,89,182,0.12), rgba(155,89,182,0.06)); color:#5d6d7e; border:1px solid rgba(155,89,182,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="lockSystem()">🔒 快捷上锁</button>
             </div>
         </div>
         <div class="dashboard-grid">
@@ -798,7 +798,7 @@
     <div class="module-card">
         <div class="title">全局搜索</div>
         <div class="row">
-            <input type="text" id="global-search" placeholder="搜索仓库代码 / 船司 / 柜型 / 货车型号 / 港口代码" oninput="renderGlobalSearch()">
+            <input type="text" id="global-search" placeholder="全系统搜索：仓库/船司/柜型/货车/港口/订单/客户/供应商/运价/提醒/待办" oninput="renderGlobalSearch()">
         </div>
         <div id="global-search-results"></div>
     </div>
@@ -6538,23 +6538,225 @@ function renderPortSearch() {
     `).join('') || '<div class="result-item">未找到结果</div>';
 }
 
+const GlobalSearchRegistry = {
+    _handlers: [],
+    
+    register: function(config) {
+        this._handlers.push({
+            name: config.name,
+            icon: config.icon || '🔍',
+            keywords: config.keywords || [],
+            storageKey: config.storageKey || null,
+            staticData: config.staticData || null,
+            searchFields: config.searchFields || [],
+            formatResult: config.formatResult || ((item, name, icon) => `${icon} ${name}：${item.name || '-'}`),
+            colorField: config.colorField || null,
+            colorMap: config.colorMap || {}
+        });
+        this._updatePlaceholder();
+    },
+    
+    _updatePlaceholder: function() {
+        const names = this._handlers.map(h => h.name).join('、');
+        const box = document.getElementById('global-search-results');
+        if (box) {
+            box.setAttribute('data-placeholder', `可搜索：${names}`);
+        }
+    },
+    
+    search: function(query) {
+        const q = query.trim().toLowerCase();
+        const results = [];
+        
+        this._handlers.forEach(handler => {
+            try {
+                let data = [];
+                if (handler.storageKey) {
+                    data = JSON.parse(localStorage.getItem(handler.storageKey) || '[]');
+                } else if (handler.staticData) {
+                    data = handler.staticData;
+                } else if (typeof handler.getData === 'function') {
+                    data = handler.getData();
+                }
+                
+                if (!Array.isArray(data)) {
+                    if (typeof data === 'object' && data !== null) {
+                        data = Object.entries(data).map(([key, value]) => ({ _key: key, _value: value }));
+                    } else {
+                        return;
+                    }
+                }
+                
+                data.forEach(item => {
+                    const searchValues = handler.searchFields.map(field => {
+                        if (field === '_key') return item._key;
+                        if (field === '_value') return item._value;
+                        return item[field] || '';
+                    });
+                    
+                    const searchStr = searchValues.join(' ').toLowerCase();
+                    
+                    if (searchStr.includes(q)) {
+                        let color = null;
+                        if (handler.colorField && handler.colorMap) {
+                            const colorKey = item[handler.colorField];
+                            color = handler.colorMap[colorKey];
+                        }
+                        
+                        const result = handler.formatResult(item, handler.name, handler.icon, color);
+                        if (result) results.push(result);
+                    }
+                });
+            } catch(e) {
+                console.warn(`搜索 ${handler.name} 时出错:`, e);
+            }
+        });
+        
+        return results.slice(0, 30);
+    },
+    
+    getHandlerNames: function() {
+        return this._handlers.map(h => h.name);
+    }
+};
+
+GlobalSearchRegistry.register({
+    name: '仓库',
+    icon: '🏭',
+    staticData: typeof FC_DATA !== 'undefined' ? FC_DATA : [],
+    searchFields: ['code', 'name', 'address'],
+    formatResult: (item, name, icon) => `${icon} ${name}：${item.code} ${item.name}`
+});
+
+GlobalSearchRegistry.register({
+    name: '柜型',
+    icon: '📦',
+    staticData: typeof CONTAINER_DATA !== 'undefined' ? CONTAINER_DATA : [],
+    searchFields: ['typeZh', 'typeEn', 'remarkZh'],
+    formatResult: (item, name, icon) => `${icon} ${name}：${item.typeZh}`
+});
+
+GlobalSearchRegistry.register({
+    name: '船司',
+    icon: '🚢',
+    staticData: typeof SHIPPING_DATA !== 'undefined' ? SHIPPING_DATA : [],
+    searchFields: ['name', 'country', 'background'],
+    formatResult: (item, name, icon) => `${icon} ${name}：${item.name}`
+});
+
+GlobalSearchRegistry.register({
+    name: '货车',
+    icon: '🚚',
+    getData: function() {
+        const all = [];
+        if (typeof TRUCK_DATA !== 'undefined') all.push(...TRUCK_DATA);
+        if (typeof JP_TRUCK_DATA !== 'undefined') all.push(...JP_TRUCK_DATA);
+        if (typeof KR_TRUCK_DATA !== 'undefined') all.push(...KR_TRUCK_DATA);
+        if (typeof SG_TRUCK_DATA !== 'undefined') all.push(...SG_TRUCK_DATA);
+        if (typeof US_TRUCK_DATA !== 'undefined') all.push(...US_TRUCK_DATA);
+        return all;
+    },
+    searchFields: ['model', 'size', 'usage'],
+    formatResult: (item, name, icon) => `${icon} ${name}：${item.model}`
+});
+
+GlobalSearchRegistry.register({
+    name: '港口',
+    icon: '🌐',
+    staticData: typeof PORT_CODE_DATA !== 'undefined' ? PORT_CODE_DATA : [],
+    searchFields: ['code', 'name', 'country'],
+    formatResult: (item, name, icon) => `${icon} ${name}：${item.code} ${item.name}`
+});
+
+GlobalSearchRegistry.register({
+    name: 'CRM订单',
+    icon: '📋',
+    storageKey: 'hgcd_crm_fcl_v1',
+    searchFields: ['orderno', 'mbl', 'hbl', 'client', 'pol', 'pod', 'status', 'carrier'],
+    colorField: 'status',
+    colorMap: {'询价':'#8e44ad','已订舱':'#2980b9','已装柜':'#e67e22','已开船':'#16a085','已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'},
+    formatResult: (item, name, icon, color) => {
+        const c = color || '#95a5a6';
+        return `<span style="color:${c};">${icon} ${name}</span>：${item.orderno || '-'} | ${item.client || '?'} | ${item.pol || '?'}→${item.pod || '?'} | <b style="color:${c};">${item.status || '-'}</b>`;
+    }
+});
+
+GlobalSearchRegistry.register({
+    name: '客户',
+    icon: '👤',
+    storageKey: 'logistics_client_data',
+    searchFields: ['name', 'contact', 'phone', 'email', 'route', 'address'],
+    colorField: 'level',
+    colorMap: {'A':'#e74c3c','B':'#27ae60','C':'#f39c12'},
+    formatResult: (item, name, icon, color) => {
+        const c = color || '#3498db';
+        return `<span style="color:${c};">${icon} ${name}</span>：${item.name} (${item.level || 'B'}级) | 联系人：${item.contact || '-'} | 航线：${item.route || '-'}`;
+    }
+});
+
+GlobalSearchRegistry.register({
+    name: '供应商',
+    icon: '🏭',
+    storageKey: 'logistics_supplier_data',
+    searchFields: ['name', 'type', 'contact', 'phone', 'address'],
+    formatResult: (item, name, icon) => `${icon} ${name}：${item.name} | 类型：${item.type || '-'} | 联系人：${item.contact || '-'}`
+});
+
+GlobalSearchRegistry.register({
+    name: '运价',
+    icon: '💰',
+    storageKey: 'logistics_freight_data',
+    searchFields: ['route', 'carrier', 'pol', 'pod', 'type'],
+    formatResult: (item, name, icon) => `${icon} ${name}：${item.route || '-'} | 船司：${item.carrier || '-'} | 类型：${item.type || '-'}`
+});
+
+GlobalSearchRegistry.register({
+    name: '提醒',
+    icon: '🔔',
+    storageKey: 'logistics_reminder_data',
+    searchFields: ['title', 'content', 'client'],
+    formatResult: (item, name, icon) => {
+        const statusText = item.status === 'urgent' ? '紧急' : item.status === 'warning' ? '警告' : '正常';
+        return `${icon} ${name}：${item.title} | 客户：${item.client || '-'} | 状态：${statusText}`;
+    }
+});
+
+GlobalSearchRegistry.register({
+    name: '待办',
+    icon: '📝',
+    storageKey: 'dashboard_todos_v1',
+    searchFields: ['text'],
+    formatResult: (item, name, icon) => {
+        const done = item.done ? '✅' : '⬜';
+        return `${icon} ${name}：${done} ${item.text}`;
+    }
+});
+
+GlobalSearchRegistry.register({
+    name: '日历备忘',
+    icon: '📅',
+    storageKey: 'hcn_calendar_memos',
+    searchFields: ['_key', '_value'],
+    formatResult: (item, name, icon) => {
+        const text = item._value || '';
+        return `${icon} ${name}：${item._key} - ${text.substring(0, 30)}${text.length > 30 ? '...' : ''}`;
+    }
+});
+
 function renderGlobalSearch() {
     const q = (document.getElementById('global-search')?.value || '').trim().toLowerCase();
     const box = document.getElementById('global-search-results');
     if (!box) return;
+    
+    const names = GlobalSearchRegistry.getHandlerNames().join('、');
+    
     if (!q) {
-        box.innerHTML = '<div class="tool-result">可搜索：仓库代码、船司、柜型、货车型号、港口机场代码</div>';
+        box.innerHTML = `<div class="tool-result">可搜索：${names}</div>`;
         return;
     }
-    const results = [];
-    FC_DATA.forEach(item => { if ([item.code, item.name, item.address].join(' ').toLowerCase().includes(q)) results.push(`仓库：${item.code} ${item.name}`); });
-    CONTAINER_DATA.forEach(item => { if ([item.typeZh, item.typeEn, item.remarkZh].join(' ').toLowerCase().includes(q)) results.push(`柜型：${item.typeZh}`); });
-    SHIPPING_DATA.forEach(item => { if ([item.name, item.country, item.background].join(' ').toLowerCase().includes(q)) results.push(`船司：${item.name}`); });
-    [...TRUCK_DATA, ...JP_TRUCK_DATA, ...KR_TRUCK_DATA, ...SG_TRUCK_DATA, ...US_TRUCK_DATA].forEach(item => {
-        if ([item.model, item.size, item.usage].join(' ').toLowerCase().includes(q)) results.push(`货车：${item.model}`);
-    });
-    PORT_CODE_DATA.forEach(item => { if ([item.code, item.name, item.country].join(' ').toLowerCase().includes(q)) results.push(`代码：${item.code} ${item.name}`); });
-    box.innerHTML = results.slice(0, 20).map(item => `<div class="result-item">${item}</div>`).join('') || '<div class="result-item">未找到匹配内容</div>';
+    
+    const results = GlobalSearchRegistry.search(q);
+    box.innerHTML = results.map(item => `<div class="result-item">${item}</div>`).join('') || '<div class="result-item">未找到匹配内容</div>';
 }
 
 function checkSensitiveCargo() {
