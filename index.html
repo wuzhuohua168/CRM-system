@@ -149,9 +149,122 @@
 
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 1000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
         .toast.show { opacity: 1; top: 30px; }
+
+        /* 预览卡片样式 */
+        .preview-card {
+            position: fixed;
+            z-index: 10050;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(200, 215, 230, 0.9);
+            border-radius: 16px;
+            padding: 16px;
+            min-width: 280px;
+            max-width: 360px;
+            box-shadow: 0 20px 50px rgba(31, 58, 93, 0.18);
+            font-size: 13px;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .preview-card.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .preview-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e8f0f8;
+        }
+        .preview-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .preview-card-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .preview-card-subtitle {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+        .preview-card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px dashed #eef3f8;
+        }
+        .preview-card-row:last-child {
+            border-bottom: none;
+        }
+        .preview-card-label {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        .preview-card-value {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 12px;
+        }
+        .preview-card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e8f0f8;
+        }
+        .preview-stat-item {
+            text-align: center;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        .preview-stat-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        .preview-stat-label {
+            font-size: 10px;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+        .preview-card-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .preview-tag-success { background: #e8f8f0; color: #27ae60; }
+        .preview-tag-warning { background: #fef5e7; color: #f39c12; }
+        .preview-tag-danger { background: #fdeaea; color: #e74c3c; }
+        .preview-tag-info { background: #e8f4fd; color: #2980b9; }
+        .preview-tag-purple { background: #f5eef8; color: #9b59b6; }
+        .preview-tag-teal { background: #e8f8f5; color: #16a085; }
+
+        /* 悬停触发器 */
+        .hover-trigger {
+            cursor: pointer;
+            position: relative;
+        }
     </style>
 </head>
 <body>
+<!-- 全局预览卡片 -->
+<div id="global-preview-card" class="preview-card"></div>
 
 <div id="tab3" class="tab-content">
     <div class="module-card">
@@ -565,6 +678,11 @@
             <div class="quick-card" onclick="switchTab(10)"><b>报价单制作</b>站内打开 Logistics-Quotation 工作页</div>
             <div class="quick-card" onclick="switchTab(11)"><b>费用单制作</b>站内打开 Intelligent-freight-generation-system 工作页</div>
             <div class="quick-card" onclick="switchTab(15)"><b>CRM 整柜台账</b>记录整柜订单全流程，管理客户、费用与节点</div>
+            <div class="quick-card" onclick="switchTab(16)"><b>客户档案</b>管理客户信息、等级分类、联系方式</div>
+            <div class="quick-card" onclick="switchTab(17)"><b>供应商管理</b>船代理、拖车行、报关行、仓库等</div>
+            <div class="quick-card" onclick="switchTab(18)"><b>提醒中心</b>ETD/ETA提醒、免柜期到期、应收逾期</div>
+            <div class="quick-card" onclick="switchTab(19)"><b>应收应付对账</b>按客户/供应商汇总对账</div>
+            <div class="quick-card" onclick="switchTab(20)"><b>运价管理</b>各航线运价记录、有效期管理</div>
         </div>
     </div>
 
@@ -913,6 +1031,25 @@
 
     <!-- 利润统计视图 -->
     <div id="crm-view-stats" style="display:none;">
+        <!-- 时间筛选 -->
+        <div class="module-card" style="padding:10px 14px; margin-bottom:10px;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <span style="font-size:12px; color:#666;">统计周期:</span>
+                <select id="crm-stats-period" onchange="crmRenderStats()" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:12px; background:#fff;">
+                    <option value="all">全部</option>
+                    <option value="month">本月</option>
+                    <option value="quarter">本季度</option>
+                    <option value="year">本年</option>
+                </select>
+                <span style="font-size:12px; color:#666; margin-left:10px;">快捷筛选:</span>
+                <select id="crm-stats-filter" onchange="crmRenderStats()" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:12px; background:#fff;">
+                    <option value="all">全部</option>
+                    <option value="profit">盈利订单</option>
+                    <option value="loss">亏损订单</option>
+                    <option value="completed">已完结</option>
+                </select>
+            </div>
+        </div>
         <!-- 总览卡片 -->
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;" id="crm-stat-overview"></div>
         <!-- 月度趋势 -->
@@ -920,6 +1057,16 @@
             <div class="title">📈 月度毛利趋势</div>
             <canvas id="crm-profit-chart" style="width:100%; height:200px; display:block;"></canvas>
             <div id="crm-profit-chart-empty" style="text-align:center; color:#bbb; font-size:12px; padding:20px 0; display:none;">暂无足够数据</div>
+        </div>
+        <!-- 航线效益分析 -->
+        <div class="module-card" style="margin-bottom:12px;">
+            <div class="title">🚢 航线效益分析</div>
+            <div id="crm-stat-routes"></div>
+        </div>
+        <!-- 船公司分析 -->
+        <div class="module-card" style="margin-bottom:12px;">
+            <div class="title">⚓ 船公司业绩</div>
+            <div id="crm-stat-carriers"></div>
         </div>
         <!-- 客户排名 -->
         <div class="module-card" style="margin-bottom:12px;">
@@ -1274,6 +1421,351 @@
             <div id="crm-detail-body" style="padding:16px; overflow-y:auto; max-height:80vh;"></div>
         </div>
     </div>
+</div>
+
+<!-- ===== 客户新增/编辑 Modal ===== -->
+<div id="client-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:10040; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div style="min-height:100%; display:flex; align-items:flex-start; justify-content:center; padding:16px;">
+        <div style="width:min(500px,100%); background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden; margin:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:linear-gradient(135deg,#4a90e2,#5ba3f5); color:#fff;">
+                <div style="font-size:15px; font-weight:bold;" id="client-modal-title">新增客户</div>
+                <button onclick="clientCloseModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0; line-height:1; flex:none; width:auto;">×</button>
+            </div>
+            <div style="padding:16px; overflow-y:auto; max-height:80vh;">
+                <input type="hidden" id="client-edit-id">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">客户名称 *</label>
+                        <input type="text" id="client-f-name" placeholder="公司/个人名称" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">客户等级</label>
+                        <select id="client-f-level" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="A">A级（核心客户）</option>
+                            <option value="B" selected>B级（普通客户）</option>
+                            <option value="C">C级（潜在客户）</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">联系人</label>
+                        <input type="text" id="client-f-contact" placeholder="联系人姓名" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">联系电话</label>
+                        <input type="text" id="client-f-phone" placeholder="电话号码" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">邮箱</label>
+                        <input type="email" id="client-f-email" placeholder="邮箱地址" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">常用航线</label>
+                        <input type="text" id="client-f-route" placeholder="如：中国→日本" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">地址</label>
+                    <input type="text" id="client-f-address" placeholder="详细地址" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">备注</label>
+                    <textarea id="client-f-notes" rows="3" placeholder="客户偏好、特殊要求等..." style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; resize:vertical;"></textarea>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-main" style="background:#4a90e2; flex:1; padding:12px;" onclick="clientSaveRecord()">保存</button>
+                    <button class="btn-main" style="background:#95a5a6; flex:1; padding:12px;" onclick="clientCloseModal()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 供应商新增/编辑 Modal ===== -->
+<div id="supplier-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:10041; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div style="min-height:100%; display:flex; align-items:flex-start; justify-content:center; padding:16px;">
+        <div style="width:min(500px,100%); background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden; margin:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:linear-gradient(135deg,#e67e22,#f39c12); color:#fff;">
+                <div style="font-size:15px; font-weight:bold;" id="supplier-modal-title">新增供应商</div>
+                <button onclick="supplierCloseModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0; line-height:1; flex:none; width:auto;">×</button>
+            </div>
+            <div style="padding:16px; overflow-y:auto; max-height:80vh;">
+                <input type="hidden" id="supplier-edit-id">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">供应商名称 *</label>
+                        <input type="text" id="supplier-f-name" placeholder="公司名称" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">供应商类型</label>
+                        <select id="supplier-f-type" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="船代理">船代理</option>
+                            <option value="拖车行">拖车行</option>
+                            <option value="报关行">报关行</option>
+                            <option value="仓库">仓库</option>
+                            <option value="清关行">清关行</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">联系人</label>
+                        <input type="text" id="supplier-f-contact" placeholder="联系人姓名" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">联系电话</label>
+                        <input type="text" id="supplier-f-phone" placeholder="电话号码" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">邮箱</label>
+                        <input type="email" id="supplier-f-email" placeholder="邮箱地址" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">服务区域</label>
+                        <input type="text" id="supplier-f-region" placeholder="如：华东、日本关西" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">地址</label>
+                    <input type="text" id="supplier-f-address" placeholder="详细地址" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">银行账户信息</label>
+                    <textarea id="supplier-f-bank" rows="2" placeholder="开户行、账号等" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; resize:vertical;"></textarea>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">备注</label>
+                    <textarea id="supplier-f-notes" rows="2" placeholder="服务特点、合作条款等..." style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; resize:vertical;"></textarea>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-main" style="background:#e67e22; flex:1; padding:12px;" onclick="supplierSaveRecord()">保存</button>
+                    <button class="btn-main" style="background:#95a5a6; flex:1; padding:12px;" onclick="supplierCloseModal()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 对账详情 Modal ===== -->
+<div id="recon-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:10042; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div style="min-height:100%; display:flex; align-items:flex-start; justify-content:center; padding:16px;">
+        <div style="width:min(600px,100%); background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden; margin:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:linear-gradient(135deg,#9b59b6,#8e44ad); color:#fff;">
+                <div style="font-size:15px; font-weight:bold;" id="recon-modal-title">对账详情</div>
+                <button onclick="reconciliationCloseModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0; line-height:1; flex:none; width:auto;">×</button>
+            </div>
+            <div id="recon-modal-body" style="padding:16px; overflow-y:auto; max-height:80vh;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 运价新增/编辑 Modal ===== -->
+<div id="freight-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:10043; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div style="min-height:100%; display:flex; align-items:flex-start; justify-content:center; padding:16px;">
+        <div style="width:min(550px,100%); background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden; margin:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:linear-gradient(135deg,#16a085,#1abc9c); color:#fff;">
+                <div style="font-size:15px; font-weight:bold;" id="freight-modal-title">新增运价</div>
+                <button onclick="freightCloseModal()" style="background:none; border:none; color:#fff; font-size:22px; cursor:pointer; padding:0; line-height:1; flex:none; width:auto;">×</button>
+            </div>
+            <div style="padding:16px; overflow-y:auto; max-height:80vh;">
+                <input type="hidden" id="freight-edit-id">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">航线 *</label>
+                        <select id="freight-f-route" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="中日">中日</option>
+                            <option value="中韩">中韩</option>
+                            <option value="中美">中美</option>
+                            <option value="中欧">中欧</option>
+                            <option value="东南亚">东南亚</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">运输类型</label>
+                        <select id="freight-f-type" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="整柜">整柜</option>
+                            <option value="散货">散货</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">起运港</label>
+                        <input type="text" id="freight-f-pol" placeholder="起运港" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">目的港</label>
+                        <input type="text" id="freight-f-pod" placeholder="目的港" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">船公司</label>
+                        <input type="text" id="freight-f-carrier" placeholder="船公司名称" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">柜型</label>
+                        <input type="text" id="freight-f-containertype" placeholder="如：20GP/40HQ" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">运费 (人民币)</label>
+                        <input type="number" id="freight-f-price" placeholder="运费" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">有效期至</label>
+                        <input type="date" id="freight-f-validto" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">备注</label>
+                    <textarea id="freight-f-notes" rows="2" placeholder="航程、中转信息等..." style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; resize:vertical;"></textarea>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-main" style="background:#16a085; flex:1; padding:12px;" onclick="freightSaveRecord()">保存</button>
+                    <button class="btn-main" style="background:#95a5a6; flex:1; padding:12px;" onclick="freightCloseModal()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 客户档案管理 TAB ===== -->
+<div id="tab16" class="tab-content">
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #4a90e2; padding-left:8px;">👥 客户档案管理</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-main" style="background:#4a90e2; padding:8px 14px;" onclick="clientShowAddModal()">＋ 新增客户</button>
+                <button class="btn-main" style="background:#27ae60; padding:8px 14px;" onclick="clientExportCSV()">导出CSV</button>
+            </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <input type="text" id="client-search" placeholder="搜索客户名称/联系人/电话..." oninput="clientRender()" style="flex:1; min-width:140px; padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+            <select id="client-filter-level" onchange="clientRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="">全部等级</option>
+                <option value="A">A级客户</option>
+                <option value="B">B级客户</option>
+                <option value="C">C级客户</option>
+            </select>
+        </div>
+        <div id="client-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+    <div id="client-list"></div>
+    <div id="client-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无客户记录，点击"＋ 新增客户"开始录入</div>
+</div>
+
+<!-- ===== 供应商管理 TAB ===== -->
+<div id="tab17" class="tab-content">
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #e67e22; padding-left:8px;">🏭 供应商管理</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-main" style="background:#e67e22; padding:8px 14px;" onclick="supplierShowAddModal()">＋ 新增供应商</button>
+                <button class="btn-main" style="background:#27ae60; padding:8px 14px;" onclick="supplierExportCSV()">导出CSV</button>
+            </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <input type="text" id="supplier-search" placeholder="搜索供应商名称/联系人/电话..." oninput="supplierRender()" style="flex:1; min-width:140px; padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+            <select id="supplier-filter-type" onchange="supplierRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="">全部类型</option>
+                <option value="船代理">船代理</option>
+                <option value="拖车行">拖车行</option>
+                <option value="报关行">报关行</option>
+                <option value="仓库">仓库</option>
+                <option value="清关行">清关行</option>
+                <option value="其他">其他</option>
+            </select>
+        </div>
+        <div id="supplier-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+    <div id="supplier-list"></div>
+    <div id="supplier-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无供应商记录，点击"＋ 新增供应商"开始录入</div>
+</div>
+
+<!-- ===== 提醒通知 TAB ===== -->
+<div id="tab18" class="tab-content">
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #e74c3c; padding-left:8px;">🔔 提醒通知中心</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-main" style="background:#e74c3c; padding:8px 14px;" onclick="reminderRefresh()">🔄 刷新提醒</button>
+            </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <select id="reminder-filter-type" onchange="reminderRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="">全部类型</option>
+                <option value="etd">ETD提醒</option>
+                <option value="eta">ETA提醒</option>
+                <option value="freetime">免柜期到期</option>
+                <option value="receivable">应收逾期</option>
+                <option value="payable">应付到期</option>
+            </select>
+            <select id="reminder-filter-days" onchange="reminderRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="7">7天内</option>
+                <option value="14" selected>14天内</option>
+                <option value="30">30天内</option>
+                <option value="all">全部</option>
+            </select>
+        </div>
+        <div id="reminder-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+    <div id="reminder-list"></div>
+    <div id="reminder-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无提醒事项</div>
+</div>
+
+<!-- ===== 应收应付对账 TAB ===== -->
+<div id="tab19" class="tab-content">
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #9b59b6; padding-left:8px;">📊 应收应付对账</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-main" style="background:#9b59b6; padding:8px 14px;" onclick="reconciliationExport()">导出对账单</button>
+            </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <select id="recon-filter-type" onchange="reconciliationRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="receivable">应收账款</option>
+                <option value="payable">应付账款</option>
+            </select>
+            <select id="recon-filter-status" onchange="reconciliationRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="">全部状态</option>
+                <option value="unpaid">未结算</option>
+                <option value="partial">部分结算</option>
+                <option value="paid">已结算</option>
+            </select>
+            <input type="text" id="recon-search" placeholder="搜索客户/供应商..." oninput="reconciliationRender()" style="flex:1; min-width:120px; padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+        </div>
+        <div id="recon-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+    <div id="recon-list"></div>
+    <div id="recon-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无对账数据，请在费用单中录入</div>
+</div>
+
+<!-- ===== 运价管理 TAB ===== -->
+<div id="tab20" class="tab-content">
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #16a085; padding-left:8px;">💰 运价管理</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-main" style="background:#16a085; padding:8px 14px;" onclick="freightShowAddModal()">＋ 新增运价</button>
+                <button class="btn-main" style="background:#27ae60; padding:8px 14px;" onclick="freightExportCSV()">导出CSV</button>
+            </div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <input type="text" id="freight-search" placeholder="搜索航线/船司/港口..." oninput="freightRender()" style="flex:1; min-width:140px; padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+            <select id="freight-filter-type" onchange="freightRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="">全部类型</option>
+                <option value="整柜">整柜</option>
+                <option value="散货">散货</option>
+            </select>
+            <select id="freight-filter-route" onchange="freightRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="">全部航线</option>
+                <option value="中日">中日</option>
+                <option value="中韩">中韩</option>
+                <option value="中美">中美</option>
+                <option value="中欧">中欧</option>
+                <option value="东南亚">东南亚</option>
+            </select>
+        </div>
+        <div id="freight-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+    <div id="freight-list"></div>
+    <div id="freight-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无运价记录，点击"＋ 新增运价"开始录入</div>
 </div>
 
 <div class="tab-bar">
@@ -4280,9 +4772,9 @@ const PREFS = [
     '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'
 ];
 
-window.onload = async () => {
+function initAllModules(){
     initRates();
-    await restoreAppState();
+    restoreAppState();
     renderContainerTable();
     renderShippingTable();
     renderTruckTable();
@@ -4303,7 +4795,8 @@ window.onload = async () => {
     updateDashboardNow();
     setInterval(updateDashboardNow, 1000);
     updateStorageStatus();
-};
+    initNewModules();
+}
 
 function switchTab(idx) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -7060,7 +7553,7 @@ function crmRender() {
                </div>`
             : '';
         const cardClick = crmSelectMode ? `crmToggleSelect(${r.id}, event)` : `crmShowDetail(${r.id})`;
-        return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" onclick="${cardClick}">
+        return `<div id="crm-card-${r.id}" class="module-card hover-trigger" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" onclick="${cardClick}" onmouseenter="showPreview(getPreviewHtml_CRMOrder(crmLoad().find(x=>x.id===${r.id})||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
             <div style="display:flex; align-items:flex-start; gap:8px;">
                 ${cbHtml}
                 <div style="flex:1; min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; flex-wrap:wrap;">
@@ -7098,9 +7591,36 @@ function crmSwitchView(v) {
 
 // ─── CRM 利润统计 ───
 function crmRenderStats() {
-    const data = crmLoad();
+    let data = crmLoad();
     const fmtM = v => v !== undefined ? (v>=0?'':'-')+'¥'+Math.abs(v).toLocaleString('zh-CN',{maximumFractionDigits:0}) : '—';
     const fmtP = v => v !== undefined ? (v*100).toFixed(1)+'%' : '—';
+
+    const periodEl = document.getElementById('crm-stats-period');
+    const filterEl = document.getElementById('crm-stats-filter');
+    const period = periodEl ? periodEl.value : 'all';
+    const filter = filterEl ? filterEl.value : 'all';
+
+    const now = new Date();
+    const thisMonth = now.toISOString().slice(0,7);
+    const thisYear = now.getFullYear();
+    const thisQuarter = Math.floor(now.getMonth() / 3) + 1;
+    const quarterStart = new Date(thisYear, (thisQuarter-1)*3, 1).toISOString().slice(0,10);
+
+    if(period === 'month'){
+        data = data.filter(r => (r.etd||r.createdAt||'').slice(0,7) === thisMonth);
+    }else if(period === 'quarter'){
+        data = data.filter(r => (r.etd||r.createdAt||'') >= quarterStart);
+    }else if(period === 'year'){
+        data = data.filter(r => (r.etd||r.createdAt||'').slice(0,4) === String(thisYear));
+    }
+
+    if(filter === 'profit'){
+        data = data.filter(r => r.profit !== undefined && r.profit > 0);
+    }else if(filter === 'loss'){
+        data = data.filter(r => r.profit !== undefined && r.profit < 0);
+    }else if(filter === 'completed'){
+        data = data.filter(r => r.status === '已完结');
+    }
 
     const withCosts = data.filter(r => r.costs && r.costs._total);
     const totalRev  = data.reduce((s,r) => s + ((r.fees||{}).total||0), 0);
@@ -7109,7 +7629,6 @@ function crmRenderStats() {
     const avgMargin  = totalRev > 0 ? (withCosts.reduce((s,r)=>s+(r.profit||0),0)) / withCosts.reduce((s,r)=>s+((r.fees||{}).total||0),0) : 0;
     const profitColor = totalProfit >= 0 ? '#1f7a5c' : '#e74c3c';
 
-    // 总览
     const overview = document.getElementById('crm-stat-overview');
     if (overview) overview.innerHTML = [
         {label:'总票数', val: data.length+'票', sub:'含'+withCosts.length+'票有应付数据', color:'#4a90e2'},
@@ -7122,7 +7641,6 @@ function crmRenderStats() {
         <div class="stat-sub">${c.sub}</div>
     </div>`).join('');
 
-    // 月度趋势
     const byMonth = {};
     withCosts.forEach(r => {
         const month = (r.etd||r.createdAt||'').slice(0,7);
@@ -7157,7 +7675,6 @@ function crmRenderStats() {
         const xStep  = chartW / (months.length - 1 || 1);
         const yScale = v => pad.t + chartH - ((v - minVal) / range) * chartH;
         ctx.clearRect(0, 0, W, H);
-        // grid
         ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
         [0, 0.25, 0.5, 0.75, 1].forEach(t => {
             const y = pad.t + chartH * t;
@@ -7166,14 +7683,12 @@ function crmRenderStats() {
             ctx.fillStyle = '#aaa'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
             ctx.fillText('¥'+Math.round(v/1000)+'k', pad.l - 4, y + 3);
         });
-        // zero line
         if (minVal < 0) {
             const zy = yScale(0);
             ctx.strokeStyle = '#ccc'; ctx.setLineDash([4,3]); ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(pad.l, zy); ctx.lineTo(W-pad.r, zy); ctx.stroke();
             ctx.setLineDash([]);
         }
-        // revenue bars
         const barW = Math.max(4, xStep * 0.4);
         months.forEach((m, i) => {
             const x = pad.l + i * xStep;
@@ -7182,7 +7697,6 @@ function crmRenderStats() {
             ctx.fillStyle = 'rgba(74,144,226,0.2)';
             ctx.fillRect(x - barW/2, Math.min(y0,y1), barW, Math.abs(y0-y1));
         });
-        // profit line
         ctx.strokeStyle = '#1f7a5c'; ctx.lineWidth = 2.5; ctx.setLineDash([]);
         ctx.beginPath();
         months.forEach((m, i) => {
@@ -7190,14 +7704,12 @@ function crmRenderStats() {
             i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         });
         ctx.stroke();
-        // dots
         months.forEach((m, i) => {
             const x = pad.l + i * xStep, y = yScale(byMonth[m].profit);
             const p = byMonth[m].profit;
             ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2);
             ctx.fillStyle = p >= 0 ? '#1f7a5c' : '#e74c3c'; ctx.fill();
         });
-        // x labels
         ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
         months.forEach((m, i) => {
             const x = pad.l + i * xStep;
@@ -7205,7 +7717,74 @@ function crmRenderStats() {
         });
     }
 
-    // 客户排名
+    const byRoute = {};
+    withCosts.forEach(r => {
+        const route = r.route || '未知航线';
+        if (!byRoute[route]) byRoute[route] = { rev:0, cost:0, profit:0, count:0 };
+        byRoute[route].rev    += (r.fees||{}).total||0;
+        byRoute[route].cost   += r.costs._total||0;
+        byRoute[route].profit += r.profit||0;
+        byRoute[route].count  ++;
+    });
+    const routeList = Object.entries(byRoute).sort((a,b) => b[1].profit - a[1].profit);
+    const routeEl = document.getElementById('crm-stat-routes');
+    if (routeEl) {
+        if (!routeList.length) { routeEl.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:16px;">暂无数据</div>'; }
+        else routeEl.innerHTML = routeList.map(([name, d], i) => {
+            const margin = d.rev > 0 ? d.profit/d.rev : 0;
+            const pc = d.profit >= 0 ? '#1f7a5c' : '#e74c3c';
+            const barPct = Math.min(Math.max(margin*100, 0), 100);
+            return `<div style="padding:10px 0;border-bottom:1px solid #f0f4fa;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="background:#e8f4fd;color:#2980b9;border-radius:999px;padding:1px 8px;font-size:10px;font-weight:bold;">#${i+1}</span>
+                        <span style="font-size:13px;font-weight:bold;color:#2c3e50;">${name}</span>
+                        <span style="font-size:10px;color:#aaa;">${d.count}票</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:bold;color:${pc};">${fmtM(d.profit)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px;">
+                    <span>应收 ¥${d.rev.toLocaleString()}</span>
+                    <span>应付 ¥${d.cost.toLocaleString()}</span>
+                    <span style="color:${pc};font-weight:bold;">${fmtP(margin)}</span>
+                </div>
+                <div style="background:#eee;border-radius:999px;height:4px;overflow:hidden;">
+                    <div style="height:100%;background:${pc};width:${barPct}%;"></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    const byCarrier = {};
+    withCosts.forEach(r => {
+        const carrier = r.carrier || '未知船司';
+        if (!byCarrier[carrier]) byCarrier[carrier] = { rev:0, cost:0, profit:0, count:0 };
+        byCarrier[carrier].rev    += (r.fees||{}).total||0;
+        byCarrier[carrier].cost   += r.costs._total||0;
+        byCarrier[carrier].profit += r.profit||0;
+        byCarrier[carrier].count  ++;
+    });
+    const carrierList = Object.entries(byCarrier).sort((a,b) => b[1].profit - a[1].profit);
+    const carrierEl = document.getElementById('crm-stat-carriers');
+    if (carrierEl) {
+        if (!carrierList.length) { carrierEl.innerHTML = '<div style="color:#bbb;font-size:12px;text-align:center;padding:16px;">暂无数据</div>'; }
+        else carrierEl.innerHTML = carrierList.slice(0,10).map(([name, d], i) => {
+            const margin = d.rev > 0 ? d.profit/d.rev : 0;
+            const pc = d.profit >= 0 ? '#1f7a5c' : '#e74c3c';
+            return `<div style="padding:8px 0;border-bottom:1px solid #f0f4fa;display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="background:#fef5e7;color:#e67e22;border-radius:999px;padding:1px 8px;font-size:10px;font-weight:bold;">#${i+1}</span>
+                    <span style="font-size:12px;color:#2c3e50;">${name}</span>
+                    <span style="font-size:10px;color:#aaa;">${d.count}票</span>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:12px;font-weight:bold;color:${pc};">${fmtM(d.profit)}</span>
+                    <span style="font-size:10px;color:#888;margin-left:8px;">${fmtP(margin)}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
     const byClient = {};
     withCosts.forEach(r => {
         const c = r.client || '未知';
@@ -7244,7 +7823,6 @@ function crmRenderStats() {
         }).join('');
     }
 
-    // 逐票明细
     const detailEl = document.getElementById('crm-stat-detail');
     if (detailEl) {
         const rows = data.filter(r => (r.fees||{}).total || (r.costs||{})._total).sort((a,b)=>(b.etd||'').localeCompare(a.etd||''));
@@ -7608,6 +8186,1126 @@ async function crmShareClientPdf(id) {
         wrap.remove();
     }
 }
+
+// ===================== 客户档案管理 =====================
+let clientData = [];
+const CLIENT_STORAGE_KEY = 'logistics_client_data';
+
+function clientLoadData(){
+    try{
+        const saved = localStorage.getItem(CLIENT_STORAGE_KEY);
+        clientData = saved ? JSON.parse(saved) : [];
+    }catch{
+        clientData = [];
+    }
+}
+
+function clientSaveData(){
+    localStorage.setItem(CLIENT_STORAGE_KEY, JSON.stringify(clientData));
+}
+
+function clientShowAddModal(){
+    document.getElementById('client-modal-title').textContent = '新增客户';
+    document.getElementById('client-edit-id').value = '';
+    document.getElementById('client-f-name').value = '';
+    document.getElementById('client-f-level').value = 'B';
+    document.getElementById('client-f-contact').value = '';
+    document.getElementById('client-f-phone').value = '';
+    document.getElementById('client-f-email').value = '';
+    document.getElementById('client-f-route').value = '';
+    document.getElementById('client-f-address').value = '';
+    document.getElementById('client-f-notes').value = '';
+    document.getElementById('client-modal').style.display = 'block';
+}
+
+function clientShowEditModal(id){
+    const item = clientData.find(c => c.id === id);
+    if(!item) return;
+    document.getElementById('client-modal-title').textContent = '编辑客户';
+    document.getElementById('client-edit-id').value = id;
+    document.getElementById('client-f-name').value = item.name || '';
+    document.getElementById('client-f-level').value = item.level || 'B';
+    document.getElementById('client-f-contact').value = item.contact || '';
+    document.getElementById('client-f-phone').value = item.phone || '';
+    document.getElementById('client-f-email').value = item.email || '';
+    document.getElementById('client-f-route').value = item.route || '';
+    document.getElementById('client-f-address').value = item.address || '';
+    document.getElementById('client-f-notes').value = item.notes || '';
+    document.getElementById('client-modal').style.display = 'block';
+}
+
+function clientCloseModal(){
+    document.getElementById('client-modal').style.display = 'none';
+}
+
+function clientSaveRecord(){
+    const editId = document.getElementById('client-edit-id').value;
+    const name = document.getElementById('client-f-name').value.trim();
+    if(!name){
+        alert('请输入客户名称');
+        return;
+    }
+    const record = {
+        id: editId || Date.now().toString(),
+        name,
+        level: document.getElementById('client-f-level').value,
+        contact: document.getElementById('client-f-contact').value.trim(),
+        phone: document.getElementById('client-f-phone').value.trim(),
+        email: document.getElementById('client-f-email').value.trim(),
+        route: document.getElementById('client-f-route').value.trim(),
+        address: document.getElementById('client-f-address').value.trim(),
+        notes: document.getElementById('client-f-notes').value.trim(),
+        createdAt: editId ? (clientData.find(c => c.id === editId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    if(editId){
+        const idx = clientData.findIndex(c => c.id === editId);
+        if(idx !== -1) clientData[idx] = record;
+    }else{
+        clientData.unshift(record);
+    }
+    clientSaveData();
+    clientCloseModal();
+    clientRender();
+}
+
+function clientDeleteRecord(id){
+    if(!confirm('确定删除该客户？此操作不可恢复。')) return;
+    clientData = clientData.filter(c => c.id !== id);
+    clientSaveData();
+    clientRender();
+}
+
+function clientRender(){
+    const search = document.getElementById('client-search').value.toLowerCase();
+    const levelFilter = document.getElementById('client-filter-level').value;
+    let filtered = clientData.filter(c => {
+        const matchSearch = !search || 
+            (c.name && c.name.toLowerCase().includes(search)) ||
+            (c.contact && c.contact.toLowerCase().includes(search)) ||
+            (c.phone && c.phone.includes(search));
+        const matchLevel = !levelFilter || c.level === levelFilter;
+        return matchSearch && matchLevel;
+    });
+    const statsBar = document.getElementById('client-stats-bar');
+    const totalA = clientData.filter(c => c.level === 'A').length;
+    const totalB = clientData.filter(c => c.level === 'B').length;
+    const totalC = clientData.filter(c => c.level === 'C').length;
+    statsBar.innerHTML = `
+        <span style="background:#e8f4fd; color:#2980b9; padding:4px 10px; border-radius:12px; font-size:11px;">A级: ${totalA}</span>
+        <span style="background:#e8f8f0; color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">B级: ${totalB}</span>
+        <span style="background:#fef5e7; color:#f39c12; padding:4px 10px; border-radius:12px; font-size:11px;">C级: ${totalC}</span>
+        <span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${clientData.length} 条</span>
+    `;
+    const listEl = document.getElementById('client-list');
+    const emptyEl = document.getElementById('client-empty');
+    if(filtered.length === 0){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = filtered.map(c => {
+        const levelColor = c.level === 'A' ? '#e74c3c' : (c.level === 'B' ? '#27ae60' : '#f39c12');
+        const levelBg = c.level === 'A' ? '#fdeaea' : (c.level === 'B' ? '#e8f8f0' : '#fef5e7');
+        const clientJson = JSON.stringify(c).replace(/"/g, '&quot;');
+        return `
+        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px;" onmouseenter="showPreview(getPreviewHtml_Client(clientData.find(x=>x.id==='${c.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:15px; font-weight:bold; color:#2c3e50;">${c.name}</span>
+                        <span style="background:${levelBg}; color:${levelColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${c.level}级</span>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:#666;">
+                        ${c.contact ? `<span>👤 ${c.contact}</span>` : ''}
+                        ${c.phone ? `<span>📞 ${c.phone}</span>` : ''}
+                        ${c.email ? `<span>📧 ${c.email}</span>` : ''}
+                        ${c.route ? `<span>🚢 ${c.route}</span>` : ''}
+                    </div>
+                    ${c.address ? `<div style="font-size:12px; color:#888; margin-top:4px;">📍 ${c.address}</div>` : ''}
+                    ${c.notes ? `<div style="font-size:11px; color:#999; margin-top:4px; padding:6px; background:#f8f9fa; border-radius:6px;">${c.notes}</div>` : ''}
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button onclick="clientShowEditModal('${c.id}')" style="background:#3498db; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">编辑</button>
+                    <button onclick="clientDeleteRecord('${c.id}')" style="background:#e74c3c; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">删除</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function clientExportCSV(){
+    if(clientData.length === 0){
+        alert('暂无数据可导出');
+        return;
+    }
+    const headers = ['客户名称', '等级', '联系人', '电话', '邮箱', '常用航线', '地址', '备注', '创建时间'];
+    const rows = clientData.map(c => [
+        c.name, c.level, c.contact, c.phone, c.email, c.route, c.address, c.notes, c.createdAt
+    ]);
+    let csv = '\uFEFF' + headers.join(',') + '\n' + rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `客户档案_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ===================== 供应商管理 =====================
+let supplierData = [];
+const SUPPLIER_STORAGE_KEY = 'logistics_supplier_data';
+
+function supplierLoadData(){
+    try{
+        const saved = localStorage.getItem(SUPPLIER_STORAGE_KEY);
+        supplierData = saved ? JSON.parse(saved) : [];
+    }catch{
+        supplierData = [];
+    }
+}
+
+function supplierSaveData(){
+    localStorage.setItem(SUPPLIER_STORAGE_KEY, JSON.stringify(supplierData));
+}
+
+function supplierShowAddModal(){
+    document.getElementById('supplier-modal-title').textContent = '新增供应商';
+    document.getElementById('supplier-edit-id').value = '';
+    document.getElementById('supplier-f-name').value = '';
+    document.getElementById('supplier-f-type').value = '船代理';
+    document.getElementById('supplier-f-contact').value = '';
+    document.getElementById('supplier-f-phone').value = '';
+    document.getElementById('supplier-f-email').value = '';
+    document.getElementById('supplier-f-region').value = '';
+    document.getElementById('supplier-f-address').value = '';
+    document.getElementById('supplier-f-bank').value = '';
+    document.getElementById('supplier-f-notes').value = '';
+    document.getElementById('supplier-modal').style.display = 'block';
+}
+
+function supplierShowEditModal(id){
+    const item = supplierData.find(s => s.id === id);
+    if(!item) return;
+    document.getElementById('supplier-modal-title').textContent = '编辑供应商';
+    document.getElementById('supplier-edit-id').value = id;
+    document.getElementById('supplier-f-name').value = item.name || '';
+    document.getElementById('supplier-f-type').value = item.type || '船代理';
+    document.getElementById('supplier-f-contact').value = item.contact || '';
+    document.getElementById('supplier-f-phone').value = item.phone || '';
+    document.getElementById('supplier-f-email').value = item.email || '';
+    document.getElementById('supplier-f-region').value = item.region || '';
+    document.getElementById('supplier-f-address').value = item.address || '';
+    document.getElementById('supplier-f-bank').value = item.bank || '';
+    document.getElementById('supplier-f-notes').value = item.notes || '';
+    document.getElementById('supplier-modal').style.display = 'block';
+}
+
+function supplierCloseModal(){
+    document.getElementById('supplier-modal').style.display = 'none';
+}
+
+function supplierSaveRecord(){
+    const editId = document.getElementById('supplier-edit-id').value;
+    const name = document.getElementById('supplier-f-name').value.trim();
+    if(!name){
+        alert('请输入供应商名称');
+        return;
+    }
+    const record = {
+        id: editId || Date.now().toString(),
+        name,
+        type: document.getElementById('supplier-f-type').value,
+        contact: document.getElementById('supplier-f-contact').value.trim(),
+        phone: document.getElementById('supplier-f-phone').value.trim(),
+        email: document.getElementById('supplier-f-email').value.trim(),
+        region: document.getElementById('supplier-f-region').value.trim(),
+        address: document.getElementById('supplier-f-address').value.trim(),
+        bank: document.getElementById('supplier-f-bank').value.trim(),
+        notes: document.getElementById('supplier-f-notes').value.trim(),
+        createdAt: editId ? (supplierData.find(s => s.id === editId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    if(editId){
+        const idx = supplierData.findIndex(s => s.id === editId);
+        if(idx !== -1) supplierData[idx] = record;
+    }else{
+        supplierData.unshift(record);
+    }
+    supplierSaveData();
+    supplierCloseModal();
+    supplierRender();
+}
+
+function supplierDeleteRecord(id){
+    if(!confirm('确定删除该供应商？此操作不可恢复。')) return;
+    supplierData = supplierData.filter(s => s.id !== id);
+    supplierSaveData();
+    supplierRender();
+}
+
+function supplierRender(){
+    const search = document.getElementById('supplier-search').value.toLowerCase();
+    const typeFilter = document.getElementById('supplier-filter-type').value;
+    let filtered = supplierData.filter(s => {
+        const matchSearch = !search || 
+            (s.name && s.name.toLowerCase().includes(search)) ||
+            (s.contact && s.contact.toLowerCase().includes(search)) ||
+            (s.phone && s.phone.includes(search));
+        const matchType = !typeFilter || s.type === typeFilter;
+        return matchSearch && matchType;
+    });
+    const statsBar = document.getElementById('supplier-stats-bar');
+    const typeCounts = {};
+    supplierData.forEach(s => { typeCounts[s.type] = (typeCounts[s.type] || 0) + 1; });
+    let statsHtml = `<span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${supplierData.length} 条</span>`;
+    Object.entries(typeCounts).forEach(([type, count]) => {
+        statsHtml += `<span style="background:#fef5e7; color:#e67e22; padding:4px 10px; border-radius:12px; font-size:11px;">${type}: ${count}</span>`;
+    });
+    statsBar.innerHTML = statsHtml;
+    const listEl = document.getElementById('supplier-list');
+    const emptyEl = document.getElementById('supplier-empty');
+    if(filtered.length === 0){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    emptyEl.style.display = 'none';
+    listEl.innerHTML = filtered.map(s => {
+        const typeColor = s.type === '船代理' ? '#3498db' : (s.type === '拖车行' ? '#9b59b6' : (s.type === '报关行' ? '#1abc9c' : '#e67e22'));
+        return `
+        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px;" onmouseenter="showPreview(getPreviewHtml_Supplier(supplierData.find(x=>x.id==='${s.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:15px; font-weight:bold; color:#2c3e50;">${s.name}</span>
+                        <span style="background:#fef5e7; color:${typeColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${s.type}</span>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:#666;">
+                        ${s.contact ? `<span>👤 ${s.contact}</span>` : ''}
+                        ${s.phone ? `<span>📞 ${s.phone}</span>` : ''}
+                        ${s.email ? `<span>📧 ${s.email}</span>` : ''}
+                        ${s.region ? `<span>🌍 ${s.region}</span>` : ''}
+                    </div>
+                    ${s.address ? `<div style="font-size:12px; color:#888; margin-top:4px;">📍 ${s.address}</div>` : ''}
+                    ${s.bank ? `<div style="font-size:11px; color:#888; margin-top:4px; padding:6px; background:#f0f8ff; border-radius:6px;">🏦 ${s.bank}</div>` : ''}
+                    ${s.notes ? `<div style="font-size:11px; color:#999; margin-top:4px; padding:6px; background:#f8f9fa; border-radius:6px;">${s.notes}</div>` : ''}
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button onclick="supplierShowEditModal('${s.id}')" style="background:#e67e22; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">编辑</button>
+                    <button onclick="supplierDeleteRecord('${s.id}')" style="background:#e74c3c; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">删除</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function supplierExportCSV(){
+    if(supplierData.length === 0){
+        alert('暂无数据可导出');
+        return;
+    }
+    const headers = ['供应商名称', '类型', '联系人', '电话', '邮箱', '服务区域', '地址', '银行账户', '备注', '创建时间'];
+    const rows = supplierData.map(s => [
+        s.name, s.type, s.contact, s.phone, s.email, s.region, s.address, s.bank, s.notes, s.createdAt
+    ]);
+    let csv = '\uFEFF' + headers.join(',') + '\n' + rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `供应商档案_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ===================== 提醒通知系统 =====================
+let reminderData = [];
+const REMINDER_STORAGE_KEY = 'logistics_reminder_data';
+
+function reminderLoadData(){
+    try{
+        const saved = localStorage.getItem(REMINDER_STORAGE_KEY);
+        reminderData = saved ? JSON.parse(saved) : [];
+    }catch{
+        reminderData = [];
+    }
+}
+
+function reminderSaveData(){
+    localStorage.setItem(REMINDER_STORAGE_KEY, JSON.stringify(reminderData));
+}
+
+function reminderRefresh(){
+    reminderGenerateFromCRM();
+    reminderRender();
+}
+
+function reminderGenerateFromCRM(){
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const newReminders = [];
+    const crmData = crmLoad();
+    crmData.forEach(r => {
+        if(r.etd){
+            const etdDate = new Date(r.etd);
+            const daysDiff = Math.ceil((etdDate - today) / (1000*60*60*24));
+            if(daysDiff >= 0 && daysDiff <= 30){
+                newReminders.push({
+                    id: `etd-${r.id}`,
+                    type: 'etd',
+                    title: `ETD提醒: ${r.customer || r.id}`,
+                    date: r.etd,
+                    daysLeft: daysDiff,
+                    orderId: r.id,
+                    status: daysDiff <= 3 ? 'urgent' : (daysDiff <= 7 ? 'warning' : 'normal')
+                });
+            }
+        }
+        if(r.eta){
+            const etaDate = new Date(r.eta);
+            const daysDiff = Math.ceil((etaDate - today) / (1000*60*60*24));
+            if(daysDiff >= 0 && daysDiff <= 30){
+                newReminders.push({
+                    id: `eta-${r.id}`,
+                    type: 'eta',
+                    title: `ETA提醒: ${r.customer || r.id}`,
+                    date: r.eta,
+                    daysLeft: daysDiff,
+                    orderId: r.id,
+                    status: daysDiff <= 3 ? 'urgent' : (daysDiff <= 7 ? 'warning' : 'normal')
+                });
+            }
+        }
+        if(r.freetimeEnd){
+            const ftDate = new Date(r.freetimeEnd);
+            const daysDiff = Math.ceil((ftDate - today) / (1000*60*60*24));
+            if(daysDiff >= 0 && daysDiff <= 30){
+                newReminders.push({
+                    id: `ft-${r.id}`,
+                    type: 'freetime',
+                    title: `免柜期到期: ${r.customer || r.id}`,
+                    date: r.freetimeEnd,
+                    daysLeft: daysDiff,
+                    orderId: r.id,
+                    status: daysDiff <= 3 ? 'urgent' : (daysDiff <= 7 ? 'warning' : 'normal')
+                });
+            }
+        }
+    });
+    reminderData = newReminders;
+    reminderSaveData();
+}
+
+function reminderRender(){
+    const typeFilter = document.getElementById('reminder-filter-type').value;
+    const daysFilter = document.getElementById('reminder-filter-days').value;
+    let filtered = reminderData.filter(r => {
+        const matchType = !typeFilter || r.type === typeFilter;
+        let matchDays = true;
+        if(daysFilter !== 'all'){
+            const maxDays = parseInt(daysFilter);
+            matchDays = r.daysLeft <= maxDays;
+        }
+        return matchType && matchDays;
+    });
+    filtered.sort((a,b) => a.daysLeft - b.daysLeft);
+    const statsBar = document.getElementById('reminder-stats-bar');
+    const urgentCount = filtered.filter(r => r.status === 'urgent').length;
+    const warningCount = filtered.filter(r => r.status === 'warning').length;
+    const normalCount = filtered.filter(r => r.status === 'normal').length;
+    statsBar.innerHTML = `
+        <span style="background:#fdeaea; color:#e74c3c; padding:4px 10px; border-radius:12px; font-size:11px;">紧急: ${urgentCount}</span>
+        <span style="background:#fef5e7; color:#f39c12; padding:4px 10px; border-radius:12px; font-size:11px;">注意: ${warningCount}</span>
+        <span style="background:#e8f8f0; color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">正常: ${normalCount}</span>
+        <span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${filtered.length} 条</span>
+    `;
+    const listEl = document.getElementById('reminder-list');
+    const emptyEl = document.getElementById('reminder-empty');
+    if(filtered.length === 0){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    emptyEl.style.display = 'none';
+    const typeLabels = { etd: 'ETD提醒', eta: 'ETA提醒', freetime: '免柜期', receivable: '应收', payable: '应付' };
+    const typeIcons = { etd: '🚢', eta: '📦', freetime: '⏰', receivable: '💰', payable: '💸' };
+    listEl.innerHTML = filtered.map(r => {
+        const bgColor = r.status === 'urgent' ? '#fdeaea' : (r.status === 'warning' ? '#fef5e7' : '#e8f8f0');
+        const borderColor = r.status === 'urgent' ? '#e74c3c' : (r.status === 'warning' ? '#f39c12' : '#27ae60');
+        const textColor = r.status === 'urgent' ? '#c0392b' : (r.status === 'warning' ? '#d68910' : '#1e8449');
+        const reminderJson = JSON.stringify(r).replace(/"/g, '&quot;');
+        return `
+        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px; border-left:4px solid ${borderColor}; background:${bgColor};" onmouseenter="showPreview(getPreviewHtml_Reminder(reminderData.find(x=>x.id==='${r.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span style="font-size:16px;">${typeIcons[r.type] || '🔔'}</span>
+                        <span style="font-size:14px; font-weight:bold; color:${textColor};">${r.title}</span>
+                    </div>
+                    <div style="font-size:12px; color:#666;">
+                        <span>📅 ${r.date}</span>
+                        <span style="margin-left:12px; font-weight:bold; color:${textColor};">${r.daysLeft === 0 ? '今天到期！' : `还有 ${r.daysLeft} 天`}</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="reminderGoToOrder('${r.orderId}')" style="background:#3498db; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">查看订单</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function reminderGoToOrder(orderId){
+    switchTab(15);
+    setTimeout(() => {
+        const order = crmLoad().find(r => r.id === orderId);
+        if(order) showCrmDetail(order);
+    }, 300);
+}
+
+// ===================== 应收应付对账 =====================
+let reconciliationData = { receivable: [], payable: [] };
+const RECON_STORAGE_KEY = 'logistics_reconciliation_data';
+
+function reconciliationLoadData(){
+    try{
+        const saved = localStorage.getItem(RECON_STORAGE_KEY);
+        reconciliationData = saved ? JSON.parse(saved) : { receivable: [], payable: [] };
+    }catch{
+        reconciliationData = { receivable: [], payable: [] };
+    }
+}
+
+function reconciliationSaveData(){
+    localStorage.setItem(RECON_STORAGE_KEY, JSON.stringify(reconciliationData));
+}
+
+function reconciliationGenerateFromCRM(){
+    const receivableMap = {};
+    const payableMap = {};
+    const crmData = crmLoad();
+    crmData.forEach(r => {
+        if(r.customer && r.totalReceivable){
+            if(!receivableMap[r.customer]) receivableMap[r.customer] = { customer: r.customer, orders: [], totalAmount: 0, paidAmount: 0 };
+            receivableMap[r.customer].orders.push({
+                orderId: r.id,
+                date: r.createdAt,
+                amount: parseFloat(r.totalReceivable) || 0,
+                status: r.paymentStatus || 'unpaid'
+            });
+            receivableMap[r.customer].totalAmount += parseFloat(r.totalReceivable) || 0;
+            if(r.paymentStatus === 'paid') receivableMap[r.customer].paidAmount += parseFloat(r.totalReceivable) || 0;
+        }
+        if(r.supplier && r.totalPayable){
+            if(!payableMap[r.supplier]) payableMap[r.supplier] = { supplier: r.supplier, orders: [], totalAmount: 0, paidAmount: 0 };
+            payableMap[r.supplier].orders.push({
+                orderId: r.id,
+                date: r.createdAt,
+                amount: parseFloat(r.totalPayable) || 0,
+                status: r.paymentStatus || 'unpaid'
+            });
+            payableMap[r.supplier].totalAmount += parseFloat(r.totalPayable) || 0;
+            if(r.paymentStatus === 'paid') payableMap[r.supplier].paidAmount += parseFloat(r.totalPayable) || 0;
+        }
+    });
+    reconciliationData.receivable = Object.values(receivableMap);
+    reconciliationData.payable = Object.values(payableMap);
+    reconciliationSaveData();
+}
+
+function reconciliationRender(){
+    const typeFilter = document.getElementById('recon-filter-type').value;
+    const statusFilter = document.getElementById('recon-filter-status').value;
+    const search = document.getElementById('recon-search').value.toLowerCase();
+    let data = typeFilter === 'receivable' ? reconciliationData.receivable : reconciliationData.payable;
+    let filtered = data.filter(item => {
+        const name = item.customer || item.supplier || '';
+        const matchSearch = !search || name.toLowerCase().includes(search);
+        const unpaid = item.totalAmount - item.paidAmount;
+        let status = 'paid';
+        if(unpaid > 0 && item.paidAmount > 0) status = 'partial';
+        else if(unpaid > 0) status = 'unpaid';
+        const matchStatus = !statusFilter || status === statusFilter;
+        return matchSearch && matchStatus;
+    });
+    const statsBar = document.getElementById('recon-stats-bar');
+    const totalReceivable = reconciliationData.receivable.reduce((sum, r) => sum + r.totalAmount, 0);
+    const totalReceivablePaid = reconciliationData.receivable.reduce((sum, r) => sum + r.paidAmount, 0);
+    const totalPayable = reconciliationData.payable.reduce((sum, r) => sum + r.totalAmount, 0);
+    const totalPayablePaid = reconciliationData.payable.reduce((sum, r) => sum + r.paidAmount, 0);
+    statsBar.innerHTML = `
+        <span style="background:#e8f4fd; color:#2980b9; padding:4px 10px; border-radius:12px; font-size:11px;">应收: ¥${totalReceivable.toFixed(2)}</span>
+        <span style="background:#e8f8f0; color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">已收: ¥${totalReceivablePaid.toFixed(2)}</span>
+        <span style="background:#fef5e7; color:#e67e22; padding:4px 10px; border-radius:12px; font-size:11px;">应付: ¥${totalPayable.toFixed(2)}</span>
+        <span style="background:#fdeaea; color:#e74c3c; padding:4px 10px; border-radius:12px; font-size:11px;">已付: ¥${totalPayablePaid.toFixed(2)}</span>
+    `;
+    const listEl = document.getElementById('recon-list');
+    const emptyEl = document.getElementById('recon-empty');
+    if(filtered.length === 0){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    emptyEl.style.display = 'none';
+    const isReceivable = typeFilter === 'receivable';
+    listEl.innerHTML = filtered.map(item => {
+        const name = item.customer || item.supplier || '未知';
+        const unpaid = item.totalAmount - item.paidAmount;
+        let status = 'paid';
+        let statusLabel = '已结算';
+        let statusColor = '#27ae60';
+        let statusBg = '#e8f8f0';
+        if(unpaid > 0 && item.paidAmount > 0){
+            status = 'partial';
+            statusLabel = '部分结算';
+            statusColor = '#f39c12';
+            statusBg = '#fef5e7';
+        }else if(unpaid > 0){
+            status = 'unpaid';
+            statusLabel = '未结算';
+            statusColor = '#e74c3c';
+            statusBg = '#fdeaea';
+        }
+        return `
+        <div class="module-card" style="padding:12px 14px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:15px; font-weight:bold; color:#2c3e50;">${name}</span>
+                        <span style="background:${statusBg}; color:${statusColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${statusLabel}</span>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:#666;">
+                        <span>总金额: <strong style="color:#2c3e50;">¥${item.totalAmount.toFixed(2)}</strong></span>
+                        <span>已${isReceivable ? '收' : '付'}: <strong style="color:#27ae60;">¥${item.paidAmount.toFixed(2)}</strong></span>
+                        <span>未${isReceivable ? '收' : '付'}: <strong style="color:#e74c3c;">¥${unpaid.toFixed(2)}</strong></span>
+                        <span>订单数: ${item.orders.length}</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button onclick="reconciliationShowDetail('${name}', '${typeFilter}')" style="background:#9b59b6; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">详情</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function reconciliationShowDetail(name, type){
+    const data = type === 'receivable' ? reconciliationData.receivable : reconciliationData.payable;
+    const item = data.find(d => (d.customer || d.supplier) === name);
+    if(!item) return;
+    const isReceivable = type === 'receivable';
+    const unpaid = item.totalAmount - item.paidAmount;
+    document.getElementById('recon-modal-title').textContent = `${name} - ${isReceivable ? '应收' : '应付'}对账详情`;
+    const bodyEl = document.getElementById('recon-modal-body');
+    bodyEl.innerHTML = `
+        <div style="margin-bottom:16px; padding:12px; background:#f8f9fa; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="color:#666;">总金额</span>
+                <span style="font-weight:bold; font-size:16px;">¥${item.totalAmount.toFixed(2)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="color:#666;">已${isReceivable ? '收' : '付'}</span>
+                <span style="font-weight:bold; color:#27ae60;">¥${item.paidAmount.toFixed(2)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:#666;">未${isReceivable ? '收' : '付'}</span>
+                <span style="font-weight:bold; color:#e74c3c;">¥${unpaid.toFixed(2)}</span>
+            </div>
+        </div>
+        <div style="font-size:13px; font-weight:bold; margin-bottom:10px; color:#2c3e50;">关联订单</div>
+        <div style="max-height:300px; overflow-y:auto;">
+            ${item.orders.map(o => `
+                <div style="padding:10px; margin-bottom:8px; background:#f8f9fa; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:12px; color:#666;">订单: ${o.orderId}</div>
+                        <div style="font-size:11px; color:#999;">${o.date || ''}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:bold;">¥${o.amount.toFixed(2)}</div>
+                        <div style="font-size:10px; color:${o.status === 'paid' ? '#27ae60' : '#e74c3c'};">${o.status === 'paid' ? '已结算' : '未结算'}</div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    document.getElementById('recon-modal').style.display = 'block';
+}
+
+function reconciliationCloseModal(){
+    document.getElementById('recon-modal').style.display = 'none';
+}
+
+function reconciliationExport(){
+    const typeFilter = document.getElementById('recon-filter-type').value;
+    const data = typeFilter === 'receivable' ? reconciliationData.receivable : reconciliationData.payable;
+    const isReceivable = typeFilter === 'receivable';
+    if(data.length === 0){
+        alert('暂无数据可导出');
+        return;
+    }
+    const headers = [isReceivable ? '客户名称' : '供应商名称', '总金额', '已' + (isReceivable ? '收' : '付'), '未' + (isReceivable ? '收' : '付'), '订单数'];
+    const rows = data.map(item => {
+        const name = item.customer || item.supplier || '';
+        const unpaid = item.totalAmount - item.paidAmount;
+        return [name, item.totalAmount.toFixed(2), item.paidAmount.toFixed(2), unpaid.toFixed(2), item.orders.length];
+    });
+    let csv = '\uFEFF' + headers.join(',') + '\n' + rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${isReceivable ? '应收' : '应付'}对账单_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ===================== 运价管理 =====================
+let freightData = [];
+const FREIGHT_STORAGE_KEY = 'logistics_freight_data';
+
+function freightLoadData(){
+    try{
+        const saved = localStorage.getItem(FREIGHT_STORAGE_KEY);
+        freightData = saved ? JSON.parse(saved) : [];
+    }catch{
+        freightData = [];
+    }
+}
+
+function freightSaveData(){
+    localStorage.setItem(FREIGHT_STORAGE_KEY, JSON.stringify(freightData));
+}
+
+function freightShowAddModal(){
+    document.getElementById('freight-modal-title').textContent = '新增运价';
+    document.getElementById('freight-edit-id').value = '';
+    document.getElementById('freight-f-route').value = '中日';
+    document.getElementById('freight-f-type').value = '整柜';
+    document.getElementById('freight-f-pol').value = '';
+    document.getElementById('freight-f-pod').value = '';
+    document.getElementById('freight-f-carrier').value = '';
+    document.getElementById('freight-f-containertype').value = '';
+    document.getElementById('freight-f-price').value = '';
+    document.getElementById('freight-f-validto').value = '';
+    document.getElementById('freight-f-notes').value = '';
+    document.getElementById('freight-modal').style.display = 'block';
+}
+
+function freightShowEditModal(id){
+    const item = freightData.find(f => f.id === id);
+    if(!item) return;
+    document.getElementById('freight-modal-title').textContent = '编辑运价';
+    document.getElementById('freight-edit-id').value = id;
+    document.getElementById('freight-f-route').value = item.route || '中日';
+    document.getElementById('freight-f-type').value = item.type || '整柜';
+    document.getElementById('freight-f-pol').value = item.pol || '';
+    document.getElementById('freight-f-pod').value = item.pod || '';
+    document.getElementById('freight-f-carrier').value = item.carrier || '';
+    document.getElementById('freight-f-containertype').value = item.containerType || '';
+    document.getElementById('freight-f-price').value = item.price || '';
+    document.getElementById('freight-f-validto').value = item.validTo || '';
+    document.getElementById('freight-f-notes').value = item.notes || '';
+    document.getElementById('freight-modal').style.display = 'block';
+}
+
+function freightCloseModal(){
+    document.getElementById('freight-modal').style.display = 'none';
+}
+
+function freightSaveRecord(){
+    const editId = document.getElementById('freight-edit-id').value;
+    const route = document.getElementById('freight-f-route').value;
+    const record = {
+        id: editId || Date.now().toString(),
+        route,
+        type: document.getElementById('freight-f-type').value,
+        pol: document.getElementById('freight-f-pol').value.trim(),
+        pod: document.getElementById('freight-f-pod').value.trim(),
+        carrier: document.getElementById('freight-f-carrier').value.trim(),
+        containerType: document.getElementById('freight-f-containertype').value.trim(),
+        price: parseFloat(document.getElementById('freight-f-price').value) || 0,
+        validTo: document.getElementById('freight-f-validto').value,
+        notes: document.getElementById('freight-f-notes').value.trim(),
+        createdAt: editId ? (freightData.find(f => f.id === editId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    if(editId){
+        const idx = freightData.findIndex(f => f.id === editId);
+        if(idx !== -1) freightData[idx] = record;
+    }else{
+        freightData.unshift(record);
+    }
+    freightSaveData();
+    freightCloseModal();
+    freightRender();
+}
+
+function freightDeleteRecord(id){
+    if(!confirm('确定删除该运价记录？')) return;
+    freightData = freightData.filter(f => f.id !== id);
+    freightSaveData();
+    freightRender();
+}
+
+function freightRender(){
+    const search = document.getElementById('freight-search').value.toLowerCase();
+    const typeFilter = document.getElementById('freight-filter-type').value;
+    const routeFilter = document.getElementById('freight-filter-route').value;
+    let filtered = freightData.filter(f => {
+        const matchSearch = !search || 
+            (f.route && f.route.toLowerCase().includes(search)) ||
+            (f.pol && f.pol.toLowerCase().includes(search)) ||
+            (f.pod && f.pod.toLowerCase().includes(search)) ||
+            (f.carrier && f.carrier.toLowerCase().includes(search));
+        const matchType = !typeFilter || f.type === typeFilter;
+        const matchRoute = !routeFilter || f.route === routeFilter;
+        return matchSearch && matchType && matchRoute;
+    });
+    const statsBar = document.getElementById('freight-stats-bar');
+    const routeCounts = {};
+    freightData.forEach(f => { routeCounts[f.route] = (routeCounts[f.route] || 0) + 1; });
+    let statsHtml = `<span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${freightData.length} 条</span>`;
+    Object.entries(routeCounts).forEach(([route, count]) => {
+        statsHtml += `<span style="background:#e8f8f0; color:#16a085; padding:4px 10px; border-radius:12px; font-size:11px;">${route}: ${count}</span>`;
+    });
+    statsBar.innerHTML = statsHtml;
+    const listEl = document.getElementById('freight-list');
+    const emptyEl = document.getElementById('freight-empty');
+    if(filtered.length === 0){
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    emptyEl.style.display = 'none';
+    const today = new Date().toISOString().slice(0,10);
+    listEl.innerHTML = filtered.map(f => {
+        const isExpired = f.validTo && f.validTo < today;
+        const expireColor = isExpired ? '#e74c3c' : (f.validTo ? '#27ae60' : '#666');
+        return `
+        <div class="module-card hover-trigger" style="padding:12px 14px; margin-bottom:8px; ${isExpired ? 'opacity:0.6;' : ''}" onmouseenter="showPreview(getPreviewHtml_Freight(freightData.find(x=>x.id==='${f.id}')||{}), event)" onmousemove="positionPreview(event)" onmouseleave="hidePreview()">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                <div style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="font-size:15px; font-weight:bold; color:#2c3e50;">${f.pol || '?'} → ${f.pod || '?'}</span>
+                        <span style="background:#e8f8f0; color:#16a085; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${f.route}</span>
+                        <span style="background:#fef5e7; color:#e67e22; padding:2px 8px; border-radius:10px; font-size:10px;">${f.type}</span>
+                        ${isExpired ? '<span style="background:#fdeaea; color:#e74c3c; padding:2px 8px; border-radius:10px; font-size:10px;">已过期</span>' : ''}
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:#666;">
+                        ${f.carrier ? `<span>🚢 ${f.carrier}</span>` : ''}
+                        ${f.containerType ? `<span>📦 ${f.containerType}</span>` : ''}
+                        <span style="color:#16a085; font-weight:bold;">¥${f.price.toFixed(2)}</span>
+                        ${f.validTo ? `<span style="color:${expireColor};">有效期: ${f.validTo}</span>` : ''}
+                    </div>
+                    ${f.notes ? `<div style="font-size:11px; color:#999; margin-top:4px; padding:6px; background:#f8f9fa; border-radius:6px;">${f.notes}</div>` : ''}
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <button onclick="freightShowEditModal('${f.id}')" style="background:#16a085; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">编辑</button>
+                    <button onclick="freightDeleteRecord('${f.id}')" style="background:#e74c3c; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">删除</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function freightExportCSV(){
+    if(freightData.length === 0){
+        alert('暂无数据可导出');
+        return;
+    }
+    const headers = ['航线', '类型', '起运港', '目的港', '船公司', '柜型', '运费(人民币)', '有效期', '备注', '创建时间'];
+    const rows = freightData.map(f => [
+        f.route, f.type, f.pol, f.pod, f.carrier, f.containerType, f.price, f.validTo, f.notes, f.createdAt
+    ]);
+    let csv = '\uFEFF' + headers.join(',') + '\n' + rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `运价表_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ===================== 全局预览功能 =====================
+let previewTimeout = null;
+let previewCard = null;
+
+function initPreviewCard(){
+    previewCard = document.getElementById('global-preview-card');
+}
+
+function showPreview(html, event){
+    if(!previewCard) initPreviewCard();
+    clearTimeout(previewTimeout);
+    previewTimeout = setTimeout(() => {
+        previewCard.innerHTML = html;
+        previewCard.classList.add('show');
+        positionPreview(event);
+    }, 300);
+}
+
+function hidePreview(){
+    if(!previewCard) initPreviewCard();
+    clearTimeout(previewTimeout);
+    previewCard.classList.remove('show');
+}
+
+function positionPreview(event){
+    if(!previewCard) return;
+    const rect = previewCard.getBoundingClientRect();
+    let x = event.clientX + 15;
+    let y = event.clientY + 15;
+    if(x + rect.width > window.innerWidth - 20){
+        x = event.clientX - rect.width - 15;
+    }
+    if(y + rect.height > window.innerHeight - 20){
+        y = event.clientY - rect.height - 15;
+    }
+    previewCard.style.left = Math.max(10, x) + 'px';
+    previewCard.style.top = Math.max(10, y) + 'px';
+}
+
+function getPreviewHtml_CRMOrder(order){
+    const statusColor = order.status === '已完结' ? '#27ae60' : (order.status === '进行中' ? '#3498db' : '#e67e22');
+    const statusBg = order.status === '已完结' ? '#e8f8f0' : (order.status === '进行中' ? '#e8f4fd' : '#fef5e7');
+    const profit = order.profit || 0;
+    const profitColor = profit >= 0 ? '#27ae60' : '#e74c3c';
+    return `
+        <div class="preview-card-header">
+            <div class="preview-card-icon" style="background: linear-gradient(135deg, #1f7a5c, #27ae60);">📦</div>
+            <div>
+                <div class="preview-card-title">${order.customer || order.id}</div>
+                <div class="preview-card-subtitle">${order.route || '未知航线'} · ${order.containerType || ''}</div>
+            </div>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">状态</span>
+            <span class="preview-card-tag" style="background:${statusBg};color:${statusColor};">${order.status || '待处理'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">ETD / ETA</span>
+            <span class="preview-card-value">${order.etd || '-'} / ${order.eta || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">船公司</span>
+            <span class="preview-card-value">${order.carrier || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">柜号</span>
+            <span class="preview-card-value">${order.containerNo || '-'}</span>
+        </div>
+        <div class="preview-card-stats">
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">¥${((order.fees||{}).total||0).toLocaleString()}</div>
+                <div class="preview-stat-label">应收</div>
+            </div>
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">¥${((order.costs||{})._total||0).toLocaleString()}</div>
+                <div class="preview-stat-label">应付</div>
+            </div>
+            <div class="preview-stat-item">
+                <div class="preview-stat-value" style="color:${profitColor};">¥${profit.toLocaleString()}</div>
+                <div class="preview-stat-label">毛利</div>
+            </div>
+        </div>
+    `;
+}
+
+function getPreviewHtml_Client(client){
+    const levelColors = {
+        'A': { bg: '#fdeaea', color: '#e74c3c' },
+        'B': { bg: '#e8f8f0', color: '#27ae60' },
+        'C': { bg: '#fef5e7', color: '#f39c12' }
+    };
+    const lc = levelColors[client.level] || levelColors['B'];
+    const crmData = crmLoad();
+    const orders = crmData.filter(r => r.customer === client.name);
+    const totalRevenue = orders.reduce((sum, r) => sum + ((r.fees||{}).total||0), 0);
+    const totalProfit = orders.reduce((sum, r) => sum + (r.profit||0), 0);
+    return `
+        <div class="preview-card-header">
+            <div class="preview-card-icon" style="background: linear-gradient(135deg, #4a90e2, #5ba3f5);">👥</div>
+            <div>
+                <div class="preview-card-title">${client.name}</div>
+                <div class="preview-card-subtitle">${client.route || '未设置航线'}</div>
+            </div>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">等级</span>
+            <span class="preview-card-tag" style="background:${lc.bg};color:${lc.color};">${client.level}级客户</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">联系人</span>
+            <span class="preview-card-value">${client.contact || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">电话</span>
+            <span class="preview-card-value">${client.phone || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">邮箱</span>
+            <span class="preview-card-value">${client.email || '-'}</span>
+        </div>
+        ${client.address ? `<div class="preview-card-row"><span class="preview-card-label">地址</span><span class="preview-card-value">${client.address}</span></div>` : ''}
+        <div class="preview-card-stats">
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">${orders.length}</div>
+                <div class="preview-stat-label">订单数</div>
+            </div>
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">¥${totalRevenue.toLocaleString()}</div>
+                <div class="preview-stat-label">累计应收</div>
+            </div>
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">¥${totalProfit.toLocaleString()}</div>
+                <div class="preview-stat-label">累计毛利</div>
+            </div>
+        </div>
+    `;
+}
+
+function getPreviewHtml_Supplier(supplier){
+    const typeColors = {
+        '船代理': { bg: '#e8f4fd', color: '#3498db' },
+        '拖车行': { bg: '#f5eef8', color: '#9b59b6' },
+        '报关行': { bg: '#e8f8f5', color: '#1abc9c' },
+        '仓库': { bg: '#fef5e7', color: '#e67e22' },
+        '清关行': { bg: '#fdeaea', color: '#e74c3c' }
+    };
+    const tc = typeColors[supplier.type] || { bg: '#f5f5f5', color: '#666' };
+    const crmData = crmLoad();
+    const orders = crmData.filter(r => r.supplier === supplier.name);
+    const totalCost = orders.reduce((sum, r) => sum + ((r.costs||{})._total||0), 0);
+    return `
+        <div class="preview-card-header">
+            <div class="preview-card-icon" style="background: linear-gradient(135deg, #e67e22, #f39c12);">🏭</div>
+            <div>
+                <div class="preview-card-title">${supplier.name}</div>
+                <div class="preview-card-subtitle">${supplier.region || '未设置区域'}</div>
+            </div>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">类型</span>
+            <span class="preview-card-tag" style="background:${tc.bg};color:${tc.color};">${supplier.type}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">联系人</span>
+            <span class="preview-card-value">${supplier.contact || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">电话</span>
+            <span class="preview-card-value">${supplier.phone || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">邮箱</span>
+            <span class="preview-card-value">${supplier.email || '-'}</span>
+        </div>
+        ${supplier.bank ? `<div class="preview-card-row"><span class="preview-card-label">银行</span><span class="preview-card-value" style="font-size:11px;">${supplier.bank}</span></div>` : ''}
+        <div class="preview-card-stats">
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">${orders.length}</div>
+                <div class="preview-stat-label">订单数</div>
+            </div>
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">¥${totalCost.toLocaleString()}</div>
+                <div class="preview-stat-label">累计应付</div>
+            </div>
+            <div class="preview-stat-item">
+                <div class="preview-stat-value">${supplier.region || '-'}</div>
+                <div class="preview-stat-label">服务区域</div>
+            </div>
+        </div>
+    `;
+}
+
+function getPreviewHtml_Freight(freight){
+    const today = new Date().toISOString().slice(0,10);
+    const isExpired = freight.validTo && freight.validTo < today;
+    const expireColor = isExpired ? '#e74c3c' : '#27ae60';
+    return `
+        <div class="preview-card-header">
+            <div class="preview-card-icon" style="background: linear-gradient(135deg, #16a085, #1abc9c);">💰</div>
+            <div>
+                <div class="preview-card-title">${freight.pol || '?'} → ${freight.pod || '?'}</div>
+                <div class="preview-card-subtitle">${freight.route} · ${freight.type}</div>
+            </div>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">船公司</span>
+            <span class="preview-card-value">${freight.carrier || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">柜型</span>
+            <span class="preview-card-value">${freight.containerType || '-'}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">运费</span>
+            <span class="preview-card-value" style="color:#16a085;font-size:15px;">¥${(freight.price||0).toFixed(2)}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">有效期</span>
+            <span class="preview-card-value" style="color:${expireColor};">${freight.validTo || '长期有效'}${isExpired ? ' (已过期)' : ''}</span>
+        </div>
+        ${freight.notes ? `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:8px;font-size:11px;color:#666;">${freight.notes}</div>` : ''}
+    `;
+}
+
+function getPreviewHtml_Reminder(reminder){
+    const statusColors = {
+        'urgent': { bg: '#fdeaea', color: '#c0392b', border: '#e74c3c' },
+        'warning': { bg: '#fef5e7', color: '#d68910', border: '#f39c12' },
+        'normal': { bg: '#e8f8f0', color: '#1e8449', border: '#27ae60' }
+    };
+    const sc = statusColors[reminder.status] || statusColors['normal'];
+    const crmData = crmLoad();
+    const order = crmData.find(r => r.id === reminder.orderId);
+    return `
+        <div class="preview-card-header">
+            <div class="preview-card-icon" style="background: ${sc.bg}; border: 2px solid ${sc.border};">🔔</div>
+            <div>
+                <div class="preview-card-title">${reminder.title}</div>
+                <div class="preview-card-subtitle" style="color:${sc.color};">${reminder.daysLeft === 0 ? '今天到期！' : `还有 ${reminder.daysLeft} 天`}</div>
+            </div>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">日期</span>
+            <span class="preview-card-value">${reminder.date}</span>
+        </div>
+        <div class="preview-card-row">
+            <span class="preview-card-label">类型</span>
+            <span class="preview-card-tag" style="background:${sc.bg};color:${sc.color};">${reminder.type === 'etd' ? 'ETD提醒' : reminder.type === 'eta' ? 'ETA提醒' : '免柜期'}</span>
+        </div>
+        ${order ? `
+        <div style="margin-top:10px;padding:10px;background:#f8f9fa;border-radius:8px;">
+            <div style="font-size:11px;color:#666;margin-bottom:6px;">关联订单</div>
+            <div style="font-size:12px;"><strong>${order.customer || order.id}</strong></div>
+            <div style="font-size:11px;color:#888;">${order.route || ''} · ${order.containerType || ''}</div>
+        </div>
+        ` : ''}
+    `;
+}
+
+function initNewModules(){
+    clientLoadData();
+    clientRender();
+    supplierLoadData();
+    supplierRender();
+    reminderLoadData();
+    reminderRefresh();
+    reconciliationLoadData();
+    reconciliationGenerateFromCRM();
+    reconciliationRender();
+    freightLoadData();
+    freightRender();
+}
+
+window.onload = function(){
+    initAllModules();
+};
 </script>
 
 <template id="template-macro">
@@ -10614,23 +12312,6 @@ function toggleNews(){
     document.getElementById("back-to-quotes").style.display = "block";
     panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-window.onload = async function(){
-    await restoreMacroPersistentState();
-    document.addEventListener('visibilitychange', handleMacroLifecycleBackup, true);
-    window.addEventListener('pagehide', handleMacroLifecycleBackup, true);
-    window.addEventListener('beforeunload', handleMacroLifecycleBackup, true);
-    renderQuoteGrid();
-    initQuoteObserver();
-    initMacroToggleButton();
-    fillManualInputs();
-    applyUiState();
-    loadChart("UKOIL");
-    fetchAlerts();
-    setInterval(fetchAlerts, 300000);
-    macroCheck();
-    setInterval(macroCheck, 86400000);
-};
 <\/script>
 <script>
 (function () {
