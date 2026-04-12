@@ -720,7 +720,7 @@
                     <button style="background:linear-gradient(135deg, rgba(231,76,60,0.12), rgba(231,76,60,0.06)); color:#5d6d7e; border:1px solid rgba(231,76,60,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="quickBackup()">📥 一键备份</button>
                     <button style="background:linear-gradient(135deg, rgba(155,89,182,0.12), rgba(155,89,182,0.06)); color:#5d6d7e; border:1px solid rgba(155,89,182,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="lockSystem()">🔒 快捷上锁</button>
                 </div>
-                <div style="font-size:10px; color:#7f8c8d;" id="dashboard-backup-inline">自动备份：未记录</div>
+                <div style="font-size:10px; color:#7f8c8d;" id="dashboard-backup-inline">备份时间：未记录</div>
             </div>
         </div>
         <div class="dashboard-grid">
@@ -7223,14 +7223,14 @@ async function updateStorageStatus() {
     const cloudName = cloudFileHandle ? cloudFileHandle.name : '未绑定';
     const inlineEl = document.getElementById('dashboard-backup-inline');
     let localInfo = '本地自动保存：已关闭';
-    let inlineText = '自动备份：已关闭';
+    let inlineText = '备份时间：未记录';
     if (localState) {
         try {
             const state = JSON.parse(localState);
             const savedText = formatReadableTime(state.savedAt || lastSavedAt);
             localInfo = `本地手动保存：已存在
 最后保存：${savedText}`;
-            inlineText = `手动备份：${savedText}`;
+            inlineText = `备份时间：${savedText}`;
         } catch (e) {
             localInfo = '本地手动保存：已存在';
             inlineText = '手动备份：已存在';
