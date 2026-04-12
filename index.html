@@ -17,6 +17,21 @@
             linear-gradient(180deg, #eef5fb 0%, #f7fafc 48%, #edf3f8 100%);
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", sans-serif;
             height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body.locked { overflow: hidden; }
+        #login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        #login-screen.hidden { display: none; }
+        .login-card { background: rgba(255,255,255,0.95); border-radius: 24px; padding: 40px 32px; width: 90%; max-width: 360px; box-shadow: 0 25px 80px rgba(0,0,0,0.25); text-align: center; }
+        .login-logo { font-size: 48px; margin-bottom: 16px; }
+        .login-title { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 8px; }
+        .login-subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+        .login-input { width: 100%; padding: 14px 18px; border: 2px solid #e0e6ed; border-radius: 12px; font-size: 16px; margin-bottom: 16px; transition: border-color 0.2s; outline: none; }
+        .login-input:focus { border-color: #667eea; }
+        .login-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+        .login-btn:active { transform: translateY(0); }
+        .login-error { color: #e74c3c; font-size: 12px; margin-top: 12px; display: none; }
+        .login-set-pwd { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        .login-set-pwd input { margin-bottom: 12px; }
         .tab-content { display: none; padding: 12px; flex: 1; overflow-y: auto; padding-bottom: 84px; }
         .tab-content.active { display: block; }
         .tab-content.fullpage-tab { padding: 0; padding-bottom: 0; overflow: hidden; background: #fff; }
@@ -58,6 +73,7 @@
         .trend-card { background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%); border: 1px solid #e4edf7; border-radius: 12px; padding: 12px; }
         .trend-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #666; margin-top: 8px; flex-wrap: wrap; }
         #jpy-trend-canvas { width: 100%; height: 180px; display: block; }
+        #freight-trend-canvas { width: 100%; height: 280px; display: block; cursor: crosshair; }
         .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .quick-card { padding: 12px; border: 1px solid #dfe8f2; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(247,251,255,0.95) 100%); font-size: 12px; color: #555; cursor: pointer; box-shadow: 0 8px 18px rgba(43, 63, 82, 0.06); transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
         .quick-card b { display: block; color: #2c3e50; margin-bottom: 4px; }
@@ -147,7 +163,7 @@
             box-shadow: 0 16px 28px rgba(31, 58, 93, 0.12);
         }
 
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 1000; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; z-index: 9999999; opacity: 0; transition: 0.3s; pointer-events: none; font-size: 13px; }
         .toast.show { opacity: 1; top: 30px; }
 
         /* 预览卡片样式 */
@@ -286,6 +302,27 @@
     </style>
 </head>
 <body>
+<!-- 登录界面 -->
+<div id="login-screen">
+    <div class="login-card">
+        <div class="login-logo">🔐</div>
+        <div class="login-title">CRM系统</div>
+        <div class="login-subtitle">请输入密码解锁系统</div>
+        <div id="login-form">
+            <input type="password" id="login-password" class="login-input" placeholder="请输入密码" onkeypress="if(event.key==='Enter')handleLogin()">
+            <button class="login-btn" onclick="handleLogin()">解锁系统</button>
+            <div id="login-error" class="login-error">密码错误，请重试</div>
+        </div>
+        <div id="set-password-form" style="display:none;">
+            <div style="font-size:13px;color:#666;margin-bottom:16px;">首次使用，请设置系统密码</div>
+            <input type="password" id="new-password" class="login-input" placeholder="设置新密码（至少4位）">
+            <input type="password" id="confirm-password" class="login-input" placeholder="确认新密码">
+            <button class="login-btn" onclick="setNewPassword()">设置密码</button>
+            <div id="set-pwd-error" class="login-error">请完整填写所有信息</div>
+        </div>
+    </div>
+</div>
+
 <!-- 全局预览卡片 -->
 <div id="global-preview-card" class="preview-card"></div>
 
@@ -801,6 +838,7 @@
     <div class="module-card">
         <div class="title" style="display:flex; align-items:center; justify-content:flex-start; gap:8px; flex-wrap:wrap;">
             <span>数据存储</span>
+            <button class="btn-main" style="background:#e74c3c; padding:6px 12px; font-size:12px;" onclick="quickBackup()">📥 一键备份</button>
             <button class="btn-main" id="toggle-storage" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleToolSection('storage')">展开</button>
         </div>
         <div id="section-storage" style="display:none;">
@@ -816,6 +854,9 @@
         <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
             <button class="btn-main" style="background:#16a085; flex:1;" onclick="syncToCloudFile()">同步到已绑定文件</button>
             <button class="btn-main" style="background:#95a5a6; flex:1;" onclick="clearCloudBinding()">清除云端绑定</button>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+            <button class="btn-main" style="background:#e74c3c; flex:1;" onclick="lockSystem()">🔒 锁定系统</button>
         </div>
         <div style="margin-top:10px; font-size:12px; color:#777; line-height:1.7;">
             默认会自动保存到当前浏览器本地。<br>
@@ -1007,6 +1048,53 @@
         </div>
         <!-- 统计栏 -->
         <div id="crm-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- OCR识别区域 -->
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer;" onclick="toggleOcrSection()">
+            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #9b59b6; padding-left:8px;">🔍 OCR 提单识别</div>
+            <button id="ocr-toggle-btn" class="btn-main" style="background:#1f7a5c; padding:6px 10px; font-size:12px;">展开</button>
+        </div>
+        <div id="ocr-section" style="display:none; margin-top:12px;">
+            <div style="font-size:11px; color:#888; margin-bottom:10px;">上传提单文件（PDF或图片），自动识别并提取关键信息填充到CRM表单</div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                <label style="flex:1; min-width:200px; border:2px dashed #d5dbe5; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:0.2s; background:#fafbfc;" onmouseover="this.style.borderColor='#9b59b6'" onmouseout="this.style.borderColor='#d5dbe5'">
+                    <input type="file" id="ocr-file-input" accept="image/*,.pdf,application/pdf" style="display:none;" onchange="handleOcrFileSelect(event)">
+                    <div style="font-size:24px; margin-bottom:8px;">📄</div>
+                    <div style="font-size:13px; color:#666;">点击或拖拽上传提单文件</div>
+                    <div style="font-size:11px; color:#999; margin-top:4px;">支持 PDF、JPG、PNG 格式</div>
+                </label>
+                <div id="ocr-preview" style="flex:1; min-width:200px; max-width:300px; border:1px solid #e0e6ed; border-radius:12px; overflow:hidden; display:none;">
+                    <img id="ocr-preview-img" style="width:100%; height:auto; display:block;">
+                </div>
+            </div>
+            <div id="ocr-progress" style="display:none; margin-bottom:12px;">
+                <div style="background:#f0f3f7; border-radius:8px; height:8px; overflow:hidden;">
+                    <div id="ocr-progress-bar" style="background:linear-gradient(90deg,#9b59b6,#8e44ad); height:100%; width:0%; transition:width 0.3s;"></div>
+                </div>
+                <div id="ocr-status" style="font-size:11px; color:#666; margin-top:6px; text-align:center;">正在识别...</div>
+            </div>
+            <div id="ocr-result" style="display:none; margin-bottom:12px;">
+                <div style="font-size:12px; font-weight:bold; color:#2c3e50; margin-bottom:8px;">📋 识别结果</div>
+                <div id="ocr-result-content" style="background:#f8f9fa; border-radius:8px; padding:12px; font-size:12px; max-height:200px; overflow-y:auto;"></div>
+            </div>
+            <div id="ocr-action-area" style="display:none; margin-top:12px; padding:12px; background:#f0f4f8; border-radius:10px;">
+                <div style="font-size:12px; font-weight:bold; color:#2c3e50; margin-bottom:10px;">选择操作方式</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+                    <button class="btn-main" style="background:#9b59b6; padding:10px 16px;" onclick="fillCrmFromOcr('new')">➕ 新增订单</button>
+                    <span style="font-size:11px; color:#888;">或</span>
+                    <select id="ocr-target-order" style="flex:1; min-width:180px; padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                        <option value="">选择现有订单更新...</option>
+                    </select>
+                    <button class="btn-main" style="background:#e67e22; padding:10px 16px;" onclick="fillCrmFromOcr('update')">🔄 更新选中订单</button>
+                </div>
+                <div style="font-size:11px; color:#888;">提示：更新订单会将识别的数据填充到选中的现有订单，未识别的字段保持不变</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn-main" id="ocr-clear-btn" style="background:#95a5a6; padding:10px 16px; display:none;" onclick="clearOcrResult()">清除</button>
+            </div>
+        </div>
     </div>
 
     <!-- 记录列表 -->
@@ -1583,11 +1671,53 @@
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">起运港</label>
-                        <input type="text" id="freight-f-pol" placeholder="起运港" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        <select id="freight-f-pol" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="">请选择</option>
+                            <option value="上海">上海</option>
+                            <option value="天津">天津</option>
+                            <option value="宁波">宁波</option>
+                            <option value="厦门">厦门</option>
+                            <option value="深圳">深圳</option>
+                            <option value="广州">广州</option>
+                            <option value="青岛">青岛</option>
+                            <option value="大连">大连</option>
+                            <option value="其他">其他</option>
+                        </select>
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">目的港</label>
-                        <input type="text" id="freight-f-pod" placeholder="目的港" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                        <select id="freight-f-pod" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="">请选择</option>
+                            <optgroup label="日本">
+                                <option value="东京">东京</option>
+                                <option value="大阪">大阪</option>
+                                <option value="横滨">横滨</option>
+                                <option value="名古屋">名古屋</option>
+                                <option value="神户">神户</option>
+                                <option value="博多">博多</option>
+                            </optgroup>
+                            <optgroup label="韩国">
+                                <option value="釜山">釜山</option>
+                                <option value="仁川">仁川</option>
+                            </optgroup>
+                            <optgroup label="美国">
+                                <option value="洛杉矶">洛杉矶</option>
+                                <option value="长滩">长滩</option>
+                                <option value="纽约">纽约</option>
+                                <option value="西雅图">西雅图</option>
+                            </optgroup>
+                            <optgroup label="欧洲">
+                                <option value="鹿特丹">鹿特丹</option>
+                                <option value="汉堡">汉堡</option>
+                                <option value="安特卫普">安特卫普</option>
+                            </optgroup>
+                            <optgroup label="东南亚">
+                                <option value="新加坡">新加坡</option>
+                                <option value="曼谷">曼谷</option>
+                                <option value="胡志明">胡志明</option>
+                            </optgroup>
+                            <option value="其他">其他</option>
+                        </select>
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">船公司</label>
@@ -1759,6 +1889,30 @@
         </div>
         <div id="freight-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
     </div>
+
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #4a90e2; padding-left:8px; margin-bottom:12px;">📈 海运费趋势图（近45天）</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+            <select id="freight-trend-ctype" onchange="drawFreightTrendChart()" style="padding:8px 12px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
+                <option value="">全部柜型</option>
+                <option value="20GP">20GP</option>
+                <option value="40GP">40GP</option>
+                <option value="40HQ">40HQ</option>
+                <option value="45HQ">45HQ</option>
+            </select>
+            <button class="btn-main" style="background:#4a90e2; padding:8px 14px;" onclick="drawFreightTrendChart()">刷新图表</button>
+        </div>
+        <div class="trend-card" style="position:relative;">
+            <canvas id="freight-trend-canvas" width="600" height="280"></canvas>
+            <div id="freight-trend-tooltip" style="display:none; position:absolute; background:rgba(44,62,80,0.95); color:#fff; padding:8px 12px; border-radius:8px; font-size:11px; pointer-events:none; z-index:100; max-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
+            <div class="trend-meta">
+                <div id="freight-trend-status">加载中...</div>
+                <div id="freight-trend-summary"></div>
+            </div>
+        </div>
+        <div id="freight-trend-legend" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+    </div>
+
     <div id="freight-list"></div>
     <div id="freight-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无运价记录，点击"＋ 新增运价"开始录入</div>
 </div>
@@ -4356,6 +4510,144 @@
 <div id="toast" class="toast">操作成功</div>
 
 <script>
+const PASSWORD_KEY = 'crm_system_password_hash';
+const SESSION_KEY = 'crm_system_session';
+const LOCK_TIMEOUT = 30 * 60 * 1000;
+let lastActivityTime = Date.now();
+
+function simpleHash(str){
+    let hash = 0;
+    for(let i = 0; i < str.length; i++){
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString(16);
+}
+
+function hasPassword(){
+    return localStorage.getItem(PASSWORD_KEY) !== null;
+}
+
+function checkSession(){
+    const session = sessionStorage.getItem(SESSION_KEY);
+    if(!session) return false;
+    try {
+        const data = JSON.parse(session);
+        return data && data.timestamp;
+    } catch(e) {
+        return false;
+    }
+}
+
+function createSession(){
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() }));
+}
+
+function clearSession(){
+    sessionStorage.removeItem(SESSION_KEY);
+}
+
+function showLoginForm(){
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('login-form').style.display = 'block';
+    document.getElementById('set-password-form').style.display = 'none';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').style.display = 'none';
+    document.body.classList.add('locked');
+}
+
+function showSetPasswordForm(){
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('set-password-form').style.display = 'block';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+    document.getElementById('set-pwd-error').style.display = 'none';
+    document.body.classList.add('locked');
+}
+
+function hideLoginScreen(){
+    document.getElementById('login-screen').classList.add('hidden');
+    document.body.classList.remove('locked');
+}
+
+function handleLogin(){
+    const password = document.getElementById('login-password').value;
+    const storedHash = localStorage.getItem(PASSWORD_KEY);
+    const inputHash = simpleHash(password);
+    
+    if(inputHash === storedHash){
+        createSession();
+        hideLoginScreen();
+        initAllModules();
+    } else {
+        document.getElementById('login-error').style.display = 'block';
+        document.getElementById('login-password').value = '';
+        document.getElementById('login-password').focus();
+    }
+}
+
+function setNewPassword(){
+    const newPwd = document.getElementById('new-password').value;
+    const confirmPwd = document.getElementById('confirm-password').value;
+    
+    if(newPwd.length < 4 || newPwd !== confirmPwd){
+        document.getElementById('set-pwd-error').style.display = 'block';
+        return;
+    }
+    
+    const hash = simpleHash(newPwd);
+    localStorage.setItem(PASSWORD_KEY, hash);
+    createSession();
+    hideLoginScreen();
+    initAllModules();
+    showToast('密码设置成功');
+}
+
+function lockSystem(){
+    clearSession();
+    showLoginForm();
+}
+
+function updateActivity(){
+    lastActivityTime = Date.now();
+}
+
+function checkAutoLock(){
+    if(hasPassword() && !checkSession()){
+        showLoginForm();
+    }
+}
+
+document.addEventListener('click', updateActivity);
+document.addEventListener('keydown', updateActivity);
+document.addEventListener('mousemove', updateActivity);
+document.addEventListener('touchstart', updateActivity);
+
+setInterval(() => {
+    if(hasPassword() && Date.now() - lastActivityTime > LOCK_TIMEOUT){
+        lockSystem();
+    }
+}, 60000);
+
+document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible'){
+        checkAutoLock();
+    }
+});
+
+function initAuth(){
+    if(!hasPassword()){
+        showSetPasswordForm();
+    } else if(checkSession()){
+        hideLoginScreen();
+        initAllModules();
+    } else {
+        showLoginForm();
+    }
+}
+
 let currDate = new Date(), rates = {}, memos = JSON.parse(localStorage.getItem('hcn_calendar_memos') || '{}');
 let selectedCountry = 'JP';
 let trendDays = 30;
@@ -4836,7 +5128,7 @@ function switchTab(idx) {
     if(idx === 17) supplierRender();
     if(idx === 18) { reminderGenerateFromCRM(); reminderRefresh(); }
     if(idx === 19) { reconciliationGenerateFromCRM(); reconciliationRender(); }
-    if(idx === 20) freightRender();
+    if(idx === 20) { freightRender(); freightInitTrendRoutes(); }
 }
 
 // 汇率转换功能
@@ -6450,6 +6742,59 @@ function exportAppState() {
     a.remove();
     URL.revokeObjectURL(a.href);
     showToast('已导出 JSON');
+}
+
+function quickBackup() {
+    try {
+        const state = gatherAppState();
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+        const filename = `物流系统备份_${timestamp}.json`;
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(a.href);
+        showToast('✅ 备份已下载: ' + filename);
+    } catch(e) {
+        console.error('备份失败:', e);
+        showToast('备份失败，请重试', true);
+    }
+}
+
+function showQuickBackupModal(){
+    const modal = document.getElementById('quick-backup-modal');
+    const info = document.getElementById('quick-backup-info');
+    modal.style.display = 'flex';
+    const crmCount = crmLoad().length;
+    const freightCount = freightData.length;
+    const clientCount = clientData.length;
+    const supplierCount = supplierData.length;
+    const reminderCount = reminderData.length;
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    info.innerHTML = `
+        <div style="margin-bottom:10px;"><b>备份时间：</b>${timestamp}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>📦 CRM订单: <b>${crmCount}</b></div>
+            <div>💰 运价记录: <b>${freightCount}</b></div>
+            <div>👥 客户档案: <b>${clientCount}</b></div>
+            <div>🏭 供应商: <b>${supplierCount}</b></div>
+            <div>⏰ 提醒事项: <b>${reminderCount}</b></div>
+        </div>
+    `;
+}
+
+function hideQuickBackupModal(){
+    document.getElementById('quick-backup-modal').style.display = 'none';
+}
+
+function executeQuickBackup(){
+    hideQuickBackupModal();
+    quickBackup();
 }
 
 function triggerImportState() {
@@ -8941,14 +9286,23 @@ function freightLoadData(){
     try{
         const saved = localStorage.getItem(FREIGHT_STORAGE_KEY);
         freightData = saved ? JSON.parse(saved) : [];
-    }catch{
+        console.log('运价数据加载完成，共', freightData.length, '条');
+    }catch(e){
+        console.error('运价数据加载失败:', e);
         freightData = [];
     }
 }
 
 function freightSaveData(){
     try {
-        localStorage.setItem(FREIGHT_STORAGE_KEY, JSON.stringify(freightData));
+        const dataStr = JSON.stringify(freightData);
+        localStorage.setItem(FREIGHT_STORAGE_KEY, dataStr);
+        console.log('运价数据保存成功，共', freightData.length, '条');
+        const verify = localStorage.getItem(FREIGHT_STORAGE_KEY);
+        if(verify !== dataStr){
+            console.error('运价数据保存验证失败');
+            return false;
+        }
         return true;
     } catch(e) {
         console.error('运价保存失败:', e);
@@ -8979,8 +9333,18 @@ function freightShowEditModal(id){
     document.getElementById('freight-edit-id').value = id;
     document.getElementById('freight-f-route').value = item.route || '中日';
     document.getElementById('freight-f-type').value = item.type || '整柜';
-    document.getElementById('freight-f-pol').value = item.pol || '';
-    document.getElementById('freight-f-pod').value = item.pod || '';
+    const polSelect = document.getElementById('freight-f-pol');
+    const podSelect = document.getElementById('freight-f-pod');
+    if(item.pol && ![...polSelect.options].some(o => o.value === item.pol)){
+        polSelect.value = '其他';
+    } else {
+        polSelect.value = item.pol || '';
+    }
+    if(item.pod && ![...podSelect.options].some(o => o.value === item.pod)){
+        podSelect.value = '其他';
+    } else {
+        podSelect.value = item.pod || '';
+    }
     document.getElementById('freight-f-carrier').value = item.carrier || '';
     document.getElementById('freight-f-containertype').value = item.containerType || '';
     document.getElementById('freight-f-price').value = item.price || '';
@@ -9012,11 +9376,16 @@ function freightSaveRecord(){
     };
     if(editId){
         const idx = freightData.findIndex(f => f.id === editId);
-        if(idx !== -1) freightData[idx] = record;
+        if(idx !== -1){
+            freightData[idx] = record;
+        } else {
+            freightData.unshift(record);
+        }
     }else{
         freightData.unshift(record);
     }
-    if(freightSaveData()){
+    const saved = freightSaveData();
+    if(saved){
         showToast(editId ? '运价已更新' : '运价已添加');
     }
     freightCloseModal();
@@ -9112,6 +9481,239 @@ function freightExportCSV(){
     a.download = `运价表_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+}
+
+const FREIGHT_TREND_COLORS = [
+    '#16a085', '#e74c3c', '#3498db', '#9b59b6', '#f39c12', 
+    '#1abc9c', '#e67e22', '#2ecc71', '#34495e', '#d35400',
+    '#27ae60', '#8e44ad', '#2980b9', '#c0392b', '#f1c40f'
+];
+let freightTrendAllPoints = [];
+const FREIGHT_TREND_DAYS = 45;
+
+function isWithinDays(dateStr, days){
+    if(!dateStr) return false;
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffTime = now.getTime() - date.getTime();
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays <= days;
+}
+
+function freightInitTrendRoutes(){
+    drawFreightTrendChart();
+}
+
+function getAllFreightTrendData(ctype){
+    const crmData = crmLoad();
+    const routeMap = new Map();
+    crmData.filter(r => {
+        const matchCtype = !ctype || r.ctype === ctype;
+        const hasOcean = r.fees && (r.fees.ocean > 0 || r.fees.fx?.ocean?.cny > 0);
+        const date = r.etd || r.createdAt?.slice(0, 10) || '';
+        const withinDays = isWithinDays(date, FREIGHT_TREND_DAYS);
+        return matchCtype && hasOcean && r.bizType !== 'lcl' && r.pol && r.pod && withinDays;
+    }).forEach(r => {
+        const route = `${r.pol} → ${r.pod}`;
+        const ocean = r.fees?.fx?.ocean?.cny || r.fees?.ocean || 0;
+        const cqty = r.cqty || 1;
+        const pricePerContainer = ocean / cqty;
+        const date = r.etd || r.createdAt?.slice(0, 10) || '';
+        if(date && pricePerContainer > 0){
+            if(!routeMap.has(route)) routeMap.set(route, []);
+            routeMap.get(route).push({
+                date, value: pricePerContainer, route, pol: r.pol, pod: r.pod,
+                source: 'CRM订单', ctype: r.ctype, mbl: r.mbl, client: r.client
+            });
+        }
+    });
+    freightData.filter(f => {
+        const matchCtype = !ctype || f.containerType === ctype;
+        const date = f.validTo || f.createdAt?.slice(0, 10) || '';
+        const withinDays = isWithinDays(date, FREIGHT_TREND_DAYS);
+        return matchCtype && f.price > 0 && f.pol && f.pod && withinDays;
+    }).forEach(f => {
+        const route = `${f.pol} → ${f.pod}`;
+        const date = f.validTo || f.createdAt?.slice(0, 10) || '';
+        if(date && f.price > 0){
+            if(!routeMap.has(route)) routeMap.set(route, []);
+            routeMap.get(route).push({
+                date, value: f.price, route, pol: f.pol, pod: f.pod,
+                source: '运价管理', ctype: f.containerType, carrier: f.carrier
+            });
+        }
+    });
+    routeMap.forEach(points => points.sort((a, b) => a.date.localeCompare(b.date)));
+    return routeMap;
+}
+
+function drawFreightTrendChart(){
+    const ctype = document.getElementById('freight-trend-ctype')?.value;
+    const statusEl = document.getElementById('freight-trend-status');
+    const summaryEl = document.getElementById('freight-trend-summary');
+    const legendEl = document.getElementById('freight-trend-legend');
+    const canvas = document.getElementById('freight-trend-canvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = canvas.clientWidth || 600;
+    const cssHeight = 280;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    const routeMap = getAllFreightTrendData(ctype);
+    if(routeMap.size === 0){
+        if(statusEl) statusEl.textContent = '暂无海运费数据';
+        if(summaryEl) summaryEl.textContent = '请在CRM或运价管理中录入数据';
+        if(legendEl) legendEl.innerHTML = '';
+        freightTrendAllPoints = [];
+        return;
+    }
+
+    const padding = { top: 20, right: 50, bottom: 35, left: 60 };
+    const width = cssWidth - padding.left - padding.right;
+    const height = cssHeight - padding.top - padding.bottom;
+
+    freightTrendAllPoints = [];
+    routeMap.forEach(points => freightTrendAllPoints.push(...points));
+    const allValues = freightTrendAllPoints.map(p => p.value);
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
+    const range = max - min || 1;
+    const allDates = [...new Set(freightTrendAllPoints.map(p => p.date))].sort();
+
+    ctx.fillStyle = '#7a8a99';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for(let i = 0; i <= 4; i++){
+        const y = padding.top + (height / 4) * i;
+        const val = max - (range / 4) * i;
+        ctx.fillText('¥' + val.toFixed(0), padding.left - 6, y);
+    }
+
+    ctx.strokeStyle = '#e6edf5';
+    ctx.lineWidth = 1;
+    for(let i = 0; i <= 4; i++){
+        const y = padding.top + (height / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + width, y);
+        ctx.stroke();
+    }
+
+    const routes = [...routeMap.keys()].sort();
+    routes.forEach((route, routeIndex) => {
+        const points = routeMap.get(route);
+        const color = FREIGHT_TREND_COLORS[routeIndex % FREIGHT_TREND_COLORS.length];
+        ctx.beginPath();
+        points.forEach((point, index) => {
+            const x = padding.left + (width * allDates.indexOf(point.date)) / Math.max(allDates.length - 1, 1);
+            const y = padding.top + height - ((point.value - min) / range) * height;
+            if(index === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        points.forEach((point) => {
+            const x = padding.left + (width * allDates.indexOf(point.date)) / Math.max(allDates.length - 1, 1);
+            const y = padding.top + height - ((point.value - min) / range) * height;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    });
+
+    if(allDates.length > 0){
+        ctx.fillStyle = '#7a8a99';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(allDates[0], padding.left, cssHeight - 10);
+        ctx.textAlign = 'right';
+        ctx.fillText(allDates[allDates.length - 1], padding.left + width, cssHeight - 10);
+    }
+
+    const totalPoints = freightTrendAllPoints.length;
+    const crmCount = freightTrendAllPoints.filter(p => p.source === 'CRM订单').length;
+    const freightCount = freightTrendAllPoints.filter(p => p.source === '运价管理').length;
+    if(statusEl) statusEl.textContent = `近 ${FREIGHT_TREND_DAYS} 天 · ${routes.length} 条航线 · ${totalPoints} 个数据点 (CRM ${crmCount} + 运价管理 ${freightCount})`;
+    const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
+    if(summaryEl) summaryEl.textContent = `均价 ¥${avg.toFixed(0)} | 区间 ¥${min.toFixed(0)}-¥${max.toFixed(0)}`;
+
+    if(legendEl){
+        legendEl.innerHTML = routes.map((route, i) => {
+            const color = FREIGHT_TREND_COLORS[i % FREIGHT_TREND_COLORS.length];
+            const count = routeMap.get(route).length;
+            return `<span style="display:inline-flex;align-items:center;gap:4px;background:${color}15;color:${color};padding:4px 10px;border-radius:12px;font-size:11px;border:1px solid ${color}33;">
+                <span style="width:10px;height:10px;background:${color};border-radius:50%;"></span>
+                ${route} (${count})
+            </span>`;
+        }).join('');
+    }
+}
+
+function freightTrendCanvasMouseMove(e){
+    const canvas = document.getElementById('freight-trend-canvas');
+    const tooltip = document.getElementById('freight-trend-tooltip');
+    if(!canvas || !tooltip || freightTrendAllPoints.length === 0) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const padding = { top: 20, right: 50, bottom: 35, left: 60 };
+    const cssWidth = canvas.clientWidth || 600;
+    const cssHeight = 280;
+    const width = cssWidth - padding.left - padding.right;
+    const height = cssHeight - padding.top - padding.bottom;
+    const allValues = freightTrendAllPoints.map(p => p.value);
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
+    const range = max - min || 1;
+    const allDates = [...new Set(freightTrendAllPoints.map(p => p.date))].sort();
+
+    let nearestPoint = null;
+    let minDist = 20;
+    freightTrendAllPoints.forEach(point => {
+        const px = padding.left + (width * allDates.indexOf(point.date)) / Math.max(allDates.length - 1, 1);
+        const py = padding.top + height - ((point.value - min) / range) * height;
+        const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
+        if(dist < minDist){
+            minDist = dist;
+            nearestPoint = { ...point, px, py };
+        }
+    });
+
+    if(nearestPoint){
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = `
+            <div style="font-weight:bold;margin-bottom:4px;">${nearestPoint.route}</div>
+            <div>日期: ${nearestPoint.date}</div>
+            <div>运费: <b style="color:#2ecc71;">¥${nearestPoint.value.toFixed(0)}</b></div>
+            <div>柜型: ${nearestPoint.ctype || '—'}</div>
+            <div>来源: ${nearestPoint.source}</div>
+            ${nearestPoint.client ? `<div>客户: ${nearestPoint.client}</div>` : ''}
+            ${nearestPoint.carrier ? `<div>船司: ${nearestPoint.carrier}</div>` : ''}
+        `;
+        let tx = nearestPoint.px + 10;
+        let ty = nearestPoint.py - 10;
+        if(tx + 180 > cssWidth) tx = nearestPoint.px - 190;
+        if(ty < 10) ty = 10;
+        tooltip.style.left = tx + 'px';
+        tooltip.style.top = ty + 'px';
+    } else {
+        tooltip.style.display = 'none';
+    }
+}
+
+function freightTrendCanvasMouseLeave(){
+    const tooltip = document.getElementById('freight-trend-tooltip');
+    if(tooltip) tooltip.style.display = 'none';
 }
 
 // ===================== 全局预览功能 =====================
@@ -9386,6 +9988,430 @@ function getPreviewHtml_Reminder(reminder){
     `;
 }
 
+let ocrExtractedData = null;
+
+function toggleOcrSection(){
+    const section = document.getElementById('ocr-section');
+    const btn = document.getElementById('ocr-toggle-btn');
+    if(section.style.display === 'none'){
+        section.style.display = 'block';
+        btn.textContent = '收起';
+    } else {
+        section.style.display = 'none';
+        btn.textContent = '展开';
+    }
+}
+
+function handleOcrFileSelect(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImage = file.type.startsWith('image/');
+    if(!isPdf && !isImage){
+        showToast('请选择PDF或图片文件', true);
+        return;
+    }
+    if(isPdf){
+        handlePdfFile(file);
+    } else {
+        handleImageFile(file);
+    }
+}
+
+function handleImageFile(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+        const preview = document.getElementById('ocr-preview');
+        const previewImg = document.getElementById('ocr-preview-img');
+        previewImg.src = e.target.result;
+        preview.style.display = 'block';
+        performOcr(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+async function handlePdfFile(file){
+    const progressDiv = document.getElementById('ocr-progress');
+    const progressBar = document.getElementById('ocr-progress-bar');
+    const statusDiv = document.getElementById('ocr-status');
+    const preview = document.getElementById('ocr-preview');
+    const previewImg = document.getElementById('ocr-preview-img');
+    const resultDiv = document.getElementById('ocr-result');
+    const actionArea = document.getElementById('ocr-action-area');
+    const clearBtn = document.getElementById('ocr-clear-btn');
+
+    progressDiv.style.display = 'block';
+    resultDiv.style.display = 'none';
+    actionArea.style.display = 'none';
+    clearBtn.style.display = 'none';
+    preview.style.display = 'none';
+    progressBar.style.width = '0%';
+    statusDiv.textContent = '正在加载PDF.js...';
+
+    try {
+        if(typeof pdfjsLib === 'undefined'){
+            await loadPdfJsScript();
+        }
+        progressBar.style.width = '10%';
+        statusDiv.textContent = '正在读取PDF文件...';
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdf.numPages;
+        
+        let allText = '';
+        let imageDataList = [];
+        
+        for(let i = 1; i <= numPages; i++){
+            statusDiv.textContent = `正在处理第 ${i}/${numPages} 页...`;
+            progressBar.style.width = (10 + (i / numPages) * 30) + '%';
+            
+            const page = await pdf.getPage(i);
+            const scale = 2;
+            const viewport = page.getViewport({ scale });
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+            
+            const imageData = canvas.toDataURL('image/png');
+            imageDataList.push(imageData);
+            
+            if(i === 1){
+                previewImg.src = imageData;
+                preview.style.display = 'block';
+            }
+        }
+        
+        progressBar.style.width = '40%';
+        statusDiv.textContent = '正在OCR识别...';
+        
+        let combinedText = '';
+        for(let i = 0; i < imageDataList.length; i++){
+            statusDiv.textContent = `正在识别第 ${i + 1}/${numPages} 页...`;
+            const pageText = await performOcrOnImage(imageDataList[i], (progress) => {
+                const totalProgress = 40 + (i / numPages) * 50 + (progress / numPages) * 50;
+                progressBar.style.width = totalProgress + '%';
+            });
+            combinedText += pageText + '\n\n';
+        }
+        
+        progressBar.style.width = '100%';
+        statusDiv.textContent = '识别完成，正在提取关键字段...';
+        
+        ocrExtractedData = extractBillFields(combinedText);
+        
+        const resultContent = document.getElementById('ocr-result-content');
+        resultContent.innerHTML = formatOcrResult(ocrExtractedData, combinedText);
+        progressDiv.style.display = 'none';
+        resultDiv.style.display = 'block';
+        actionArea.style.display = 'block';
+        clearBtn.style.display = 'inline-block';
+        populateOcrOrderSelect();
+        
+        showToast(`PDF识别完成，共 ${numPages} 页`);
+    } catch(e){
+        console.error('PDF处理错误:', e);
+        statusDiv.textContent = 'PDF处理失败: ' + e.message;
+        progressBar.style.background = '#e74c3c';
+        showToast('PDF处理失败', true);
+    }
+}
+
+function loadPdfJsScript(){
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+        script.onload = () => {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+            resolve();
+        };
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+async function performOcrOnImage(imageData, onProgress){
+    if(typeof Tesseract === 'undefined'){
+        await loadTesseractScript();
+    }
+    
+    const result = await Tesseract.recognize(imageData, 'eng+chi_sim', {
+        logger: m => {
+            if(m.status === 'recognizing text' && onProgress){
+                onProgress(m.progress);
+            }
+        }
+    });
+    
+    return result.data.text;
+}
+
+async function performOcr(imageData){
+    const progressDiv = document.getElementById('ocr-progress');
+    const progressBar = document.getElementById('ocr-progress-bar');
+    const statusDiv = document.getElementById('ocr-status');
+    const resultDiv = document.getElementById('ocr-result');
+    const resultContent = document.getElementById('ocr-result-content');
+    const actionArea = document.getElementById('ocr-action-area');
+    const clearBtn = document.getElementById('ocr-clear-btn');
+
+    progressDiv.style.display = 'block';
+    resultDiv.style.display = 'none';
+    actionArea.style.display = 'none';
+    clearBtn.style.display = 'none';
+    progressBar.style.width = '0%';
+    statusDiv.textContent = '正在加载OCR引擎...';
+
+    try {
+        if(typeof Tesseract === 'undefined'){
+            statusDiv.textContent = '正在加载Tesseract.js...';
+            await loadTesseractScript();
+        }
+
+        progressBar.style.width = '20%';
+        statusDiv.textContent = '正在识别提单内容...';
+
+        const result = await Tesseract.recognize(imageData, 'eng+chi_sim', {
+            logger: m => {
+                if(m.status === 'recognizing text'){
+                    const percent = 20 + m.progress * 80;
+                    progressBar.style.width = percent + '%';
+                    statusDiv.textContent = `识别中... ${Math.round(m.progress * 100)}%`;
+                }
+            }
+        });
+
+        progressBar.style.width = '100%';
+        statusDiv.textContent = '识别完成，正在提取关键字段...';
+
+        const text = result.data.text;
+        ocrExtractedData = extractBillFields(text);
+
+        resultContent.innerHTML = formatOcrResult(ocrExtractedData, text);
+        progressDiv.style.display = 'none';
+        resultDiv.style.display = 'block';
+        actionArea.style.display = 'block';
+        clearBtn.style.display = 'inline-block';
+        populateOcrOrderSelect();
+
+        showToast('OCR识别完成');
+    } catch(e){
+        console.error('OCR Error:', e);
+        statusDiv.textContent = '识别失败: ' + e.message;
+        progressBar.style.background = '#e74c3c';
+        showToast('OCR识别失败', true);
+    }
+}
+
+function loadTesseractScript(){
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+function extractBillFields(text){
+    const data = {
+        mbl: '',
+        hbl: '',
+        pol: '',
+        pod: '',
+        vessel: '',
+        carrier: '',
+        etd: '',
+        eta: '',
+        containerNo: '',
+        containerType: '',
+        weight: '',
+        pkgs: '',
+        goods: '',
+        shipper: '',
+        consignee: ''
+    };
+
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+    const mblMatch = text.match(/(?:MBL|Master\s*Bill|B\/L\s*No\.?|Bill\s*of\s*Lading\s*No\.?)[:\s]*([A-Z0-9]{8,15})/i);
+    if(mblMatch) data.mbl = mblMatch[1];
+
+    const hblMatch = text.match(/(?:HBL|House\s*Bill|H\/B\s*L)[:\s]*([A-Z0-9]{8,15})/i);
+    if(hblMatch) data.hbl = hblMatch[1];
+
+    const polMatch = text.match(/(?:POL|Port\s*of\s*Loading|起运港|装货港)[:\s]*([A-Za-z\u4e00-\u9fa5]{2,20})/i);
+    if(polMatch) data.pol = polMatch[1];
+
+    const podMatch = text.match(/(?:POD|Port\s*of\s*Discharge|目的港|卸货港)[:\s]*([A-Za-z\u4e00-\u9fa5]{2,20})/i);
+    if(podMatch) data.pod = podMatch[1];
+
+    const vesselMatch = text.match(/(?:Vessel|Vessel\s*Name|船名|VSL)[:\s]*([A-Za-z0-9\u4e00-\u9fa5\s]{2,30})/i);
+    if(vesselMatch) data.vessel = vesselMatch[1].trim();
+
+    const carrierMatch = text.match(/(?:Carrier|Shipping\s*Line|船公司|承运人)[:\s]*([A-Za-z\u4e00-\u9fa5]{2,20})/i);
+    if(carrierMatch) data.carrier = carrierMatch[1];
+
+    const etdMatch = text.match(/(?:ETD|Estimated\s*Time\s*of\s*Departure|预计开船|开船日期)[:\s]*(\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4})/i);
+    if(etdMatch) data.etd = normalizeDate(etdMatch[1]);
+
+    const etaMatch = text.match(/(?:ETA|Estimated\s*Time\s*of\s*Arrival|预计到港|到港日期)[:\s]*(\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4})/i);
+    if(etaMatch) data.eta = normalizeDate(etaMatch[1]);
+
+    const containerMatch = text.match(/(?:Container\s*No\.?|柜号|箱号)[:\s]*([A-Z]{3,4}[A-Z0-9]{6,10})/i);
+    if(containerMatch) data.containerNo = containerMatch[1];
+
+    const ctypeMatch = text.match(/(?:Container\s*Type|柜型|箱型)[:\s]*([24]0\s*(?:GP|HQ)|45\s*HQ)/i);
+    if(ctypeMatch) data.containerType = ctypeMatch[1].replace(/\s/g, '');
+
+    const weightMatch = text.match(/(?:Gross\s*Weight|毛重|G\.W\.)[:\s]*([\d,.]+)\s*(?:KG|kg|KGS)/i);
+    if(weightMatch) data.weight = weightMatch[1].replace(/,/g, '');
+
+    const pkgsMatch = text.match(/(?:No\.?\s*of\s*Pkgs|Packages|件数|Package)[:\s]*([\d,]+)/i);
+    if(pkgsMatch) data.pkgs = pkgsMatch[1].replace(/,/g, '');
+
+    const goodsMatch = text.match(/(?:Description\s*of\s*Goods|货名|品名|Description)[:\s]*([A-Za-z\u4e00-\u9fa5\s]{2,50})/i);
+    if(goodsMatch) data.goods = goodsMatch[1].trim();
+
+    return data;
+}
+
+function normalizeDate(dateStr){
+    const parts = dateStr.split(/[-/]/);
+    if(parts.length === 3){
+        let [y, m, d] = parts;
+        if(y.length === 2){
+            y = '20' + y;
+        }
+        if(m.length === 1) m = '0' + m;
+        if(d.length === 1) d = '0' + d;
+        if(parts[0].length <= 2){
+            [m, d, y] = parts;
+            if(y.length === 2) y = '20' + y;
+            if(m.length === 1) m = '0' + m;
+            if(d.length === 1) d = '0' + d;
+        }
+        return `${y}-${m}-${d}`;
+    }
+    return dateStr;
+}
+
+function formatOcrResult(data, rawText){
+    let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
+    const fields = [
+        ['主提单号 MBL', data.mbl],
+        ['分提单号 HBL', data.hbl],
+        ['起运港 POL', data.pol],
+        ['目的港 POD', data.pod],
+        ['船名/航次', data.vessel],
+        ['船公司', data.carrier],
+        ['ETD', data.etd],
+        ['ETA', data.eta],
+        ['柜号', data.containerNo],
+        ['柜型', data.containerType],
+        ['毛重 (KG)', data.weight],
+        ['件数', data.pkgs],
+        ['品名', data.goods]
+    ];
+    fields.forEach(([label, value]) => {
+        const hasValue = value && value.trim();
+        html += `<div style="padding:6px 8px; background:${hasValue ? '#e8f8f0' : '#f5f5f5'}; border-radius:6px;">
+            <div style="font-size:10px; color:#888;">${label}</div>
+            <div style="font-size:12px; color:${hasValue ? '#2c3e50' : '#aaa'}; font-weight:${hasValue ? '500' : 'normal'};">${hasValue ? value : '—'}</div>
+        </div>`;
+    });
+    html += '</div>';
+    html += `<details style="margin-top:10px;"><summary style="cursor:pointer; font-size:11px; color:#888;">查看原始识别文本</summary>
+        <pre style="margin-top:8px; padding:10px; background:#fff; border:1px solid #e0e6ed; border-radius:6px; font-size:10px; white-space:pre-wrap; word-break:break-all; max-height:150px; overflow-y:auto;">${rawText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+    </details>`;
+    return html;
+}
+
+function populateOcrOrderSelect(){
+    const select = document.getElementById('ocr-target-order');
+    if(!select) return;
+    const crmData = crmLoad();
+    select.innerHTML = '<option value="">选择现有订单更新...</option>';
+    crmData.forEach(r => {
+        const label = `${r.client || '未知客户'} - ${r.mbl || r.orderno || r.id}`;
+        select.innerHTML += `<option value="${r.id}">${label}</option>`;
+    });
+}
+
+function fillCrmFromOcr(mode){
+    if(!ocrExtractedData){
+        showToast('没有识别数据', true);
+        return;
+    }
+    if(mode === 'update'){
+        const select = document.getElementById('ocr-target-order');
+        const orderId = select?.value;
+        if(!orderId){
+            showToast('请选择要更新的订单', true);
+            return;
+        }
+        crmEditRecord(parseInt(orderId));
+        setTimeout(() => {
+            fillOcrDataToForm();
+            showToast('已填充识别数据，请确认后保存');
+        }, 300);
+    } else {
+        crmShowAddModal();
+        setTimeout(() => {
+            fillOcrDataToForm();
+            showToast('已填充识别数据，请确认后保存');
+        }, 300);
+    }
+}
+
+function fillOcrDataToForm(){
+    if(!ocrExtractedData) return;
+    const mapping = {
+        'crm-f-mbl': ocrExtractedData.mbl,
+        'crm-f-hbl': ocrExtractedData.hbl,
+        'crm-f-pol': ocrExtractedData.pol,
+        'crm-f-pod': ocrExtractedData.pod,
+        'crm-f-vessel': ocrExtractedData.vessel,
+        'crm-f-carrier': ocrExtractedData.carrier,
+        'crm-f-etd': ocrExtractedData.etd,
+        'crm-f-eta': ocrExtractedData.eta,
+        'crm-f-ctype': ocrExtractedData.containerType,
+        'crm-f-weight': ocrExtractedData.weight,
+        'crm-f-pkgs': ocrExtractedData.pkgs,
+        'crm-f-goods': ocrExtractedData.goods
+    };
+    Object.entries(mapping).forEach(([id, value]) => {
+        if(value){
+            const el = document.getElementById(id);
+            if(el) el.value = value;
+        }
+    });
+}
+
+function clearOcrResult(){
+    const preview = document.getElementById('ocr-preview');
+    const progressDiv = document.getElementById('ocr-progress');
+    const resultDiv = document.getElementById('ocr-result');
+    const actionArea = document.getElementById('ocr-action-area');
+    const clearBtn = document.getElementById('ocr-clear-btn');
+    const fileInput = document.getElementById('ocr-file-input');
+
+    preview.style.display = 'none';
+    progressDiv.style.display = 'none';
+    resultDiv.style.display = 'none';
+    actionArea.style.display = 'none';
+    clearBtn.style.display = 'none';
+    fileInput.value = '';
+    ocrExtractedData = null;
+}
+
 function initNewModules(){
     clientLoadData();
     clientRender();
@@ -9398,10 +10424,16 @@ function initNewModules(){
     reconciliationRender();
     freightLoadData();
     freightRender();
+    freightInitTrendRoutes();
+    const trendCanvas = document.getElementById('freight-trend-canvas');
+    if(trendCanvas){
+        trendCanvas.addEventListener('mousemove', freightTrendCanvasMouseMove);
+        trendCanvas.addEventListener('mouseleave', freightTrendCanvasMouseLeave);
+    }
 }
 
 window.onload = function(){
-    initAllModules();
+    initAuth();
 };
 </script>
 
@@ -12424,5 +13456,21 @@ function toggleNews(){
 <\/html>
 
 </template>
+
+<div id="quick-backup-fab" onclick="showQuickBackupModal()" style="position:fixed;right:16px;bottom:80px;z-index:99998;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 15px rgba(231,76,60,0.4);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 20px rgba(231,76,60,0.5)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 15px rgba(231,76,60,0.4)'" title="一键备份">
+    💾
+</div>
+
+<div id="quick-backup-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:24px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="font-size:18px;font-weight:bold;color:#2c3e50;margin-bottom:16px;text-align:center;">💾 快速备份</div>
+        <div id="quick-backup-info" style="background:#f8f9fa;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#555;"></div>
+        <div style="display:flex;gap:10px;">
+            <button onclick="executeQuickBackup()" style="flex:1;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:bold;cursor:pointer;">📥 立即备份</button>
+            <button onclick="hideQuickBackupModal()" style="flex:1;background:#f0f0f0;color:#666;border:none;border-radius:10px;padding:14px;font-size:14px;cursor:pointer;">取消</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
