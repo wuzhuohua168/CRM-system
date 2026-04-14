@@ -1297,6 +1297,14 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">目的港</label>
                         <input type="text" id="crm-f-pod" placeholder="如 NRT / OSA" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
+                    <div style="grid-column:1 / -1;">
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">发货地址</label>
+                        <input type="text" id="crm-f-shipaddr" placeholder="发货人详细地址" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div style="grid-column:1 / -1;">
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">收货地址</label>
+                        <input type="text" id="crm-f-recvaddr" placeholder="收货人详细地址" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
                     <div id="crm-ctype-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">柜型</label>
                         <select id="crm-f-ctype" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
@@ -6677,7 +6685,7 @@ GlobalSearchRegistry.register({
     name: 'CRM订单',
     icon: '📋',
     storageKey: 'hgcd_crm_fcl_v1',
-    searchFields: ['orderno', 'mbl', 'hbl', 'client', 'pol', 'pod', 'status', 'carrier'],
+    searchFields: ['orderno', 'mbl', 'hbl', 'client', 'pol', 'pod', 'shipaddr', 'recvaddr', 'status', 'carrier'],
     colorField: 'status',
     colorMap: {'询价':'#8e44ad','已订舱':'#2980b9','已装柜':'#e67e22','已开船':'#16a085','已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'},
     formatResult: (item, name, icon, color) => {
@@ -7592,7 +7600,7 @@ function crmGenOrderNo() {
 
 function crmShowAddModal() {
     // clear form
-    ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipmode',
+    ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipaddr','crm-f-recvaddr','crm-f-shipmode',
      'crm-f-carrier','crm-f-vessel','crm-f-goods','crm-f-weight','crm-f-pkgs','crm-f-cbm',
      'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime',
      'crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax',
@@ -7896,6 +7904,8 @@ function crmFormToRecord() {
         shipMode: g('crm-f-shipmode'),
         pol:      g('crm-f-pol'),
         pod:      g('crm-f-pod'),
+        shipaddr: g('crm-f-shipaddr'),
+        recvaddr: g('crm-f-recvaddr'),
         ctype:    g('crm-f-ctype'),
         cqty:     parseInt(document.getElementById('crm-f-cqty').value) || 1,
         carrier:  g('crm-f-carrier'),
@@ -7928,7 +7938,7 @@ function crmRecordToForm(r) {
     s('crm-f-biztype', r.bizType || 'fcl');
     s('crm-f-client', r.client); s('crm-f-orderno', r.orderno); s('crm-f-mbl', r.mbl); s('crm-f-hbl', r.hbl);
     s('crm-f-shipmode', r.shipMode);
-    s('crm-f-pol', r.pol); s('crm-f-pod', r.pod); s('crm-f-ctype', r.ctype); s('crm-f-cqty', r.cqty || 1);
+    s('crm-f-pol', r.pol); s('crm-f-pod', r.pod); s('crm-f-shipaddr', r.shipaddr); s('crm-f-recvaddr', r.recvaddr); s('crm-f-ctype', r.ctype); s('crm-f-cqty', r.cqty || 1);
     s('crm-f-carrier', r.carrier); s('crm-f-vessel', r.vessel); s('crm-f-goods', r.goods);
     s('crm-f-weight', r.weight || ''); s('crm-f-pkgs', r.pkgs || ''); s('crm-f-cbm', r.cbm || '');
     s('crm-f-billweight', r.billWeight || ''); s('crm-f-unitprice', r.unitPrice || '');
@@ -8056,6 +8066,7 @@ function crmShowDetail(id) {
         ${section(isLcl ? '运单 & 单号' : '提单 & 单号', [[isLcl ? '运单号' : '主单号 MBL', fmt(r.mbl)], [isLcl ? '参考单号' : '分单号 HBL', fmt(r.hbl)]])}
         ${section('航线 & 船务', [
             ['起运港', fmt(r.pol)], ['目的港', fmt(r.pod)],
+            ['发货地址', fmt(r.shipaddr)], ['收货地址', fmt(r.recvaddr)],
             [isLcl ? '运输方式' : '柜型/数量', isLcl ? fmt(r.shipMode) : (r.ctype ? `${r.ctype} × ${r.cqty||1}` : '—')],
             ['船公司', fmt(r.carrier)],
             ['船名/航次', fmt(r.vessel)],
@@ -8560,12 +8571,12 @@ function crmExportCSV(selectionOnly = false) {
         data = data.filter(r => crmSelectedIds.has(r.id));
     }
     if (!data.length) { showToast('暂无数据'); return; }
-    const headers = ['业务类型','客户','订单号','MBL','HBL','运输方式','起运港','目的港','柜型','柜数','船公司','船名航次',
+    const headers = ['业务类型','客户','订单号','MBL','HBL','运输方式','起运港','目的港','发货地址','收货地址','柜型','柜数','船公司','船名航次',
         '品名','毛重(kg)','件数','体积(CBM)','计费重(kg)','单价(¥/kg)','截关日','ETD','ETA','ATA','提柜日','免柜期',
         '海运费','国内拖车费','报关费','税金','ARRIVAL NOTICE費用','清关费','尾程派送费','其他费','应收合计','状态','贸易术语','备注','创建日期'];
     const rows = data.map(r => {
         const f = r.fees || {};
-        return [r.bizType === 'lcl' ? '散货' : '整柜', r.client,r.orderno,r.mbl,r.hbl,r.shipMode,r.pol,r.pod,r.ctype,r.cqty,r.carrier,r.vessel,
+        return [r.bizType === 'lcl' ? '散货' : '整柜', r.client,r.orderno,r.mbl,r.hbl,r.shipMode,r.pol,r.pod,r.shipaddr,r.recvaddr,r.ctype,r.cqty,r.carrier,r.vessel,
             r.goods,r.weight,r.pkgs,r.cbm,r.billWeight,r.unitPrice,r.cutoff,r.etd,r.eta,r.ata,r.pickup,r.freetime,
             f.ocean,f.truck,f.customs,f.tax,f.arrival_notice,f.clearance,f.delivery,f.other,f.total,r.status,r.incoterm,
             (r.notes||'').replace(/\n/g,' '),(r.createdAt||'').slice(0,10)]
