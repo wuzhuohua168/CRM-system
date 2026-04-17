@@ -9573,7 +9573,8 @@ function showApiConfig() {
     modal.style.display = 'flex';
     document.getElementById('config-api-url').value = localStorage.getItem('cloudflare_api_url') || '';
     document.getElementById('config-api-key').value = localStorage.getItem('cloudflare_api_key') || '';
-    const autoSync = localStorage.getItem('crm_auto_sync') === 'true';
+    const autoSyncValue = localStorage.getItem('crm_auto_sync');
+    const autoSync = autoSyncValue === null ? true : autoSyncValue === 'true';
     document.getElementById('config-auto-sync').checked = autoSync;
     updateAutoSyncSlider();
     document.getElementById('api-config-status').style.display = 'none';
