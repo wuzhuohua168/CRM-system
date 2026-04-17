@@ -874,6 +874,37 @@
     </div>
 </div>
 
+<!-- API配置弹窗 -->
+<div id="api-config-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:var(--bg-primary); border-radius:12px; padding:24px; width:400px; max-width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <div style="font-size:18px; font-weight:bold; margin-bottom:20px; color:var(--text-primary);">⚙️ Cloudflare API 配置</div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:6px; color:var(--text-secondary);">API URL</label>
+            <input type="text" id="config-api-url" placeholder="https://your-worker.workers.dev" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary);">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:6px; color:var(--text-secondary);">API Key</label>
+            <input type="text" id="config-api-key" placeholder="输入你的API密钥" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary);">
+        </div>
+        <div style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg-gray); border-radius:8px;">
+            <div>
+                <div style="font-size:14px; font-weight:bold; color:var(--text-primary);">自动同步</div>
+                <div style="font-size:12px; color:var(--text-secondary);">保存订单时自动同步到云端</div>
+            </div>
+            <label style="position:relative; display:inline-block; width:50px; height:26px;">
+                <input type="checkbox" id="config-auto-sync" style="opacity:0; width:0; height:0;" onchange="updateAutoSyncSlider()">
+                <span id="auto-sync-slider" onclick="document.getElementById('config-auto-sync').click(); updateAutoSyncSlider();" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:0.3s; border-radius:26px;"></span>
+                <span id="auto-sync-dot" style="position:absolute; content:''; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; pointer-events:none;"></span>
+            </label>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="saveApiConfig()" style="flex:1; padding:10px; background:#9b59b6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">保存配置</button>
+            <button onclick="hideApiConfig()" style="flex:1; padding:10px; background:#95a5a6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">取消</button>
+        </div>
+        <div id="api-config-status" style="margin-top:12px; font-size:13px; text-align:center; display:none;"></div>
+    </div>
+</div>
+
 <!-- 全局预览卡片 -->
 <div id="global-preview-card" class="preview-card"></div>
 
@@ -1582,6 +1613,9 @@
                 <button class="btn-main" id="crm-select-toggle" style="background:#f39c12; padding:8px 14px;" onclick="crmToggleSelectMode()">☑ 勾选</button>
                 <button class="btn-main" style="background:#e74c3c; padding:8px 14px;" onclick="crmExportPDF()">导出PDF</button>
                 <button class="btn-main" style="background:#27ae60; padding:8px 14px;" onclick="crmExportCSV()">导出CSV</button>
+                <button class="btn-main" style="background:#9b59b6; padding:8px 14px;" onclick="crmExportTracking()">📤 同步到云端</button>
+                <button class="btn-main" style="background:#16a085; padding:8px 14px;" onclick="crmRestoreFromCloud()">📥 从云端恢复</button>
+                <button class="btn-main" style="background:#34495e; padding:8px 14px;" onclick="showApiConfig()">⚙️ API设置</button>
             </div>
         </div>
         <!-- 搜索 + 状态筛选 -->
@@ -2065,6 +2099,28 @@
                             <span id="crm-f-lcl-profit" style="font-size:15px; font-weight:bold; color:#1f7a5c;">¥ 0</span>
                             <span id="crm-f-lcl-margin" style="font-size:12px; color:#27ae60; background:#d4f1e4; padding:2px 10px; border-radius:999px;">0%</span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- 快递信息 -->
+                <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">快递信息</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">快递单号</label>
+                        <input type="text" id="crm-f-tracking" placeholder="输入快递单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">快递公司</label>
+                        <select id="crm-f-carrier-type" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="">请选择</option>
+                            <option value="sagawa">佐川急便</option>
+                            <option value="kuroneko">黑猫宅急便 (雅玛多)</option>
+                            <option value="japanpost">日本邮政</option>
+                            <option value="fukutsu">福山通运</option>
+                            <option value="seino">西浓运输</option>
+                            <option value="daiichi">第一货物</option>
+                            <option value="other">其他</option>
+                        </select>
                     </div>
                 </div>
 
@@ -8291,6 +8347,90 @@ function crmLoad() {
 }
 function crmSave(data) {
     localStorage.setItem(CRM_KEY, JSON.stringify(data));
+    crmAutoSync();
+}
+
+let autoSyncTimeout = null;
+function crmAutoSync() {
+    const autoSync = localStorage.getItem('crm_auto_sync') === 'true';
+    if (!autoSync) return;
+    
+    if (autoSyncTimeout) {
+        clearTimeout(autoSyncTimeout);
+    }
+    
+    autoSyncTimeout = setTimeout(() => {
+        const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
+        const apiKey = localStorage.getItem('cloudflare_api_key') || '';
+        
+        if (!apiUrl || !apiKey) return;
+        
+        const data = crmLoad();
+        if (!data.length) return;
+        
+        const syncData = data.map(r => ({
+            id: r.id || crypto.randomUUID(),
+            bizType: r.bizType || 'fcl',
+            client: r.client || '',
+            orderno: r.orderno || '',
+            mbl: r.mbl || '',
+            hbl: r.hbl || '',
+            shipMode: r.shipMode || '',
+            pol: r.pol || '',
+            pod: r.pod || '',
+            shipaddr: r.shipaddr || '',
+            recvaddr: r.recvaddr || '',
+            ctype: r.ctype || '',
+            cqty: r.cqty || 1,
+            carrier: r.carrier || '',
+            vessel: r.vessel || '',
+            goods: r.goods || '',
+            weight: r.weight || 0,
+            pkgs: r.pkgs || 0,
+            cbm: r.cbm || 0,
+            billWeight: r.billWeight || 0,
+            unitPrice: r.unitPrice || 0,
+            cutoff: r.cutoff || '',
+            etd: r.etd || '',
+            eta: r.eta || '',
+            ata: r.ata || '',
+            pickup: r.pickup || '',
+            freetime: r.freetime || '',
+            signed: r.signed || '',
+            warehouse: r.warehouse || '',
+            flight: r.flight || '',
+            airSigned: r.airSigned || '',
+            tracking: r.tracking || '',
+            carrierType: r.carrierType || '',
+            status: r.status || '',
+            incoterm: r.incoterm || '',
+            notes: r.notes || '',
+            fees: r.fees || null,
+            costs: r.costs || null,
+            profit: r.profit || 0,
+            margin: r.margin || 0,
+            createdAt: r.createdAt || new Date().toISOString(),
+            updatedAt: r.updatedAt || new Date().toISOString()
+        }));
+        
+        fetch(apiUrl + '/api/orders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(syncData)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                console.log('自动同步成功:', result.message);
+            }
+        })
+        .catch(error => {
+            console.error('自动同步失败:', error);
+        });
+    }, 3000);
 }
 function crmToggleBizType() {
     const bizType = document.getElementById('crm-f-biztype')?.value || 'fcl';
@@ -8360,6 +8500,7 @@ function crmShowAddModal() {
      'crm-f-warehouse','crm-f-flight','crm-f-air-signed',
      'crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-commodity','crm-f-lcl-fumigation','crm-f-lcl-delivery','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax','crm-f-lcl-cost-delivery',
      'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-inspection','crm-f-fee-commodity','crm-f-fee-fumigation','crm-f-fee-other',
+     'crm-f-tracking','crm-f-carrier-type',
      'crm-f-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
     document.getElementById('crm-f-biztype').value = 'fcl';
     document.getElementById('crm-f-ctype').value = '';
@@ -8697,6 +8838,8 @@ function crmFormToRecord() {
         warehouse: g('crm-f-warehouse'),
         flight:   g('crm-f-flight'),
         airSigned: g('crm-f-air-signed'),
+        tracking: g('crm-f-tracking'),
+        carrierType: g('crm-f-carrier-type'),
         fees,
         costs,
         profit,
@@ -8748,6 +8891,7 @@ function crmRecordToForm(r) {
         legacyFeesFx.arrival_notice = { amt: (r.fees||{}).arrival_notice, cur: 'CNY', rate: 1, cny: (r.fees||{}).arrival_notice };
     }
     crmRenderFeeFxRows({ ...legacyFeesFx, ...((r.fees||{}).fx || {}) });
+    s('crm-f-tracking', r.tracking); s('crm-f-carrier-type', r.carrierType);
     s('crm-f-status', r.status); s('crm-f-incoterm', r.incoterm); s('crm-f-notes', r.notes);
     // render cost rows first, then populate values
     crmRenderCostRows(r.costs || {});
@@ -8827,6 +8971,33 @@ function crmShowDetail(id) {
                 </div>`).join('')}
             </div>
         </div>`;
+    
+    const getTrackingUrl = (carrierType, trackingNo) => {
+        if (!trackingNo || !carrierType) return null;
+        const urls = {
+            'sagawa': `https://k2k.sagawa-exp.co.jp/p/web/okurijosearch.do?okurijoNo=${trackingNo}`,
+            'kuroneko': `https://toi.kuronekoyamato.co.jp/cgi-bin/tneko?dkino=${trackingNo}`,
+            'japanpost': `https://trackings.post.japanpost.jp/services/srv/search/?requestNo1=${trackingNo}`,
+            'fukutsu': `https://www.fukutsu.co.jp/cgi-bin/user/tntsearch.cgi?no=${trackingNo}`,
+            'seino': `https://track.seino.co.jp/cgi-bin/tracking_e.cgi?number=${trackingNo}`,
+            'daiichi': `http://www.daiichikamotsu.co.jp/track/track.php?number=${trackingNo}`,
+        };
+        return urls[carrierType] || null;
+    };
+    
+    const getCarrierName = (carrierType) => {
+        const names = {
+            'sagawa': '佐川急便',
+            'kuroneko': '黑猫宅急便',
+            'japanpost': '日本邮政',
+            'fukutsu': '福山通运',
+            'seino': '西浓运输',
+            'daiichi': '第一货物',
+            'other': '其他'
+        };
+        return names[carrierType] || '—';
+    };
+    
     const fees = r.fees || {};
     const feeFx = fees.fx || {};
     const isLcl = (r.bizType || 'fcl') === 'lcl';
@@ -8839,6 +9010,14 @@ function crmShowDetail(id) {
         }
         return fmtMoney(fallbackVal);
     };
+    
+    const trackingUrl = getTrackingUrl(r.carrierType, r.tracking);
+    const trackingLink = r.tracking 
+        ? (trackingUrl 
+            ? `<a href="${trackingUrl}" target="_blank" style="color:#4a90e2; text-decoration:none; border-bottom:1px dashed #4a90e2;">${r.tracking} 🔗</a>`
+            : r.tracking)
+        : '—';
+    
     document.getElementById('crm-detail-body').innerHTML = `
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
             <div style="font-size:18px; font-weight:bold; color:#2c3e50;">${fmt(r.client)}</div>
@@ -8847,6 +9026,10 @@ function crmShowDetail(id) {
             ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px;">${r.orderno}</span>` : ''}
         </div>
         ${section(isLcl ? '运单 & 单号' : '提单 & 单号', [[isLcl ? '运单号' : '主单号 MBL', fmt(r.mbl)], [isLcl ? '参考单号' : '分单号 HBL', fmt(r.hbl)]])}
+        ${r.tracking ? section('📦 快递信息', [
+            ['快递单号', trackingLink],
+            ['快递公司', getCarrierName(r.carrierType)],
+        ]) : ''}
         ${section('航线 & 船务', [
             ['起运港', fmt(r.pol)], ['目的港', fmt(r.pod)],
             ['发货地址', fmt(r.shipaddr)], ['收货地址', fmt(r.recvaddr)],
@@ -9385,6 +9568,186 @@ function crmExportCSV(selectionOnly = false) {
     showToast('CSV已导出');
 }
 
+function showApiConfig() {
+    const modal = document.getElementById('api-config-modal');
+    modal.style.display = 'flex';
+    document.getElementById('config-api-url').value = localStorage.getItem('cloudflare_api_url') || '';
+    document.getElementById('config-api-key').value = localStorage.getItem('cloudflare_api_key') || '';
+    const autoSync = localStorage.getItem('crm_auto_sync') === 'true';
+    document.getElementById('config-auto-sync').checked = autoSync;
+    updateAutoSyncSlider();
+    document.getElementById('api-config-status').style.display = 'none';
+}
+
+function updateAutoSyncSlider() {
+    const checkbox = document.getElementById('config-auto-sync');
+    const slider = document.getElementById('auto-sync-slider');
+    const dot = document.getElementById('auto-sync-dot');
+    if (checkbox.checked) {
+        slider.style.backgroundColor = '#9b59b6';
+        dot.style.left = '27px';
+    } else {
+        slider.style.backgroundColor = '#ccc';
+        dot.style.left = '3px';
+    }
+}
+
+function hideApiConfig() {
+    document.getElementById('api-config-modal').style.display = 'none';
+}
+
+function saveApiConfig() {
+    const apiUrl = document.getElementById('config-api-url').value.trim();
+    const apiKey = document.getElementById('config-api-key').value.trim();
+    const autoSync = document.getElementById('config-auto-sync').checked;
+    
+    if (!apiUrl || !apiKey) {
+        const status = document.getElementById('api-config-status');
+        status.style.display = 'block';
+        status.style.color = '#e74c3c';
+        status.textContent = '请填写完整的API配置';
+        return;
+    }
+    
+    localStorage.setItem('cloudflare_api_url', apiUrl);
+    localStorage.setItem('cloudflare_api_key', apiKey);
+    localStorage.setItem('crm_auto_sync', autoSync ? 'true' : 'false');
+    
+    const status = document.getElementById('api-config-status');
+    status.style.display = 'block';
+    status.style.color = '#27ae60';
+    status.textContent = '✅ 配置已保存' + (autoSync ? '（自动同步已启用）' : '');
+    
+    setTimeout(() => {
+        hideApiConfig();
+    }, 1000);
+}
+
+function crmExportTracking() {
+    const data = crmLoad();
+    if (!data.length) {
+        showToast('暂无数据');
+        return;
+    }
+    
+    const syncData = data.map(r => ({
+        id: r.id || crypto.randomUUID(),
+        bizType: r.bizType || 'fcl',
+        client: r.client || '',
+        orderno: r.orderno || '',
+        mbl: r.mbl || '',
+        hbl: r.hbl || '',
+        shipMode: r.shipMode || '',
+        pol: r.pol || '',
+        pod: r.pod || '',
+        shipaddr: r.shipaddr || '',
+        recvaddr: r.recvaddr || '',
+        ctype: r.ctype || '',
+        cqty: r.cqty || 1,
+        carrier: r.carrier || '',
+        vessel: r.vessel || '',
+        goods: r.goods || '',
+        weight: r.weight || 0,
+        pkgs: r.pkgs || 0,
+        cbm: r.cbm || 0,
+        billWeight: r.billWeight || 0,
+        unitPrice: r.unitPrice || 0,
+        cutoff: r.cutoff || '',
+        etd: r.etd || '',
+        eta: r.eta || '',
+        ata: r.ata || '',
+        pickup: r.pickup || '',
+        freetime: r.freetime || '',
+        signed: r.signed || '',
+        warehouse: r.warehouse || '',
+        flight: r.flight || '',
+        airSigned: r.airSigned || '',
+        tracking: r.tracking || '',
+        carrierType: r.carrierType || '',
+        status: r.status || '',
+        incoterm: r.incoterm || '',
+        notes: r.notes || '',
+        fees: r.fees || null,
+        costs: r.costs || null,
+        profit: r.profit || 0,
+        margin: r.margin || 0,
+        createdAt: r.createdAt || new Date().toISOString(),
+        updatedAt: r.updatedAt || new Date().toISOString()
+    }));
+    
+    const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
+    const apiKey = localStorage.getItem('cloudflare_api_key') || '';
+    
+    if (!apiUrl || !apiKey) {
+        const json = JSON.stringify(syncData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'crm-backup-' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        showToast('请先配置Cloudflare API，已导出JSON文件备用');
+        return;
+    }
+    
+    showToast('正在同步数据到云端...');
+    
+    fetch(apiUrl + '/api/orders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(syncData)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showToast('✅ 已同步 ' + syncData.length + ' 条订单到云端！');
+        } else {
+            showToast('❌ 同步失败：' + (result.error || '未知错误'));
+        }
+    })
+    .catch(error => {
+        showToast('❌ 同步失败：' + error.message);
+    });
+}
+
+function crmRestoreFromCloud() {
+    const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
+    const apiKey = localStorage.getItem('cloudflare_api_key') || '';
+    
+    if (!apiUrl || !apiKey) {
+        showToast('请先配置Cloudflare API');
+        return;
+    }
+    
+    if (!confirm('确定要从云端恢复数据吗？这将覆盖本地数据。')) {
+        return;
+    }
+    
+    showToast('正在从云端恢复数据...');
+    
+    fetch(apiUrl + '/api/backup', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success && result.data) {
+            crmSave(result.data);
+            showToast('✅ 已从云端恢复 ' + result.count + ' 条订单！');
+            crmRender();
+        } else {
+            showToast('❌ 恢复失败：' + (result.error || '未知错误'));
+        }
+    })
+    .catch(error => {
+        showToast('❌ 恢复失败：' + error.message);
+    });
+}
+
 // ─── PDF 导出选项弹窗 ───
 let _crmPdfList = null;
 
@@ -9442,6 +9805,9 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
         ['海运费', 'ocean'],
         ['拖车费', 'truck'],
         ['报关费', 'customs'],
+        ['查验费', 'inspection'],
+        ['商检费', 'commodity'],
+        ['熏蒸费', 'fumigation'],
         ['税金', 'tax'],
         ['ARRIVAL NOTICE費用', 'arrival_notice'],
         ['清关费', 'clearance'],
@@ -9473,6 +9839,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
             <th style="${thS}text-align:left;min-width:80px;">品名</th>
             <th style="${thS}text-align:center;min-width:68px;">ETD</th>
             <th style="${thS}text-align:center;min-width:68px;">ETA</th>
+            <th style="${thS}text-align:center;min-width:68px;">签收</th>
             <th style="${thS}text-align:left;min-width:170px;">明细金额</th>
             <th style="${thS}text-align:center;min-width:80px;">应收合计</th>
             <th style="${thS}text-align:center;min-width:64px;">状态</th>
@@ -9500,6 +9867,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
         const tdS = `padding:7px 6px;border:1px solid #e0e8f0;font-size:11px;`;
         const statusBadge = `<span style="background:${col}22;color:${col};padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;white-space:nowrap;">${r.status}</span>`;
         if (isClient) {
+            const signedDate = r.signed || r.airSigned || '';
             return `<tr style="background:${bg};">
                 <td style="${tdS}text-align:center;color:${isLcl?'#16a085':'#4a90e2'};font-weight:bold;">${isLcl?'散货':'整柜'}</td>
                 <td style="${tdS}font-weight:600;color:#2c3e50;">${r.client||'—'}</td>
@@ -9510,6 +9878,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
                 <td style="${tdS}color:#555;">${fmt(r.goods)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.etd)}</td>
                 <td style="${tdS}text-align:center;color:#555;">${fmt(r.eta)}</td>
+                <td style="${tdS}text-align:center;color:#555;">${fmt(signedDate)}</td>
                 <td style="${tdS}line-height:1.45;min-width:170px;">${buildFeeDetailHtml(f)}</td>
                 <td style="${tdS}text-align:center;font-weight:bold;color:#2c7be5;">${f.total ? '¥'+Number(f.total).toLocaleString() : '—'}</td>
                 <td style="${tdS}text-align:center;">${statusBadge}</td>
@@ -9539,7 +9908,7 @@ function crmBuildPdfHtml(list, mode, opts = {}) {
 
     const footerRow = isClient
         ? `<tr style="background:#f0f6ff;">
-            <td colspan="10" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">应收合计</td>
+            <td colspan="11" style="padding:8px 6px;border:1px solid #e0e8f0;font-size:11px;font-weight:bold;color:#2c3e50;text-align:right;">应收合计</td>
             <td style="padding:8px 6px;border:1px solid #e0e8f0;font-size:12px;font-weight:bold;color:#2c7be5;text-align:center;">¥${totalRev.toLocaleString()}</td>
             <td style="border:1px solid #e0e8f0;"></td>
           </tr>`
