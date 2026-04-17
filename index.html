@@ -5128,6 +5128,7 @@
         <button style="background:#4a90e2" onclick="renderPreview()">1. 生成预览</button>
         <button style="background:#28a745" onclick="exportToPDF()">2. 导出 PDF</button>
         <button style="background:#9b59b6" onclick="copyLabelInfo()">3. 复制信息</button>
+        <button style="background:#e67e22" onclick="copySimpleInfo()">4. 复制简易</button>
     </div>
 
     <div class="info-tip">
@@ -5278,6 +5279,22 @@
         toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:99999;pointer-events:none;';
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 1500);
+    }
+
+    function copySimpleInfo() {
+        if (!currentMainTracking) {
+            alert("请先生成预览！");
+            return;
+        }
+        const qty = document.getElementById('qty').value;
+        const mode = finalModeName || 'LOGISTICS';
+        const info = `${mode}-${currentMainTracking}-${qty}件`;
+        
+        navigator.clipboard.writeText(info).then(() => {
+            showToast('简易信息已复制');
+        }).catch(() => {
+            alert('复制失败，请手动复制：\n' + info);
+        });
     }
 </script>
 <script>
