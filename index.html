@@ -1624,7 +1624,7 @@
             <select id="crm-filter-status" onchange="crmRender()" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:12px; background:#fff;">
                 <option value="">全部状态</option>
                 <option value="询价">询价</option>
-                <option value="已订舱">已订舱</option>
+                <option value="已下单">已下单</option>
                 <option value="已入库">已入库</option>
                 <option value="已审单">已审单</option>
                 <option value="已装柜">已装柜</option>
@@ -2131,7 +2131,7 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">当前状态</label>
                         <select id="crm-f-status" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
                             <option value="询价">询价</option>
-                            <option value="已订舱">已订舱</option>
+                            <option value="已下单">已下单</option>
                             <option value="已入库">已入库</option>
                             <option value="已审单">已审单</option>
                             <option value="已装柜">已装柜</option>
@@ -7476,7 +7476,7 @@ GlobalSearchRegistry.register({
     storageKey: 'hgcd_crm_fcl_v1',
     searchFields: ['orderno', 'mbl', 'hbl', 'client', 'pol', 'pod', 'shipaddr', 'recvaddr', 'status', 'carrier'],
     colorField: 'status',
-    colorMap: {'询价':'#8e44ad','已订舱':'#2980b9','已入库':'#3498db','已审单':'#9b59b6','已装柜':'#e67e22','已开船':'#16a085','已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'},
+    colorMap: {'询价':'#8e44ad','已下单':'#2980b9','已入库':'#3498db','已审单':'#9b59b6','已装柜':'#e67e22','已开船':'#16a085','已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'},
     formatResult: (item, name, icon, color) => {
         const c = color || '#95a5a6';
         return `<span style="color:${c};">${icon} ${name}</span>：${item.orderno || '-'} | ${item.client || '?'} | ${item.pol || '?'}→${item.pod || '?'} | <b style="color:${c};">${item.status || '-'}</b>`;
@@ -8331,7 +8331,7 @@ const CRM_KEY = 'hgcd_crm_fcl_v1';
 
 const CRM_STATUS_COLOR = {
     '询价':   '#8e44ad',
-    '已订舱': '#2980b9',
+    '已下单': '#2980b9',
     '已入库': '#3498db',
     '已审单': '#9b59b6',
     '已装柜': '#e67e22',
@@ -9124,9 +9124,9 @@ function crmShowDetail(id) {
             创建：${r.createdAt ? r.createdAt.slice(0,10) : '—'} &nbsp;|&nbsp; 更新：${r.updatedAt ? r.updatedAt.slice(0,10) : '—'}
         </div>
         <div style="display:flex; gap:10px;">
-            <button class="btn-main" style="background:#4a90e2; flex:1; padding:11px;" onclick="crmEditRecord(${r.id})">✏️ 编辑</button>
-            <button class="btn-main" style="background:#27ae60; flex:1; padding:11px;" onclick="crmShareClientPdf(${r.id})">📤 客户版PDF</button>
-            <button class="btn-main" style="background:#e74c3c; flex:1; padding:11px;" onclick="crmDeleteRecord(${r.id})">🗑 删除</button>
+            <button class="btn-main" style="background:#4a90e2; flex:1; padding:11px;" onclick="crmEditRecord('${r.id}')">✏️ 编辑</button>
+            <button class="btn-main" style="background:#27ae60; flex:1; padding:11px;" onclick="crmShareClientPdf('${r.id}')">📤 客户版PDF</button>
+            <button class="btn-main" style="background:#e74c3c; flex:1; padding:11px;" onclick="crmDeleteRecord('${r.id}')">🗑 删除</button>
         </div>`;
     document.getElementById('crm-detail-modal').style.display = 'block';
 }
@@ -9895,7 +9895,7 @@ function crmClosePdfModal() {
 
 function crmBuildPdfHtml(list, mode, opts = {}) {
     const STATUS_COLOR = {
-        '询价':'#8e44ad','已订舱':'#2980b9','已入库':'#3498db','已审单':'#9b59b6','已装柜':'#e67e22','已开船':'#16a085',
+        '询价':'#8e44ad','已下单':'#2980b9','已入库':'#3498db','已审单':'#9b59b6','已装柜':'#e67e22','已开船':'#16a085',
         '已到港':'#27ae60','已清关':'#1f7a5c','已完结':'#7f8c8d','取消':'#c0392b'
     };
     const fmt = v => v || '—';
