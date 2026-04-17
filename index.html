@@ -9650,7 +9650,12 @@ function crmExportTracking() {
         todos: [],
         calendarMemos: [],
         shipmentNotes: null,
-        appState: null
+        appState: null,
+        apiSettings: {
+            url: apiUrl,
+            key: apiKey,
+            autoSync: localStorage.getItem('crm_auto_sync') !== 'false'
+        }
     };
     
     const ordersData = crmLoad();
@@ -9852,6 +9857,21 @@ function crmRestoreFromCloud() {
                 const state = data.appState[0];
                 if (state && state.state) {
                     localStorage.setItem('logistics_workbench_state_v1', JSON.stringify(state.state));
+                    restoreCount++;
+                }
+            }
+            
+            if (data.apiSettings) {
+                if (data.apiSettings.url) {
+                    localStorage.setItem('cloudflare_api_url', data.apiSettings.url);
+                    restoreCount++;
+                }
+                if (data.apiSettings.key) {
+                    localStorage.setItem('cloudflare_api_key', data.apiSettings.key);
+                    restoreCount++;
+                }
+                if (data.apiSettings.autoSync !== undefined) {
+                    localStorage.setItem('crm_auto_sync', data.apiSettings.autoSync ? 'true' : 'false');
                     restoreCount++;
                 }
             }
