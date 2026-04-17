@@ -9235,8 +9235,8 @@ function crmRender() {
         const selected = crmSelectedIds.has(r.id);
         const selStyle = selected ? 'background:rgba(74,144,226,0.08); box-shadow:0 0 0 2px #4a90e2 inset, 0 12px 28px rgba(31,58,93,0.08);' : '';
         const cbHtml = crmSelectMode
-            ? `<div style="flex-shrink:0; display:flex; align-items:center; padding-right:4px;" onclick="crmToggleSelect(${r.id}, event)">
-                <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} onclick="crmToggleSelect(${r.id}, event)" style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
+            ? `<div style="flex-shrink:0; display:flex; align-items:center; padding-right:4px;" onclick="crmToggleSelect('${r.id}', event)">
+                <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} onclick="crmToggleSelect('${r.id}', event)" style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
                </div>`
             : '';
         const cardClick = crmSelectMode ? `crmToggleSelect('${r.id}', event)` : `crmShowDetail('${r.id}')`;
