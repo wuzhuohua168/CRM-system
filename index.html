@@ -9239,7 +9239,7 @@ function crmRender() {
                 <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} onclick="crmToggleSelect(${r.id}, event)" style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
                </div>`
             : '';
-        const cardClick = crmSelectMode ? `crmToggleSelect(${r.id}, event)` : `crmShowDetail(${r.id})`;
+        const cardClick = crmSelectMode ? `crmToggleSelect('${r.id}', event)` : `crmShowDetail('${r.id}')`;
         return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" onclick="${cardClick}">
             <div style="display:flex; align-items:flex-start; gap:8px;">
                 ${cbHtml}
