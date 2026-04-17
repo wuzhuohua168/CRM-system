@@ -9023,7 +9023,7 @@ function crmShowDetail(id) {
             <div style="font-size:18px; font-weight:bold; color:#2c3e50;">${fmt(r.client)}</div>
             <span style="background:${isLcl?'#16a08522':'#4a90e222'}; color:${isLcl?'#16a085':'#4a90e2'}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${isLcl?'散货':'整柜'}</span>
             <span style="background:${color}22; color:${color}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${r.status}</span>
-            ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px;">${r.orderno}</span>` : ''}
+            ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">${r.orderno}<button onclick="event.stopPropagation(); navigator.clipboard.writeText('${r.orderno}').then(() => alert('订单号已复制：${r.orderno}'));" style="background:none; border:none; cursor:pointer; padding:0; font-size:12px; color:#4a90e2; margin-left:2px;" title="复制订单号">📋</button></span>` : ''}
         </div>
         ${section(isLcl ? '运单 & 单号' : '提单 & 单号', [[isLcl ? '运单号' : '主单号 MBL', fmt(r.mbl)], [isLcl ? '参考单号' : '分单号 HBL', fmt(r.hbl)]])}
         ${r.tracking ? section('📦 快递信息', [
