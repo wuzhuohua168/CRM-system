@@ -1906,6 +1906,10 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">免柜期截止</label>
                         <input type="date" id="crm-f-freetime" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">签收时间</label>
+                        <input type="date" id="crm-f-signed" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
                 </div>
 
                 <div id="crm-fcl-fee-area">
@@ -5125,10 +5129,10 @@
     </div>
 
     <div class="btn-group">
-        <button style="background:#4a90e2" onclick="renderPreview()">1. Generate</button>
-        <button style="background:#28a745" onclick="exportToPDF()">2. Export</button>
-        <button style="background:#9b59b6" onclick="copyLabelInfo()">3. Copy</button>
-        <button style="background:#e67e22" onclick="copySimpleInfo()">4. Easy</button>
+        <button style="background:#4a90e2" onclick="renderPreview()">Generate</button>
+        <button style="background:#28a745" onclick="exportToPDF()">Export</button>
+        <button style="background:#9b59b6" onclick="copyLabelInfo()">Copy</button>
+        <button style="background:#e67e22" onclick="copySimpleInfo()">Easy</button>
     </div>
 
     <div class="info-tip">
@@ -8278,7 +8282,7 @@ function crmShowAddModal() {
     // clear form
     ['crm-f-client','crm-f-orderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipaddr','crm-f-recvaddr','crm-f-shipmode',
      'crm-f-carrier','crm-f-vessel','crm-f-goods','crm-f-weight','crm-f-pkgs','crm-f-cbm',
-     'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime',
+     'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime','crm-f-signed',
      'crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax',
      'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-other',
      'crm-f-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
@@ -8598,6 +8602,7 @@ function crmFormToRecord() {
         ata:      g('crm-f-ata'),
         pickup:   g('crm-f-pickup'),
         freetime: g('crm-f-freetime'),
+        signed:   g('crm-f-signed'),
         fees,
         costs,
         profit,
@@ -8626,7 +8631,7 @@ function crmRecordToForm(r) {
     s('crm-f-lcl-cost-extra', (r.costs||{}).extra || '');
     s('crm-f-lcl-cost-tax', (r.costs||{}).tax || '');
     s('crm-f-cutoff', r.cutoff); s('crm-f-etd', r.etd); s('crm-f-eta', r.eta); s('crm-f-ata', r.ata);
-    s('crm-f-pickup', r.pickup); s('crm-f-freetime', r.freetime);
+    s('crm-f-pickup', r.pickup); s('crm-f-freetime', r.freetime); s('crm-f-signed', r.signed);
     s('crm-f-fee-ocean', (r.fees||{}).ocean || ''); s('crm-f-fee-truck', (r.fees||{}).truck || '');
     s('crm-f-fee-customs', (r.fees||{}).customs || ''); s('crm-f-fee-tax', (r.fees||{}).tax || '');
     s('crm-f-fee-other', (r.fees||{}).other || '');
@@ -8759,6 +8764,7 @@ function crmShowDetail(id) {
             ['截关日', fmt(r.cutoff)], ['开船 ETD', fmt(r.etd)],
             ['预计到港 ETA', fmt(r.eta)], ['实际到港 ATA', fmt(r.ata)],
             ['提柜日', fmt(r.pickup)], ['免柜期截止', fmt(r.freetime)],
+            ['签收时间', fmt(r.signed)],
         ])}
         ${isLcl
             ? section('💰 散货应收', [
