@@ -9631,85 +9631,136 @@ function saveApiConfig() {
 }
 
 function crmExportTracking() {
-    const data = crmLoad();
-    if (!data.length) {
-        showToast('暂无数据');
-        return;
-    }
-    
-    const syncData = data.map(r => ({
-        id: r.id || crypto.randomUUID(),
-        bizType: r.bizType || 'fcl',
-        client: r.client || '',
-        orderno: r.orderno || '',
-        mbl: r.mbl || '',
-        hbl: r.hbl || '',
-        shipMode: r.shipMode || '',
-        pol: r.pol || '',
-        pod: r.pod || '',
-        shipaddr: r.shipaddr || '',
-        recvaddr: r.recvaddr || '',
-        ctype: r.ctype || '',
-        cqty: r.cqty || 1,
-        carrier: r.carrier || '',
-        vessel: r.vessel || '',
-        goods: r.goods || '',
-        weight: r.weight || 0,
-        pkgs: r.pkgs || 0,
-        cbm: r.cbm || 0,
-        billWeight: r.billWeight || 0,
-        unitPrice: r.unitPrice || 0,
-        cutoff: r.cutoff || '',
-        etd: r.etd || '',
-        eta: r.eta || '',
-        ata: r.ata || '',
-        pickup: r.pickup || '',
-        freetime: r.freetime || '',
-        signed: r.signed || '',
-        warehouse: r.warehouse || '',
-        flight: r.flight || '',
-        airSigned: r.airSigned || '',
-        tracking: r.tracking || '',
-        carrierType: r.carrierType || '',
-        status: r.status || '',
-        incoterm: r.incoterm || '',
-        notes: r.notes || '',
-        fees: r.fees || null,
-        costs: r.costs || null,
-        profit: r.profit || 0,
-        margin: r.margin || 0,
-        createdAt: r.createdAt || new Date().toISOString(),
-        updatedAt: r.updatedAt || new Date().toISOString()
-    }));
-    
     const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
     const apiKey = localStorage.getItem('cloudflare_api_key') || '';
     
     if (!apiUrl || !apiKey) {
-        const json = JSON.stringify(syncData, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'crm-backup-' + new Date().toISOString().slice(0,10) + '.json';
-        a.click();
-        showToast('请先配置Cloudflare API，已导出JSON文件备用');
+        showToast('请先配置Cloudflare API');
+        showApiConfig();
         return;
     }
     
-    showToast('正在同步数据到云端...');
+    const allData = {
+        orders: [],
+        clients: [],
+        suppliers: [],
+        airQuotes: [],
+        fclQuotes: [],
+        todos: [],
+        calendarMemos: [],
+        shipmentNotes: null,
+        appState: null
+    };
     
-    fetch(apiUrl + '/api/orders', {
+    const ordersData = crmLoad();
+    if (ordersData.length) {
+        allData.orders = ordersData.map(r => ({
+            id: r.id || crypto.randomUUID(),
+            bizType: r.bizType || 'fcl',
+            client: r.client || '',
+            orderno: r.orderno || '',
+            mbl: r.mbl || '',
+            hbl: r.hbl || '',
+            shipMode: r.shipMode || '',
+            pol: r.pol || '',
+            pod: r.pod || '',
+            shipaddr: r.shipaddr || '',
+            recvaddr: r.recvaddr || '',
+            ctype: r.ctype || '',
+            cqty: r.cqty || 1,
+            carrier: r.carrier || '',
+            vessel: r.vessel || '',
+            goods: r.goods || '',
+            weight: r.weight || 0,
+            pkgs: r.pkgs || 0,
+            cbm: r.cbm || 0,
+            billWeight: r.billWeight || 0,
+            unitPrice: r.unitPrice || 0,
+            cutoff: r.cutoff || '',
+            etd: r.etd || '',
+            eta: r.eta || '',
+            ata: r.ata || '',
+            pickup: r.pickup || '',
+            freetime: r.freetime || '',
+            signed: r.signed || '',
+            warehouse: r.warehouse || '',
+            flight: r.flight || '',
+            airSigned: r.airSigned || '',
+            tracking: r.tracking || '',
+            carrierType: r.carrierType || '',
+            status: r.status || '',
+            incoterm: r.incoterm || '',
+            notes: r.notes || '',
+            fees: r.fees || null,
+            costs: r.costs || null,
+            profit: r.profit || 0,
+            margin: r.margin || 0,
+            createdAt: r.createdAt || new Date().toISOString(),
+            updatedAt: r.updatedAt || new Date().toISOString()
+        }));
+    }
+    
+    try {
+        const clientsData = localStorage.getItem('logistics_client_data');
+        if (clientsData) allData.clients = JSON.parse(clientsData);
+    } catch(e) {}
+    
+    try {
+        const suppliersData = localStorage.getItem('logistics_supplier_data');
+        if (suppliersData) allData.suppliers = JSON.parse(suppliersData);
+    } catch(e) {}
+    
+    try {
+        const airQuotesData = localStorage.getItem('freight_air_cache_v1');
+        if (airQuotesData) allData.airQuotes = [{ id: '1', data: JSON.parse(airQuotesData) }];
+    } catch(e) {}
+    
+    try {
+        const fclQuotesData = localStorage.getItem('freight_fcl_cache_v1');
+        if (fclQuotesData) allData.fclQuotes = [{ id: '1', data: JSON.parse(fclQuotesData) }];
+    } catch(e) {}
+    
+    try {
+        const todosData = localStorage.getItem('dashboard_todos_v1');
+        if (todosData) allData.todos = JSON.parse(todosData);
+    } catch(e) {}
+    
+    try {
+        const memosData = localStorage.getItem('hcn_calendar_memos');
+        if (memosData) {
+            const memos = JSON.parse(memosData);
+            allData.calendarMemos = Object.entries(memos).map(([date, content]) => ({
+                id: crypto.randomUUID(),
+                date: date,
+                content: content
+            }));
+        }
+    } catch(e) {}
+    
+    try {
+        const shipmentNotes = localStorage.getItem('shipment_notes_v1');
+        if (shipmentNotes) allData.shipmentNotes = shipmentNotes;
+    } catch(e) {}
+    
+    try {
+        const appState = localStorage.getItem('logistics_workbench_state_v1');
+        if (appState) allData.appState = JSON.parse(appState);
+    } catch(e) {}
+    
+    showToast('正在同步全部数据到云端...');
+    
+    fetch(apiUrl + '/api/sync-all', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify(syncData)
+        body: JSON.stringify(allData)
     })
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            showToast('✅ 已同步 ' + syncData.length + ' 条订单到云端！');
+            showToast('✅ ' + result.message);
         } else {
             showToast('❌ 同步失败：' + (result.error || '未知错误'));
         }
@@ -9743,8 +9794,68 @@ function crmRestoreFromCloud() {
     .then(response => response.json())
     .then(result => {
         if (result.success && result.data) {
-            crmSave(result.data);
-            showToast('✅ 已从云端恢复 ' + result.count + ' 条订单！');
+            const data = result.data;
+            let restoreCount = 0;
+            
+            if (data.orders && data.orders.length) {
+                crmSave(data.orders);
+                restoreCount += data.orders.length;
+            }
+            
+            if (data.clients && data.clients.length) {
+                localStorage.setItem('logistics_client_data', JSON.stringify(data.clients));
+                restoreCount += data.clients.length;
+            }
+            
+            if (data.suppliers && data.suppliers.length) {
+                localStorage.setItem('logistics_supplier_data', JSON.stringify(data.suppliers));
+                restoreCount += data.suppliers.length;
+            }
+            
+            if (data.airQuotes && data.airQuotes.length) {
+                const airData = data.airQuotes[0];
+                if (airData && airData.data) {
+                    localStorage.setItem('freight_air_cache_v1', JSON.stringify(airData.data));
+                    restoreCount++;
+                }
+            }
+            
+            if (data.fclQuotes && data.fclQuotes.length) {
+                const fclData = data.fclQuotes[0];
+                if (fclData && fclData.data) {
+                    localStorage.setItem('freight_fcl_cache_v1', JSON.stringify(fclData.data));
+                    restoreCount++;
+                }
+            }
+            
+            if (data.todos && data.todos.length) {
+                localStorage.setItem('dashboard_todos_v1', JSON.stringify(data.todos));
+                restoreCount += data.todos.length;
+            }
+            
+            if (data.calendarMemos && data.calendarMemos.length) {
+                const memos = {};
+                data.calendarMemos.forEach(m => {
+                    memos[m.date] = m.content;
+                });
+                localStorage.setItem('hcn_calendar_memos', JSON.stringify(memos));
+                restoreCount += data.calendarMemos.length;
+            }
+            
+            if (data.shipmentNotes && data.shipmentNotes.length) {
+                localStorage.setItem('shipment_notes_v1', data.shipmentNotes[0].content || '');
+                restoreCount++;
+            }
+            
+            if (data.appState && data.appState.length) {
+                const state = data.appState[0];
+                if (state && state.state) {
+                    localStorage.setItem('logistics_workbench_state_v1', JSON.stringify(state.state));
+                    restoreCount++;
+                }
+            }
+            
+            showToast('✅ 已从云端恢复 ' + restoreCount + ' 条数据！');
             crmRender();
         } else {
             showToast('❌ 恢复失败：' + (result.error || '未知错误'));
