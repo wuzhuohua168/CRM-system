@@ -8,6 +8,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript/lunar.js"></script>
     <script src="https://yubinbango.github.io/yubinbango/yubinbango.js" charset="UTF-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
@@ -8226,7 +8228,7 @@ function renderHomeQuoteGrid() {
         label.textContent = item.label;
 
         const widgetWrap = document.createElement('div');
-        widgetWrap.className = 'market-quote-widget tradingview-widget-container lazy-home-quote';
+        widgetWrap.className = 'market-quote-widget tradingview-widget-container';
         widgetWrap.dataset.symbol = item.symbol;
 
         const widgetTarget = document.createElement('div');
@@ -8243,35 +8245,10 @@ function renderHomeQuoteGrid() {
         tile.appendChild(widgetWrap);
         tile.appendChild(overlay);
         grid.appendChild(tile);
+        
+        appendHomeQuoteWidget(widgetWrap, item.symbol);
     });
 
-    const lazyQuotes = Array.from(grid.querySelectorAll('.lazy-home-quote'));
-    if (!('IntersectionObserver' in window)) {
-        lazyQuotes.forEach(el => {
-            if (!el.dataset.loaded) {
-                appendHomeQuoteWidget(el, el.dataset.symbol);
-                el.dataset.loaded = '1';
-            }
-        });
-        grid.dataset.ready = 'true';
-        return;
-    }
-
-    if (homeQuoteObserver) homeQuoteObserver.disconnect();
-    homeQuoteObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const el = entry.target;
-                if (!el.dataset.loaded) {
-                    appendHomeQuoteWidget(el, el.dataset.symbol);
-                    el.dataset.loaded = '1';
-                }
-                homeQuoteObserver.unobserve(el);
-            }
-        });
-    }, { root: null, rootMargin: '120px', threshold: 0.1 });
-
-    lazyQuotes.forEach(el => homeQuoteObserver.observe(el));
     grid.dataset.ready = 'true';
 }
 
