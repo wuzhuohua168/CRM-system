@@ -1308,44 +1308,44 @@
 <div id="tab9" class="tab-content active">
     <div class="module-card dashboard-hero">
         <div class="dashboard-title-row">
-            <div class="title" style="background:linear-gradient(135deg, rgba(74,144,226,0.12), rgba(74,144,226,0.06)); padding:8px 14px; border-radius:10px; border-left:none;">首页仪表盘</div>
+            <div class="title" style="background:linear-gradient(135deg, rgba(74,144,226,0.12), rgba(74,144,226,0.06)); padding:8px 14px; border-radius:10px; border-left:none;" data-i18n="dashboard">首页仪表盘</div>
             <div class="title-btns" style="flex-direction:column; align-items:flex-end; gap:4px;">
                 <div style="display:flex; gap:6px;">
-                    <button style="background:linear-gradient(135deg, rgba(231,76,60,0.12), rgba(231,76,60,0.06)); color:#5d6d7e; border:1px solid rgba(231,76,60,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="quickBackup()">📥 一键备份</button>
-                    <button style="background:linear-gradient(135deg, rgba(155,89,182,0.12), rgba(155,89,182,0.06)); color:#5d6d7e; border:1px solid rgba(155,89,182,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="lockSystem()">🔒 快捷上锁</button>
+                    <button style="background:linear-gradient(135deg, rgba(231,76,60,0.12), rgba(231,76,60,0.06)); color:#5d6d7e; border:1px solid rgba(231,76,60,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="quickBackup()" data-i18n="quickBackup">📥 一键备份</button>
+                    <button style="background:linear-gradient(135deg, rgba(155,89,182,0.12), rgba(155,89,182,0.06)); color:#5d6d7e; border:1px solid rgba(155,89,182,0.2); padding:6px 10px; font-size:12px; border-radius:8px; cursor:pointer; font-weight:500;" onclick="lockSystem()" data-i18n="quickLock">🔒 快捷上锁</button>
                 </div>
-                <div style="font-size:10px; color:#7f8c8d;" id="dashboard-backup-inline">备份时间：未记录</div>
+                <div style="font-size:10px; color:#7f8c8d;" id="dashboard-backup-inline" data-i18n="backupTime">备份时间：未记录</div>
             </div>
         </div>
         <div class="dashboard-grid">
             <div class="stat-card">
-                <div class="stat-label">当前默认首页</div>
+                <div class="stat-label" data-i18n="currentDefaultHome">当前默认首页</div>
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                    <div class="stat-value">工具工作台</div>
+                    <div class="stat-value" data-i18n="toolWorkbench">工具工作台</div>
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                         <span id="dashboard-now" style="font-size:12px; color:#5f6b78;">--</span>
-                        <button class="btn-main" id="timeis-toggle-btn" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleTimeIsPanel()">时间</button>
+                        <button class="btn-main" id="timeis-toggle-btn" style="background:#1f7a5c; padding:6px 10px; font-size:12px;" onclick="toggleTimeIsPanel()" data-i18n="time">时间</button>
                     </div>
                 </div>
-                <div class="stat-sub" id="dashboard-rates-info">汇率加载中...</div>
+                <div class="stat-sub" id="dashboard-rates-info" data-i18n="ratesLoading">汇率加载中...</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">本月提醒</div>
-                <div class="stat-value" id="dashboard-holiday-title">节假/休市</div>
-                <div class="stat-sub" id="dashboard-holiday-info">正在整理本月提醒...</div>
+                <div class="stat-label" data-i18n="monthlyReminder">本月提醒</div>
+                <div class="stat-value" id="dashboard-holiday-title" data-i18n="holidayMarket">节假/休市</div>
+                <div class="stat-sub" id="dashboard-holiday-info" data-i18n="organizingReminders">正在整理本月提醒...</div>
             </div>
         </div>
     </div>
 
     <div class="module-card">
-        <div class="title">报价表组件</div>
+        <div class="title" data-i18n="quoteComponent">报价表组件</div>
         <div id="home-quote-grid" class="market-quote-grid"></div>
     </div>
 
     <div id="quote-modal" class="quote-modal" onclick="closeQuoteModal(event)">
         <div class="quote-modal-card" onclick="event.stopPropagation()">
             <div class="quote-modal-head">
-                <div class="quote-modal-title" id="quote-modal-title">报价详情</div>
+                <div class="quote-modal-title" id="quote-modal-title" data-i18n="quoteDetails">报价详情</div>
                 <button class="btn-main" style="background:#95a5a6; padding:8px 12px; font-size:12px;" onclick="closeQuoteModal()">关闭</button>
             </div>
             <div class="quote-modal-body">
@@ -3207,6 +3207,408 @@
 </div>
 
 <script>
+// =====================================================
+// 多语言配置
+// =====================================================
+const LANGUAGES = {
+    'zh-CN': {
+        name: '中文',
+        flag: '🇨🇳',
+        texts: {
+            dashboard: '首页仪表盘',
+            quickBackup: '📥 一键备份',
+            quickLock: '🔒 快捷上锁',
+            backupTime: '备份时间：未记录',
+            currentDefaultHome: '当前默认首页',
+            toolWorkbench: '工具工作台',
+            time: '时间',
+            ratesLoading: '汇率加载中...',
+            monthlyReminder: '本月提醒',
+            holidayMarket: '节假/休市',
+            organizingReminders: '正在整理本月提醒...',
+            quoteComponent: '报价表组件',
+            quoteDetails: '报价详情',
+            close: '关闭',
+            loadingChart: '正在加载图表...',
+            todoPlaceholder: '输入待办，例如：确认福州柜子厦门港订舱价格',
+            add: '添加',
+            search: '搜索',
+            filter: '筛选',
+            all: '全部',
+            select: '选择',
+            export: '导出',
+            exportPDF: '导出PDF',
+            exportCSV: '导出CSV',
+            selectAll: '全选',
+            clearAll: '清空',
+            exit: '退出',
+            selected: '已选',
+            orders: '单',
+            currentFilter: '当前筛选',
+            orderStats: '📊 订单统计',
+            noOrderData: '暂无订单数据',
+            pkgs: '件数',
+            weight: '毛重',
+            volume: '体积',
+            billWeight: '计费重',
+            receivable: '应收',
+            payable: '应付',
+            profit: '毛利',
+            crmTitle: 'CRM 整柜台账',
+            ocrTitle: '🔍 OCR 提单识别',
+            ocrDesc: '上传提单文件（PDF或图片），自动识别并提取关键信息填充到CRM表单',
+            uploadTip: '点击或拖拽上传提单文件',
+            supportedFormats: '支持 PDF、JPG、PNG 格式',
+            recognizing: '正在识别...',
+            addOrder: '新增订单',
+            batchImport: '批量导入',
+            clientOrderNo: '客户单号',
+            route: '航线',
+            shippingMode: '运输方式',
+            goods: '货物',
+            status: '状态',
+            edit: '编辑',
+            delete: '删除',
+            confirm: '确认',
+            cancel: '取消',
+            save: '保存',
+            client: '客户',
+            orderNo: '订单号',
+            blNo: '提单号',
+            pol: '起运港',
+            pod: '目的港',
+            etd: '预计开船',
+            eta: '预计到港',
+            vessel: '船名航次',
+            carrier: '船公司',
+            containerType: '柜型',
+            containerQty: '柜量',
+            lcl: '散货',
+            fcl: '整柜',
+            timeline: '轨迹图',
+            share: '分享',
+            sharePdf: '分享PDF',
+            noOrder: '未找到订单',
+            orderNotFound: '未找到该订单',
+            confirmDelete: '确认删除该条记录？',
+            inquiry: '询价',
+            ordered: '已下单',
+            warehoused: '已入库',
+            audited: '已审单',
+            loaded: '已装柜',
+            shipped: '已开船',
+            arrived: '已到港',
+            cleared: '已清关',
+            completed: '已完结',
+            cancelled: '取消',
+            supplierPayable: '🏭 供应商应付',
+            feesReceivable: '💰 费用应收',
+            totalReceivable: '应收合计（自动）',
+            currency: '币种',
+            rate: '汇率',
+            amount: '金额',
+            remark: '备注',
+            reminder: '提醒',
+            reminderDate: '提醒日期',
+            reminderContent: '提醒内容',
+            noReminder: '暂无提醒',
+            addReminder: '添加提醒',
+            viewOrder: '查看订单',
+            pieces: '件',
+            kg: 'kg',
+            cbm: 'CBM',
+        }
+    },
+    'en-US': {
+        name: 'English',
+        flag: '🇺🇸',
+        texts: {
+            dashboard: 'Dashboard',
+            quickBackup: '📥 Backup',
+            quickLock: '🔒 Lock',
+            backupTime: 'Backup Time: Not recorded',
+            currentDefaultHome: 'Current Default Home',
+            toolWorkbench: 'Tool Workbench',
+            time: 'Time',
+            ratesLoading: 'Loading rates...',
+            monthlyReminder: 'Monthly Reminder',
+            holidayMarket: 'Holiday/Market Closed',
+            organizingReminders: 'Organizing reminders...',
+            quoteComponent: 'Quote Component',
+            quoteDetails: 'Quote Details',
+            close: 'Close',
+            loadingChart: 'Loading chart...',
+            todoPlaceholder: 'Enter todo, e.g.: Confirm Fuzhou container Xiamen port booking price',
+            add: 'Add',
+            search: 'Search',
+            filter: 'Filter',
+            all: 'All',
+            select: 'Select',
+            export: 'Export',
+            exportPDF: 'Export PDF',
+            exportCSV: 'Export CSV',
+            selectAll: 'Select All',
+            clearAll: 'Clear',
+            exit: 'Exit',
+            selected: 'Selected',
+            orders: 'orders',
+            currentFilter: 'Current Filter',
+            orderStats: '📊 Order Statistics',
+            noOrderData: 'No order data',
+            pkgs: 'Packages',
+            weight: 'Weight',
+            volume: 'Volume',
+            billWeight: 'Billable Weight',
+            receivable: 'Receivable',
+            payable: 'Payable',
+            profit: 'Profit',
+            crmTitle: 'CRM FCL Ledger',
+            ocrTitle: '🔍 OCR Bill Recognition',
+            ocrDesc: 'Upload bill file (PDF or image), automatically recognize and extract key information to fill CRM form',
+            uploadTip: 'Click or drag to upload bill file',
+            supportedFormats: 'Supports PDF, JPG, PNG formats',
+            recognizing: 'Recognizing...',
+            addOrder: 'Add Order',
+            batchImport: 'Batch Import',
+            clientOrderNo: 'Client Order No.',
+            route: 'Route',
+            shippingMode: 'Shipping Mode',
+            goods: 'Goods',
+            status: 'Status',
+            edit: 'Edit',
+            delete: 'Delete',
+            confirm: 'Confirm',
+            cancel: 'Cancel',
+            save: 'Save',
+            client: 'Client',
+            orderNo: 'Order No.',
+            blNo: 'B/L No.',
+            pol: 'POL',
+            pod: 'POD',
+            etd: 'ETD',
+            eta: 'ETA',
+            vessel: 'Vessel/Voyage',
+            carrier: 'Carrier',
+            containerType: 'Container Type',
+            containerQty: 'Container Qty',
+            lcl: 'LCL',
+            fcl: 'FCL',
+            timeline: 'Timeline',
+            share: 'Share',
+            sharePdf: 'Share PDF',
+            noOrder: 'No order found',
+            orderNotFound: 'Order not found',
+            confirmDelete: 'Confirm delete this record?',
+            inquiry: 'Inquiry',
+            ordered: 'Ordered',
+            warehoused: 'Warehoused',
+            audited: 'Audited',
+            loaded: 'Loaded',
+            shipped: 'Shipped',
+            arrived: 'Arrived',
+            cleared: 'Cleared',
+            completed: 'Completed',
+            cancelled: 'Cancelled',
+            supplierPayable: '🏭 Supplier Payable',
+            feesReceivable: '💰 Fees Receivable',
+            totalReceivable: 'Total Receivable (Auto)',
+            currency: 'Currency',
+            rate: 'Rate',
+            amount: 'Amount',
+            remark: 'Remark',
+            reminder: 'Reminder',
+            reminderDate: 'Reminder Date',
+            reminderContent: 'Reminder Content',
+            noReminder: 'No reminder',
+            addReminder: 'Add Reminder',
+            viewOrder: 'View Order',
+            pieces: 'pcs',
+            kg: 'kg',
+            cbm: 'CBM',
+        }
+    },
+    'ja-JP': {
+        name: '日本語',
+        flag: '🇯🇵',
+        texts: {
+            dashboard: 'ダッシュボード',
+            quickBackup: '📥 バックアップ',
+            quickLock: '🔒 ロック',
+            backupTime: 'バックアップ時間：未記録',
+            currentDefaultHome: '現在のデフォルトホーム',
+            toolWorkbench: 'ツールワークベンチ',
+            time: '時間',
+            ratesLoading: '為替読み込み中...',
+            monthlyReminder: '今月のリマインダー',
+            holidayMarket: '祝日/市場休場',
+            organizingReminders: 'リマインダー整理中...',
+            quoteComponent: '見積コンポーネント',
+            quoteDetails: '見積詳細',
+            close: '閉じる',
+            loadingChart: 'チャート読み込み中...',
+            todoPlaceholder: 'ToDoを入力、例：福州コンテナアモイ港予約価格確認',
+            add: '追加',
+            search: '検索',
+            filter: 'フィルター',
+            all: 'すべて',
+            select: '選択',
+            export: 'エクスポート',
+            exportPDF: 'PDF出力',
+            exportCSV: 'CSV出力',
+            selectAll: '全選択',
+            clearAll: 'クリア',
+            exit: '終了',
+            selected: '選択済み',
+            orders: '件',
+            currentFilter: '現在のフィルター',
+            orderStats: '📊 オーダー統計',
+            noOrderData: 'オーダーデータなし',
+            pkgs: '梱包数',
+            weight: '重量',
+            volume: '容積',
+            billWeight: '課金重量',
+            receivable: '売掛金',
+            payable: '買掛金',
+            profit: '利益',
+            crmTitle: 'CRM FCL台帳',
+            ocrTitle: '🔍 OCR B/L認識',
+            ocrDesc: 'B/Lファイル（PDFまたは画像）をアップロード、自動認識してCRMフォームに情報を抽出',
+            uploadTip: 'クリックまたはドラッグでB/Lファイルをアップロード',
+            supportedFormats: 'PDF、JPG、PNG形式対応',
+            recognizing: '認識中...',
+            addOrder: 'オーダー追加',
+            batchImport: '一括インポート',
+            clientOrderNo: '顧客オーダーNo.',
+            route: 'ルート',
+            shippingMode: '輸送モード',
+            goods: '貨物',
+            status: 'ステータス',
+            edit: '編集',
+            delete: '削除',
+            confirm: '確認',
+            cancel: 'キャンセル',
+            save: '保存',
+            client: '顧客',
+            orderNo: 'オーダーNo.',
+            blNo: 'B/L No.',
+            pol: '積港',
+            pod: '揚港',
+            etd: 'ETD',
+            eta: 'ETA',
+            vessel: '船名/航海',
+            carrier: '船会社',
+            containerType: 'コンテナタイプ',
+            containerQty: 'コンテナ数',
+            lcl: 'LCL',
+            fcl: 'FCL',
+            timeline: 'タイムライン',
+            share: '共有',
+            sharePdf: 'PDF共有',
+            noOrder: 'オーダーなし',
+            orderNotFound: 'オーダーが見つかりません',
+            confirmDelete: 'このレコードを削除しますか？',
+            inquiry: '問い合わせ',
+            ordered: '発注済み',
+            warehoused: '入庫済み',
+            audited: '審査済み',
+            loaded: '積載済み',
+            shipped: '出荷済み',
+            arrived: '到着済み',
+            cleared: '通関済み',
+            completed: '完了',
+            cancelled: 'キャンセル',
+            supplierPayable: '🏭 サプライヤー買掛金',
+            feesReceivable: '💰 費用売掛金',
+            totalReceivable: '売掛金合計（自動）',
+            currency: '通貨',
+            rate: 'レート',
+            amount: '金額',
+            remark: '備考',
+            reminder: 'リマインダー',
+            reminderDate: 'リマインダー日付',
+            reminderContent: 'リマインダー内容',
+            noReminder: 'リマインダーなし',
+            addReminder: 'リマインダー追加',
+            viewOrder: 'オーダー表示',
+            pieces: '個',
+            kg: 'kg',
+            cbm: 'CBM',
+        }
+    }
+};
+
+let currentLang = localStorage.getItem('hgcd_lang') || 'zh-CN';
+
+function t(key) {
+    return LANGUAGES[currentLang]?.texts[key] || LANGUAGES['zh-CN'].texts[key] || key;
+}
+
+function setLanguage(lang) {
+    if (!LANGUAGES[lang]) return;
+    currentLang = lang;
+    localStorage.setItem('hgcd_lang', lang);
+    updateLanguageUI();
+    document.dispatchEvent(new CustomEvent('language-change', { detail: { lang } }));
+}
+
+function updateLanguageUI() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (el.tagName === 'INPUT' && el.placeholder !== undefined) {
+            el.placeholder = t(key);
+        } else {
+            el.textContent = t(key);
+        }
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.getAttribute('data-i18n-html');
+        el.innerHTML = t(key);
+    });
+}
+
+function initLanguage() {
+    updateLanguageUI();
+    updateLangSelectorUI();
+}
+
+function toggleLangDropdown() {
+    const dropdown = document.getElementById('lang-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+}
+
+function selectLanguage(lang) {
+    setLanguage(lang);
+    updateLangSelectorUI();
+    const dropdown = document.getElementById('lang-dropdown');
+    if (dropdown) {
+        dropdown.classList.remove('show');
+    }
+}
+
+function updateLangSelectorUI() {
+    const flagEl = document.getElementById('current-lang-flag');
+    if (flagEl && LANGUAGES[currentLang]) {
+        flagEl.textContent = LANGUAGES[currentLang].flag;
+    }
+    document.querySelectorAll('.lang-option').forEach(el => {
+        if (el.getAttribute('data-lang') === currentLang) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
+}
+
+document.addEventListener('click', function(e) {
+    const selector = document.getElementById('lang-selector');
+    const dropdown = document.getElementById('lang-dropdown');
+    if (selector && dropdown && !selector.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
     let globalData = { cust: '客户', no: '单号', qty: 0 };
     let fclData = { custCode: '-', company: '-', total: 0 };
 
@@ -6088,6 +6490,7 @@ const PREFS = [
 ];
 
 function initAllModules(){
+    initLanguage();
     initRates();
     restoreAppState();
     renderContainerTable();
@@ -10781,6 +11184,11 @@ function crmRestoreFromCloud() {
             
             showToast('✅ 已从云端恢复 ' + restoreCount + ' 条数据！');
             crmRender();
+            if (typeof supplierLoadData === 'function') supplierLoadData();
+            if (typeof clientLoadData === 'function') clientLoadData();
+            if (typeof renderSupplierTable === 'function') renderSupplierTable();
+            if (typeof renderClientTable === 'function') renderClientTable();
+            if (typeof loadReminders === 'function') loadReminders();
         } else {
             showToast('❌ 恢复失败：' + (result.error || '未知错误'));
         }
