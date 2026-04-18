@@ -12808,12 +12808,14 @@ function silentSyncFromCloud(apiUrl, apiKey) {
             if (data.orders && data.orders.length) {
                 const localOrders = crmLoad();
                 const localOrderMap = new Map(localOrders.map(o => [o.id, o]));
+                let hasChanges = false;
                 
                 data.orders.forEach(serverOrder => {
                     const localOrder = localOrderMap.get(serverOrder.id);
                     if (!localOrder) {
                         localOrders.push(serverOrder);
                         restoreCount++;
+                        hasChanges = true;
                     } else {
                         const serverUpdated = new Date(serverOrder.updatedAt || serverOrder.createdAt).getTime();
                         const localUpdated = new Date(localOrder.updatedAt || localOrder.createdAt).getTime();
@@ -12822,12 +12824,15 @@ function silentSyncFromCloud(apiUrl, apiKey) {
                             if (idx >= 0) {
                                 localOrders[idx] = serverOrder;
                                 restoreCount++;
+                                hasChanges = true;
                             }
                         }
                     }
                 });
                 
-                crmSave(localOrders);
+                if (hasChanges) {
+                    localStorage.setItem(CRM_KEY, JSON.stringify(localOrders));
+                }
             }
             
             if (data.clients && data.clients.length) {
