@@ -8648,7 +8648,19 @@ const CRM_FEE_FX_ITEMS = [
 function crmGetFeeFxLine(key) {
     const amt = parseFloat(document.getElementById('crm-f-fee-amt-' + key)?.value) || 0;
     const cur = document.getElementById('crm-f-fee-cur-' + key)?.value || 'CNY';
-    const rate = cur === 'CNY' ? 1 : (parseFloat(document.getElementById('crm-f-fee-rate-' + key)?.value) || 0);
+    let rate = 1;
+    
+    if (cur === 'CNY') {
+        rate = 1;
+    } else {
+        const rateValue = parseFloat(document.getElementById('crm-f-fee-rate-' + key)?.value);
+        if (rateValue && rateValue > 0) {
+            rate = rateValue;
+        } else {
+            rate = 1;
+        }
+    }
+    
     const cny = amt * rate;
     return { amt, cur, rate, cny };
 }
@@ -12742,7 +12754,104 @@ function initTheme() {
 window.onload = function(){
     initTheme();
     initAuth();
+    checkAndAutoSyncFromCloud();
 };
+
+function checkAndAutoSyncFromCloud() {
+    const config = getCurrentApiConfig();
+    const apiUrl = config.url;
+    const apiKey = getDecryptedKey(config);
+    
+    if (!apiUrl || !apiKey) {
+        return;
+    }
+    
+    const autoSync = localStorage.getItem('crm_auto_sync');
+    if (autoSync === 'false') {
+        return;
+    }
+    
+    const localData = crmLoad();
+    const lastSyncTime = localStorage.getItem('crm_last_cloud_sync_time');
+    const now = Date.now();
+    
+    const SYNC_INTERVAL = 60 * 60 * 1000;
+    
+    if (localData.length === 0) {
+        silentSyncFromCloud(apiUrl, apiKey);
+        return;
+    }
+    
+    if (lastSyncTime) {
+        const timeSinceLastSync = now - parseInt(lastSyncTime);
+        if (timeSinceLastSync < SYNC_INTERVAL) {
+            return;
+        }
+    }
+    
+    silentSyncFromCloud(apiUrl, apiKey);
+}
+
+function silentSyncFromCloud(apiUrl, apiKey) {
+    fetch(apiUrl + '/api/backup', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success && result.data) {
+            const data = result.data;
+            let restoreCount = 0;
+            
+            if (data.orders && data.orders.length) {
+                const localOrders = crmLoad();
+                const localOrderMap = new Map(localOrders.map(o => [o.id, o]));
+                
+                data.orders.forEach(serverOrder => {
+                    const localOrder = localOrderMap.get(serverOrder.id);
+                    if (!localOrder) {
+                        localOrders.push(serverOrder);
+                        restoreCount++;
+                    } else {
+                        const serverUpdated = new Date(serverOrder.updatedAt || serverOrder.createdAt).getTime();
+                        const localUpdated = new Date(localOrder.updatedAt || localOrder.createdAt).getTime();
+                        if (serverUpdated > localUpdated) {
+                            const idx = localOrders.findIndex(o => o.id === serverOrder.id);
+                            if (idx >= 0) {
+                                localOrders[idx] = serverOrder;
+                                restoreCount++;
+                            }
+                        }
+                    }
+                });
+                
+                crmSave(localOrders);
+            }
+            
+            if (data.clients && data.clients.length) {
+                localStorage.setItem('logistics_client_data', JSON.stringify(data.clients));
+                restoreCount += data.clients.length;
+            }
+            
+            if (data.suppliers && data.suppliers.length) {
+                localStorage.setItem('logistics_supplier_data', JSON.stringify(data.suppliers));
+                restoreCount += data.suppliers.length;
+            }
+            
+            localStorage.setItem('crm_last_cloud_sync_time', Date.now().toString());
+            
+            if (restoreCount > 0) {
+                showToast(`✅ 已从云端同步 ${restoreCount} 条数据`);
+                crmRender();
+            }
+        }
+    })
+    .catch(error => {
+        console.log('自动同步失败:', error);
+    });
+}
 </script>
 
 <template id="template-macro">
