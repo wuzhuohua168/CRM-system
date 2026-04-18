@@ -8689,7 +8689,7 @@ function crmBuildTimelineHtml(order) {
     const orderInfoHtml = `
         <div class="crm-timeline-order-info">
             <h3>📦 ${order.orderno || '订单'} - ${order.status || '未知状态'}</h3>
-            <p><strong>客户单号：</strong>${order.clientOrderNo || '—'}</p>
+            ${order.clientOrderNo && order.clientOrderNo.trim() ? `<p><strong>客户单号：</strong>${order.clientOrderNo}</p>` : ''}
             <p><strong>航线：</strong>${order.pol || '—'} → ${order.pod || '—'}</p>
             <p><strong>运输方式：</strong>${order.shipMode || '—'}</p>
             ${order.goods ? `<p><strong>货物：</strong>${order.goods}</p>` : ''}
