@@ -8911,6 +8911,7 @@ function crmRecordToForm(r) {
     let shipMode = r.shipMode || '';
     if (shipMode === '整柜' || (!shipMode && r.bizType === 'fcl')) shipMode = '海运整柜';
     if (shipMode === '拼箱' || shipMode === '海运散货' || (!shipMode && r.bizType === 'lcl')) shipMode = '普船拼箱';
+    if (!shipMode) shipMode = '海运整柜';
     s('crm-f-shipmode', shipMode);
     s('crm-f-client', r.client); s('crm-f-orderno', r.orderno); s('crm-f-clientorderno', r.clientOrderNo); s('crm-f-mbl', r.mbl); s('crm-f-hbl', r.hbl);
     s('crm-f-pol', r.pol); s('crm-f-pod', r.pod); s('crm-f-shipaddr', r.shipaddr); s('crm-f-recvaddr', r.recvaddr); s('crm-f-ctype', r.ctype); s('crm-f-cqty', r.cqty || 1);
