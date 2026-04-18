@@ -1852,11 +1852,11 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">客户单号</label>
                         <input type="text" id="crm-f-clientorderno" placeholder="客户的订单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
-                    <div>
+                    <div id="crm-mbl-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">主单号 (MBL)</label>
                         <input type="text" id="crm-f-mbl" placeholder="船公司主提单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
-                    <div>
+                    <div id="crm-hbl-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">分单号 (HBL)</label>
                         <input type="text" id="crm-f-hbl" placeholder="代理分提单号" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
@@ -1865,11 +1865,11 @@
                 <!-- 航线/柜型 -->
                 <div id="crm-route-title" style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">航线 & 柜型</div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-                    <div>
+                    <div id="crm-pol-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">起运港</label>
                         <input type="text" id="crm-f-pol" placeholder="如 SHA / PVG" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
-                    <div>
+                    <div id="crm-pod-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">目的港</label>
                         <input type="text" id="crm-f-pod" placeholder="如 NRT / OSA" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
@@ -1902,11 +1902,11 @@
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">柜数量</label>
                         <input type="number" id="crm-f-cqty" value="1" min="1" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
-                    <div>
+                    <div id="crm-carrier-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">船公司</label>
                         <input type="text" id="crm-f-carrier" placeholder="如 MSC / Maersk / COSCO" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
-                    <div>
+                    <div id="crm-vessel-wrap">
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">船名/航次</label>
                         <input type="text" id="crm-f-vessel" placeholder="如 MSC ANNA / 012W" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
@@ -8487,23 +8487,42 @@ function crmToggleShipMode() {
     const shipMode = document.getElementById('crm-f-shipmode')?.value || '';
     const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '空运' || shipMode === '快递';
     const isFcl = shipMode === '海运整柜';
+    const isAirOrExpress = shipMode === '空运' || shipMode === '快递';
+    
     if (modalTitle) modalTitle.textContent = editId ? `编辑${shipMode || '订单'}` : `新增${shipMode || '订单'}`;
     const routeTitle = document.getElementById('crm-route-title');
     const cargoTitle = document.getElementById('crm-cargo-title');
     if (routeTitle) routeTitle.textContent = isFcl ? '航线 & 柜型' : '航线 & 运输';
     if (cargoTitle) cargoTitle.textContent = isFcl ? '货物信息' : '货物信息 & 计费';
+    
     const ctypeWrap = document.getElementById('crm-ctype-wrap');
     const cqtyWrap = document.getElementById('crm-cqty-wrap');
     const billWeightWrap = document.getElementById('crm-bill-weight-wrap');
     const unitPriceWrap = document.getElementById('crm-unit-price-wrap');
     const fclFeeArea = document.getElementById('crm-fcl-fee-area');
     const lclFeeArea = document.getElementById('crm-lcl-fee-area');
+    
     if (ctypeWrap) ctypeWrap.style.display = isFcl ? 'block' : 'none';
     if (cqtyWrap) cqtyWrap.style.display = isFcl ? 'block' : 'none';
     if (billWeightWrap) billWeightWrap.style.display = 'none';
     if (unitPriceWrap) unitPriceWrap.style.display = 'none';
     if (fclFeeArea) fclFeeArea.style.display = isFcl ? 'block' : 'none';
     if (lclFeeArea) lclFeeArea.style.display = isLcl ? 'block' : 'none';
+    
+    const mblWrap = document.getElementById('crm-mbl-wrap');
+    const hblWrap = document.getElementById('crm-hbl-wrap');
+    const polWrap = document.getElementById('crm-pol-wrap');
+    const podWrap = document.getElementById('crm-pod-wrap');
+    const carrierWrap = document.getElementById('crm-carrier-wrap');
+    const vesselWrap = document.getElementById('crm-vessel-wrap');
+    
+    if (mblWrap) mblWrap.style.display = isAirOrExpress ? 'none' : 'block';
+    if (hblWrap) hblWrap.style.display = isAirOrExpress ? 'none' : 'block';
+    if (polWrap) polWrap.style.display = isAirOrExpress ? 'none' : 'block';
+    if (podWrap) podWrap.style.display = isAirOrExpress ? 'none' : 'block';
+    if (carrierWrap) carrierWrap.style.display = isAirOrExpress ? 'none' : 'block';
+    if (vesselWrap) vesselWrap.style.display = isAirOrExpress ? 'none' : 'block';
+    
     crmToggleKeyDates();
     crmUpdateFeeTotal();
 }
@@ -8579,7 +8598,9 @@ function crmBindFeeCalc() {
 }
 
 function crmUpdateFeeTotal() {
-    const isLcl = (document.getElementById('crm-f-biztype')?.value || 'fcl') === 'lcl';
+    const shipMode = document.getElementById('crm-f-shipmode')?.value || '';
+    const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '空运' || shipMode === '快递';
+    
     if (isLcl) {
         const billWeight = parseFloat(document.getElementById('crm-f-lcl-billweight')?.value || '0') || 0;
         const price = parseFloat(document.getElementById('crm-f-lcl-price')?.value || '0') || 0;
@@ -8724,7 +8745,9 @@ function crmCostLineCalc(key) {
 }
 
 function crmUpdateCostTotal() {
-    const isLcl = (document.getElementById('crm-f-biztype')?.value || 'fcl') === 'lcl';
+    const shipMode = document.getElementById('crm-f-shipmode')?.value || '';
+    const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '空运' || shipMode === '快递';
+    
     if (isLcl) {
         const billWeight = parseFloat(document.getElementById('crm-f-lcl-billweight')?.value || '0') || 0;
         const revenuePrice = parseFloat(document.getElementById('crm-f-lcl-price')?.value || '0') || 0;
@@ -8975,6 +8998,7 @@ function crmSaveRecord() {
     const data = crmLoad();
     const editId = document.getElementById('crm-edit-id').value;
     const now = new Date().toISOString();
+    const today = new Date().toISOString().split('T')[0];
     
     if (editId) {
         const idx = data.findIndex(r => String(r.id) === String(editId));
@@ -8992,6 +9016,43 @@ function crmSaveRecord() {
                     timestamp: now,
                     previousStatus: oldRecord.status
                 });
+                
+                const shipMode = rec.shipMode || '';
+                const isAirOrExpress = shipMode === '空运' || shipMode === '快递';
+                
+                if (rec.status === '已下单' && !rec.bookedDate && !isAirOrExpress) {
+                    rec.bookedDate = today;
+                }
+                if (rec.status === '已下单' && !rec.airBookedDate && isAirOrExpress) {
+                    rec.airBookedDate = today;
+                }
+                if (rec.status === '已装柜' && !rec.loadedDate) {
+                    rec.loadedDate = today;
+                }
+                if (rec.status === '已入库' && !rec.warehouse) {
+                    rec.warehouse = today;
+                }
+                if (rec.status === '已开船' && !rec.etd && !isAirOrExpress) {
+                    rec.etd = today;
+                }
+                if (rec.status === '已到港' && !rec.ata && !isAirOrExpress) {
+                    rec.ata = today;
+                }
+                if (rec.status === '已到港' && !rec.airAta && isAirOrExpress) {
+                    rec.airAta = today;
+                }
+                if (rec.status === '已清关' && !rec.clearedDate && !isAirOrExpress) {
+                    rec.clearedDate = today;
+                }
+                if (rec.status === '已清关' && !rec.airClearedDate && isAirOrExpress) {
+                    rec.airClearedDate = today;
+                }
+                if (rec.status === '已完结' && !rec.signed && !isAirOrExpress) {
+                    rec.signed = today;
+                }
+                if (rec.status === '已完结' && !rec.airSigned && isAirOrExpress) {
+                    rec.airSigned = today;
+                }
             } else {
                 rec.statusHistory = oldRecord.statusHistory || [];
             }
