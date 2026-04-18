@@ -517,8 +517,33 @@
             background: var(--bg-tertiary);
         }
         .quote-modal-title { font-size: 17px; font-weight: 600; color: var(--text-primary); }
-        .quote-modal-body { flex: 1; background: var(--bg-primary); }
+        .quote-modal-body { flex: 1; background: var(--bg-primary); position: relative; }
         #quote-modal-frame { width: 100%; height: 100%; border: none; background: var(--bg-primary); display: block; }
+        .quote-modal-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-primary); z-index: 10; }
+        .quote-modal-loading.hidden { display: none; }
+        .quote-modal-spinner { width: 40px; height: 40px; border: 3px solid var(--border-color); border-top-color: var(--accent-blue); border-radius: 50%; animation: quote-spin 1s linear infinite; }
+        @keyframes quote-spin { to { transform: rotate(360deg); } }
+        .quote-modal-loading-text { margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
+        
+        .crm-timeline-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        @media (max-width: 600px) { .crm-timeline-grid { grid-template-columns: 1fr; } }
+        .crm-timeline-item { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: #f8fbff; border-radius: 8px; border-left: 3px solid #e0e0e0; }
+        .crm-timeline-item.completed { border-left-color: #667eea; background: linear-gradient(135deg, #f0f4ff 0%, #f8f0ff 100%); }
+        .crm-timeline-item.current { border-left-color: #27ae60; background: linear-gradient(135deg, #e8f8f0 0%, #f0fff4 100%); }
+        .crm-timeline-header { display: flex; align-items: center; gap: 8px; }
+        .crm-timeline-dot { width: 22px; height: 22px; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+        .crm-timeline-item.completed .crm-timeline-dot { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .crm-timeline-item.current .crm-timeline-dot { background: #27ae60; color: white; animation: crm-pulse 2s infinite; }
+        @keyframes crm-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .crm-timeline-title { font-size: 12px; color: #2c3e50; font-weight: 600; }
+        .crm-timeline-date { font-size: 10px; color: #7f8c8d; }
+        .crm-timeline-status { font-size: 9px; padding: 2px 6px; border-radius: 3px; display: inline-block; }
+        .crm-timeline-status.completed { color: #e74c3c; background: #fdecea; }
+        .crm-timeline-status.current { color: #e67e22; background: #fef5e7; }
+        .crm-timeline-status.pending { color: #95a5a6; background: #f5f5f5; }
+        .crm-timeline-order-info { background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+        .crm-timeline-order-info h3 { font-size: 14px; color: #2c3e50; margin-bottom: 8px; }
+        .crm-timeline-order-info p { font-size: 12px; color: #7f8c8d; margin: 4px 0; }
 
         .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
         .compact-tool {
@@ -1322,6 +1347,10 @@
                 <button class="btn-main" style="background:#95a5a6; padding:8px 12px; font-size:12px;" onclick="closeQuoteModal()">关闭</button>
             </div>
             <div class="quote-modal-body">
+                <div id="quote-modal-loading" class="quote-modal-loading">
+                    <div class="quote-modal-spinner"></div>
+                    <div class="quote-modal-loading-text">正在加载图表...</div>
+                </div>
                 <iframe id="quote-modal-frame" title="报价详情"></iframe>
             </div>
         </div>
@@ -1638,6 +1667,7 @@
                 <button class="btn-main" style="background:#9b59b6; padding:8px 14px;" onclick="crmExportTracking()">📤 同步到云端</button>
                 <button class="btn-main" style="background:#16a085; padding:8px 14px;" onclick="crmRestoreFromCloud()">📥 从云端恢复</button>
                 <button class="btn-main" style="background:#e67e22; padding:8px 14px;" onclick="crmGenerateTrackingData()">📊 生成轨迹数据</button>
+                <button class="btn-main" style="background:#8e44ad; padding:8px 14px;" onclick="crmShowTimelineModal()">🗺️ 生成轨迹图</button>
                 <button class="btn-main" style="background:#34495e; padding:8px 14px;" onclick="showApiConfig()">⚙️ API设置</button>
             </div>
         </div>
@@ -1807,6 +1837,19 @@
                 </div>
                 <div style="font-size:11px; color:#888; line-height:1.6;">✅ 全部字段<br>✅ 供应商应付明细、毛利、毛利率<br>✅ 带"内部保密"水印</div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CRM 轨迹图弹窗 ===== -->
+<div id="crm-timeline-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:10035; overflow-y:auto; -webkit-overflow-scrolling:touch;">
+    <div style="min-height:100%; display:flex; align-items:flex-start; justify-content:center; padding:16px;">
+        <div style="width:min(800px,100%); background:#fff; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden; margin:auto;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:linear-gradient(135deg,#8e44ad,#9b59b6); color:#fff;">
+                <div style="font-size:15px; font-weight:bold;">🗺️ 订单轨迹图</div>
+                <button onclick="crmCloseTimelineModal()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px;">关闭</button>
+            </div>
+            <div id="crm-timeline-content" style="padding:16px; max-height:70vh; overflow-y:auto;"></div>
         </div>
     </div>
 </div>
@@ -8140,9 +8183,14 @@ function openQuoteModal(label, symbol) {
     const modal = document.getElementById('quote-modal');
     const title = document.getElementById('quote-modal-title');
     const frame = document.getElementById('quote-modal-frame');
+    const loading = document.getElementById('quote-modal-loading');
     if (!modal || !title || !frame) return;
     title.innerText = `${label} · 原页面`;
+    if (loading) loading.classList.remove('hidden');
     frame.src = buildQuoteModalUrl(label, symbol);
+    frame.onload = function() {
+        if (loading) loading.classList.add('hidden');
+    };
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
 }
@@ -8151,9 +8199,12 @@ function closeQuoteModal(event) {
     if (event && event.target && event.target !== event.currentTarget) return;
     const modal = document.getElementById('quote-modal');
     const frame = document.getElementById('quote-modal-frame');
+    const loading = document.getElementById('quote-modal-loading');
     if (!modal || !frame) return;
     modal.classList.remove('show');
     frame.src = 'about:blank';
+    frame.onload = null;
+    if (loading) loading.classList.remove('hidden');
     document.body.style.overflow = '';
 }
 
@@ -8574,6 +8625,165 @@ function crmGenerateTrackingData() {
     URL.revokeObjectURL(url);
     
     showToast(`✅ 已生成轨迹数据文件（${cleanData.length}条订单）`);
+}
+
+const CRM_STATUS_CONFIG = {
+    '询价': { color: '#8e44ad', icon: '📋', order: 1 },
+    '已下单': { color: '#2980b9', icon: '📝', order: 2 },
+    '已入库': { color: '#3498db', icon: '📦', order: 3 },
+    '已审单': { color: '#9b59b6', icon: '📝', order: 4 },
+    '已装柜': { color: '#e67e22', icon: '🚛', order: 5 },
+    '已开船': { color: '#16a085', icon: '🚢', order: 6 },
+    '已到港': { color: '#27ae60', icon: '⚓', order: 7 },
+    '已清关': { color: '#1f7a5c', icon: '✓', order: 8 },
+    '已完结': { color: '#7f8c8d', icon: '🎉', order: 9 },
+    '取消': { color: '#c0392b', icon: '✗', order: 0 }
+};
+
+function crmShowTimelineModal() {
+    const selectedIds = Array.from(crmSelectedIds);
+    
+    if (selectedIds.length === 0) {
+        showToast('❌ 请先勾选一个订单');
+        return;
+    }
+    
+    if (selectedIds.length > 1) {
+        showToast('❌ 每次只能选择一个订单生成轨迹图');
+        return;
+    }
+    
+    const orders = crmLoad();
+    const order = orders.find(o => o.id === selectedIds[0]);
+    
+    if (!order) {
+        showToast('❌ 未找到订单');
+        return;
+    }
+    
+    const modal = document.getElementById('crm-timeline-modal');
+    const content = document.getElementById('crm-timeline-content');
+    
+    content.innerHTML = crmBuildTimelineHtml(order);
+    modal.style.display = 'block';
+}
+
+function crmCloseTimelineModal() {
+    const modal = document.getElementById('crm-timeline-modal');
+    modal.style.display = 'none';
+}
+
+function crmBuildTimelineHtml(order) {
+    const currentStatusOrder = (CRM_STATUS_CONFIG[order.status] || {}).order || 0;
+    const shipMode = order.shipMode || '';
+    const isAir = shipMode === '空运';
+    const isExpress = shipMode === '快递';
+    const isFcl = shipMode === '海运整柜' || shipMode === '整柜';
+    const isLcl = shipMode === '普船拼箱' || shipMode === '快船拼柜' || shipMode === '拼箱' || shipMode === '海运散货';
+    
+    const statusHistory = order.statusHistory || [];
+    const statusTimestamps = {};
+    statusHistory.forEach(entry => {
+        statusTimestamps[entry.status] = entry.timestamp;
+    });
+    
+    function getStatusDate(status, fallbackDate) {
+        return statusTimestamps[status] || fallbackDate;
+    }
+    
+    function formatDate(dateStr) {
+        if (!dateStr) return null;
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return null;
+            return {
+                date: date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
+                time: date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+            };
+        } catch(e) {
+            return null;
+        }
+    }
+    
+    let milestones = [];
+    
+    if (isFcl) {
+        milestones = [
+            { key: 'created', label: '订单创建', date: getStatusDate('询价', order.createdAt), icon: '📋', status: '询价' },
+            { key: 'booked', label: '已下单', date: getStatusDate('已下单', order.bookedDate), icon: '📝', status: '已下单' },
+            { key: 'loaded', label: '已装柜', date: getStatusDate('已装柜', order.loadedDate), icon: '🚛', status: '已装柜' },
+            { key: 'departed', label: '已开船', date: getStatusDate('已开船', order.etd), icon: '🚢', status: '已开船' },
+            { key: 'arrived', label: '已到港', date: getStatusDate('已到港', order.ata || order.eta), icon: '⚓', status: '已到港' },
+            { key: 'cleared', label: '已清关', date: getStatusDate('已清关', order.clearedDate), icon: '✓', status: '已清关' },
+            { key: 'pickup', label: '提柜', date: order.pickup, icon: '🚚', status: '已到港' },
+            { key: 'delivery', label: '派送', date: order.deliveryDate, icon: '📦', status: '已清关' },
+            { key: 'delivered', label: '已签收', date: getStatusDate('已完结', order.signed), icon: '🎉', status: '已完结' }
+        ];
+    } else {
+        milestones = [
+            { key: 'created', label: '订单创建', date: getStatusDate('询价', order.createdAt), icon: '📋', status: '询价' },
+            { key: 'ordered', label: '已下单', date: getStatusDate('已下单', order.airBookedDate || order.bookedDate), icon: '📝', status: '已下单' },
+            { key: 'received', label: '已收货', date: getStatusDate('已入库', order.warehouse), icon: '📦', status: '已入库' },
+            { key: 'shipped', label: '已发出', date: getStatusDate('已审单', null), icon: '🚚', status: '已审单' },
+            { key: 'flight', label: isAir ? '飞行中' : '运输中', date: getStatusDate('已开船', order.flight), icon: isAir ? '✈️' : '🚛', status: '已开船' },
+            { key: 'arrived', label: '已到港', date: getStatusDate('已到港', order.airAta || order.ata || order.eta), icon: '⚓', status: '已到港' },
+            { key: 'cleared', label: '已清关', date: getStatusDate('已清关', order.airClearedDate || order.clearedDate), icon: '✓', status: '已清关' },
+            { key: 'express', label: '快递派送', date: order.tracking ? `单号: ${order.tracking}` : null, icon: '📦', status: '已清关', extra: order.carrierType ? `承运商: ${order.carrierType}` : null },
+            { key: 'delivered', label: '已签收', date: getStatusDate('已完结', order.airSigned || order.signed), icon: '🎉', status: '已完结' }
+        ];
+    }
+    
+    const orderInfoHtml = `
+        <div class="crm-timeline-order-info">
+            <h3>📦 ${order.orderno || '订单'} - ${order.status || '未知状态'}</h3>
+            <p><strong>客户单号：</strong>${order.clientOrderNo || '—'}</p>
+            <p><strong>航线：</strong>${order.pol || '—'} → ${order.pod || '—'}</p>
+            <p><strong>运输方式：</strong>${order.shipMode || '—'}</p>
+            ${order.goods ? `<p><strong>货物：</strong>${order.goods}</p>` : ''}
+        </div>
+    `;
+    
+    const timelineHtml = milestones.map(m => {
+        const statusOrder = (CRM_STATUS_CONFIG[m.status] || {}).order || 0;
+        const isCompleted = currentStatusOrder > statusOrder;
+        const isCurrent = currentStatusOrder === statusOrder;
+        const dateInfo = formatDate(m.date);
+        const hasDate = dateInfo && dateInfo.date;
+        
+        let itemClass = 'crm-timeline-item';
+        if (isCompleted) itemClass += ' completed';
+        if (isCurrent) itemClass += ' current';
+        
+        let dateDisplay = '';
+        if (hasDate) {
+            dateDisplay = `<span class="crm-timeline-date">${dateInfo.date} ${dateInfo.time}</span>`;
+        } else if (m.date && typeof m.date === 'string' && !m.date.includes('T')) {
+            dateDisplay = `<span class="crm-timeline-date">${m.date}</span>`;
+        } else if (isCompleted) {
+            dateDisplay = '<span class="crm-timeline-status completed">✓ 已完成</span>';
+        } else if (isCurrent) {
+            dateDisplay = '<span class="crm-timeline-status current">● 进行中</span>';
+        } else {
+            dateDisplay = '<span class="crm-timeline-status pending">○ 待处理</span>';
+        }
+        
+        const dotIcon = isCompleted ? '✓' : isCurrent ? m.icon : m.icon;
+        
+        return `
+            <div class="${itemClass}">
+                <div class="crm-timeline-header">
+                    <div class="crm-timeline-dot">${dotIcon}</div>
+                    <div class="crm-timeline-title">${m.label}</div>
+                </div>
+                <div style="margin-left:30px;">
+                    ${dateDisplay}
+                    ${m.extra ? `<span class="crm-timeline-date" style="margin-left:8px;">${m.extra}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    return orderInfoHtml + `<div class="crm-timeline-grid">${timelineHtml}</div>`;
 }
 
 function crmToggleShipMode() {
