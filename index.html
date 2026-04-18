@@ -1849,7 +1849,11 @@
                 <div style="font-size:15px; font-weight:bold;">🗺️ 订单轨迹图</div>
                 <button onclick="crmCloseTimelineModal()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px;">关闭</button>
             </div>
-            <div id="crm-timeline-content" style="padding:16px; max-height:70vh; overflow-y:auto;"></div>
+            <div id="crm-timeline-content" style="padding:16px; max-height:60vh; overflow-y:auto;"></div>
+            <div id="crm-timeline-share-btns" style="padding:12px 16px; border-top:1px solid #eee; display:flex; gap:10px; justify-content:center;">
+                <button onclick="crmShareTimelineAsImage()" style="background:#07c160; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold;">📤 分享图片到微信</button>
+                <button onclick="crmShareTimelineAsPDF()" style="background:#e74c3c; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold;">📄 分享PDF</button>
+            </div>
         </div>
     </div>
 </div>
@@ -8640,34 +8644,6 @@ const CRM_STATUS_CONFIG = {
     '取消': { color: '#c0392b', icon: '✗', order: 0 }
 };
 
-function crmShowTimelineModal() {
-    const selectedIds = Array.from(crmSelectedIds);
-    
-    if (selectedIds.length === 0) {
-        showToast('❌ 请先勾选一个订单');
-        return;
-    }
-    
-    if (selectedIds.length > 1) {
-        showToast('❌ 每次只能选择一个订单生成轨迹图');
-        return;
-    }
-    
-    const orders = crmLoad();
-    const order = orders.find(o => o.id === selectedIds[0]);
-    
-    if (!order) {
-        showToast('❌ 未找到订单');
-        return;
-    }
-    
-    const modal = document.getElementById('crm-timeline-modal');
-    const content = document.getElementById('crm-timeline-content');
-    
-    content.innerHTML = crmBuildTimelineHtml(order);
-    modal.style.display = 'block';
-}
-
 function crmCloseTimelineModal() {
     const modal = document.getElementById('crm-timeline-modal');
     modal.style.display = 'none';
@@ -8743,7 +8719,25 @@ function crmBuildTimelineHtml(order) {
         </div>
     `;
     
-    const timelineHtml = milestones.map(m => {
+    const visibleMilestones = milestones.filter(m => {
+        const statusOrder = (CRM_STATUS_CONFIG[m.status] || {}).order || 0;
+        const isCompleted = currentStatusOrder > statusOrder;
+        const isCurrent = currentStatusOrder === statusOrder;
+        const dateInfo = formatDate(m.date);
+        const hasDate = dateInfo && dateInfo.date;
+        
+        if (m.date && typeof m.date === 'string' && !m.date.includes('T') && (m.date.includes('单号') || m.date.includes(':'))) {
+            return true;
+        }
+        
+        if (!hasDate && !isCompleted && !isCurrent) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    const timelineHtml = visibleMilestones.map(m => {
         const statusOrder = (CRM_STATUS_CONFIG[m.status] || {}).order || 0;
         const isCompleted = currentStatusOrder > statusOrder;
         const isCurrent = currentStatusOrder === statusOrder;
@@ -8784,6 +8778,170 @@ function crmBuildTimelineHtml(order) {
     }).join('');
     
     return orderInfoHtml + `<div class="crm-timeline-grid">${timelineHtml}</div>`;
+}
+
+let crmCurrentTimelineOrder = null;
+
+function crmShowTimelineModal() {
+    const selectedIds = Array.from(crmSelectedIds);
+    
+    if (selectedIds.length === 0) {
+        showToast('❌ 请先勾选一个订单');
+        return;
+    }
+    
+    if (selectedIds.length > 1) {
+        showToast('❌ 每次只能选择一个订单生成轨迹图');
+        return;
+    }
+    
+    const orders = crmLoad();
+    const order = orders.find(o => o.id === selectedIds[0]);
+    
+    if (!order) {
+        showToast('❌ 未找到订单');
+        return;
+    }
+    
+    crmCurrentTimelineOrder = order;
+    
+    const modal = document.getElementById('crm-timeline-modal');
+    const content = document.getElementById('crm-timeline-content');
+    
+    content.innerHTML = crmBuildTimelineHtml(order);
+    modal.style.display = 'block';
+}
+
+async function crmShareTimelineAsImage() {
+    const content = document.getElementById('crm-timeline-content');
+    const shareBtns = document.getElementById('crm-timeline-share-btns');
+    
+    if (!content) {
+        showToast('❌ 未找到内容区域');
+        return;
+    }
+    
+    shareBtns.style.display = 'none';
+    
+    try {
+        const canvas = await html2canvas(content, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true
+        });
+        
+        canvas.toBlob(function(blob) {
+            const order = crmCurrentTimelineOrder || {};
+            const orderNo = order.orderno || order.mbl || 'tracking';
+            const fileName = `轨迹图_${orderNo}.png`;
+            
+            if (navigator.share && navigator.canShare) {
+                const file = new File([blob], fileName, { type: 'image/png' });
+                navigator.share({
+                    title: `订单轨迹 - ${orderNo}`,
+                    text: `订单 ${orderNo} 的物流轨迹`,
+                    files: [file]
+                }).then(() => {
+                    showToast('✅ 分享成功！');
+                }).catch((err) => {
+                    console.log('分享取消:', err);
+                    crmDownloadTimelineImage(canvas, orderNo);
+                });
+            } else {
+                crmDownloadTimelineImage(canvas, orderNo);
+            }
+        });
+    } catch (error) {
+        console.error('图片生成失败:', error);
+        showToast('❌ 图片生成失败，请重试');
+    }
+    
+    shareBtns.style.display = 'flex';
+}
+
+function crmDownloadTimelineImage(canvas, orderNo) {
+    const link = document.createElement('a');
+    link.download = `轨迹图_${orderNo}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('✅ 图片已下载！');
+}
+
+async function crmShareTimelineAsPDF() {
+    const content = document.getElementById('crm-timeline-content');
+    const shareBtns = document.getElementById('crm-timeline-share-btns');
+    
+    if (!content) {
+        showToast('❌ 未找到内容区域');
+        return;
+    }
+    
+    shareBtns.style.display = 'none';
+    
+    try {
+        const canvas = await html2canvas(content, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const margin = 10;
+        const imgWidth = pageWidth - margin * 2;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        let heightLeft = imgHeight;
+        let position = margin;
+        
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - margin * 2);
+        
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight + margin;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - margin * 2);
+        }
+        
+        const order = crmCurrentTimelineOrder || {};
+        const shipMode = order.shipMode || '海运';
+        const orderNo = order.orderno || order.mbl || 'tracking';
+        const date = new Date().toISOString().slice(0, 10);
+        const fileName = `${shipMode}_${orderNo}_${date}.pdf`;
+        
+        const pdfBlob = pdf.output('blob');
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        
+        let shared = false;
+        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+            try {
+                await navigator.share({ 
+                    files: [pdfFile], 
+                    title: `订单轨迹 - ${orderNo}`,
+                    text: `订单 ${orderNo} 的物流轨迹PDF`
+                });
+                shared = true;
+                showToast('✅ PDF分享成功！');
+            } catch (shareErr) {
+                console.log('分享取消:', shareErr);
+            }
+        }
+        
+        if (!shared) {
+            pdf.save(fileName);
+            showToast('✅ PDF已下载！');
+        }
+    } catch (error) {
+        console.error('PDF生成失败:', error);
+        showToast('❌ PDF生成失败，请重试');
+    }
+    
+    shareBtns.style.display = 'flex';
 }
 
 function crmToggleShipMode() {
