@@ -1946,6 +1946,14 @@
                 <!-- 海运散货日期 -->
                 <div id="crm-sea-dates" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">下单日期</label>
+                        <input type="date" id="crm-f-bookeddate" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">装柜日期</label>
+                        <input type="date" id="crm-f-loadeddate" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">截关日 (SI/VGM)</label>
                         <input type="date" id="crm-f-cutoff" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
@@ -1962,8 +1970,16 @@
                         <input type="date" id="crm-f-ata" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                     <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">清关日期</label>
+                        <input type="date" id="crm-f-cleareddate" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">提柜日</label>
                         <input type="date" id="crm-f-pickup" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">派送日期</label>
+                        <input type="date" id="crm-f-deliverydate" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">免柜期截止</label>
@@ -1977,12 +1993,24 @@
                 <!-- 空运日期 -->
                 <div id="crm-air-dates" style="display:none; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">下单日期</label>
+                        <input type="date" id="crm-f-air-bookeddate" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">入仓日期</label>
                         <input type="date" id="crm-f-warehouse" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">空运航班日期</label>
                         <input type="date" id="crm-f-flight" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">到港日期</label>
+                        <input type="date" id="crm-f-air-ata" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">清关日期</label>
+                        <input type="date" id="crm-f-air-cleareddate" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
                     </div>
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">签收时间</label>
@@ -8513,8 +8541,8 @@ function crmGenOrderNo() {
 function crmShowAddModal() {
     ['crm-f-client','crm-f-orderno','crm-f-clientorderno','crm-f-mbl','crm-f-hbl','crm-f-pol','crm-f-pod','crm-f-shipaddr','crm-f-recvaddr','crm-f-shipmode',
      'crm-f-carrier','crm-f-vessel','crm-f-goods','crm-f-weight','crm-f-pkgs','crm-f-cbm',
-     'crm-f-billweight','crm-f-unitprice','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-pickup','crm-f-freetime','crm-f-signed',
-     'crm-f-warehouse','crm-f-flight','crm-f-air-signed',
+     'crm-f-billweight','crm-f-unitprice','crm-f-bookeddate','crm-f-loadeddate','crm-f-cutoff','crm-f-etd','crm-f-eta','crm-f-ata','crm-f-cleareddate','crm-f-pickup','crm-f-deliverydate','crm-f-freetime','crm-f-signed',
+     'crm-f-warehouse','crm-f-flight','crm-f-air-signed','crm-f-air-bookeddate','crm-f-air-ata','crm-f-air-cleareddate',
      'crm-f-lcl-billweight','crm-f-lcl-price','crm-f-lcl-extra','crm-f-lcl-tax','crm-f-lcl-commodity','crm-f-lcl-fumigation','crm-f-lcl-delivery','crm-f-lcl-cost-price','crm-f-lcl-cost-extra','crm-f-lcl-cost-tax','crm-f-lcl-cost-delivery',
      'crm-f-fee-ocean','crm-f-fee-truck','crm-f-fee-customs','crm-f-fee-tax','crm-f-fee-inspection','crm-f-fee-commodity','crm-f-fee-fumigation','crm-f-fee-other',
      'crm-f-tracking','crm-f-carrier-type',
@@ -8848,16 +8876,23 @@ function crmFormToRecord() {
         cbm:      parseFloat(document.getElementById('crm-f-cbm').value) || 0,
         billWeight: parseFloat(document.getElementById('crm-f-billweight').value) || 0,
         unitPrice:  parseFloat(document.getElementById('crm-f-unitprice').value) || 0,
+        bookedDate: g('crm-f-bookeddate'),
+        loadedDate: g('crm-f-loadeddate'),
         cutoff:   g('crm-f-cutoff'),
         etd:      g('crm-f-etd'),
         eta:      g('crm-f-eta'),
         ata:      g('crm-f-ata'),
+        clearedDate: g('crm-f-cleareddate'),
         pickup:   g('crm-f-pickup'),
+        deliveryDate: g('crm-f-deliverydate'),
         freetime: g('crm-f-freetime'),
         signed:   g('crm-f-signed'),
         warehouse: g('crm-f-warehouse'),
         flight:   g('crm-f-flight'),
         airSigned: g('crm-f-air-signed'),
+        airBookedDate: g('crm-f-air-bookeddate'),
+        airAta: g('crm-f-air-ata'),
+        airClearedDate: g('crm-f-air-cleareddate'),
         tracking: g('crm-f-tracking'),
         carrierType: g('crm-f-carrier-type'),
         fees,
@@ -8873,7 +8908,9 @@ function crmFormToRecord() {
 
 function crmRecordToForm(r) {
     const s = (id, v) => { const el = document.getElementById(id); if(el) el.value = v || ''; };
-    const shipMode = r.shipMode || (r.bizType === 'lcl' ? '普船拼箱' : '海运整柜');
+    let shipMode = r.shipMode || '';
+    if (shipMode === '整柜' || (!shipMode && r.bizType === 'fcl')) shipMode = '海运整柜';
+    if (shipMode === '拼箱' || shipMode === '海运散货' || (!shipMode && r.bizType === 'lcl')) shipMode = '普船拼箱';
     s('crm-f-shipmode', shipMode);
     s('crm-f-client', r.client); s('crm-f-orderno', r.orderno); s('crm-f-clientorderno', r.clientOrderNo); s('crm-f-mbl', r.mbl); s('crm-f-hbl', r.hbl);
     s('crm-f-pol', r.pol); s('crm-f-pod', r.pod); s('crm-f-shipaddr', r.shipaddr); s('crm-f-recvaddr', r.recvaddr); s('crm-f-ctype', r.ctype); s('crm-f-cqty', r.cqty || 1);
@@ -8891,9 +8928,12 @@ function crmRecordToForm(r) {
     s('crm-f-lcl-cost-extra', (r.costs||{}).extra || '');
     s('crm-f-lcl-cost-tax', (r.costs||{}).tax || '');
     s('crm-f-lcl-cost-delivery', (r.costs||{}).delivery || '');
+    s('crm-f-bookeddate', r.bookedDate); s('crm-f-loadeddate', r.loadedDate);
     s('crm-f-cutoff', r.cutoff); s('crm-f-etd', r.etd); s('crm-f-eta', r.eta); s('crm-f-ata', r.ata);
-    s('crm-f-pickup', r.pickup); s('crm-f-freetime', r.freetime); s('crm-f-signed', r.signed);
+    s('crm-f-cleareddate', r.clearedDate);
+    s('crm-f-pickup', r.pickup); s('crm-f-deliverydate', r.deliveryDate); s('crm-f-freetime', r.freetime); s('crm-f-signed', r.signed);
     s('crm-f-warehouse', r.warehouse); s('crm-f-flight', r.flight); s('crm-f-air-signed', r.airSigned);
+    s('crm-f-air-bookeddate', r.airBookedDate); s('crm-f-air-ata', r.airAta); s('crm-f-air-cleareddate', r.airClearedDate);
     crmToggleShipMode();
     s('crm-f-fee-ocean', (r.fees||{}).ocean || ''); s('crm-f-fee-truck', (r.fees||{}).truck || '');
     s('crm-f-fee-customs', (r.fees||{}).customs || ''); s('crm-f-fee-tax', (r.fees||{}).tax || '');
