@@ -8392,7 +8392,18 @@ const CRM_STATUS_COLOR = {
 };
 
 function crmLoad() {
-    try { return JSON.parse(localStorage.getItem(CRM_KEY) || '[]'); } catch(e) { return []; }
+    try { 
+        const data = JSON.parse(localStorage.getItem(CRM_KEY) || '[]');
+        return data.map(r => ({
+            ...r,
+            id: r.id || crypto.randomUUID(),
+            bizType: r.bizType || 'fcl',
+            status: r.status || '询价',
+            createdAt: r.createdAt || new Date().toISOString(),
+            updatedAt: r.updatedAt || new Date().toISOString(),
+            statusHistory: r.statusHistory || []
+        }));
+    } catch(e) { return []; }
 }
 function crmSave(data) {
     localStorage.setItem(CRM_KEY, JSON.stringify(data));
