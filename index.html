@@ -1637,6 +1637,7 @@
                 <button class="btn-main" style="background:#27ae60; padding:8px 14px;" onclick="crmExportCSV()">导出CSV</button>
                 <button class="btn-main" style="background:#9b59b6; padding:8px 14px;" onclick="crmExportTracking()">📤 同步到云端</button>
                 <button class="btn-main" style="background:#16a085; padding:8px 14px;" onclick="crmRestoreFromCloud()">📥 从云端恢复</button>
+                <button class="btn-main" style="background:#e67e22; padding:8px 14px;" onclick="crmGenerateTrackingData()">📊 生成轨迹数据</button>
                 <button class="btn-main" style="background:#34495e; padding:8px 14px;" onclick="showApiConfig()">⚙️ API设置</button>
             </div>
         </div>
@@ -8394,15 +8395,28 @@ const CRM_STATUS_COLOR = {
 function crmLoad() {
     try { 
         const data = JSON.parse(localStorage.getItem(CRM_KEY) || '[]');
-        return data.map(r => ({
-            ...r,
-            id: r.id || crypto.randomUUID(),
-            bizType: r.bizType || 'fcl',
-            status: r.status || '询价',
-            createdAt: r.createdAt || new Date().toISOString(),
-            updatedAt: r.updatedAt || new Date().toISOString(),
-            statusHistory: r.statusHistory || []
-        }));
+        return data.map(r => {
+            const fixed = { ...r };
+            if (!fixed.id) {
+                fixed.id = crypto.randomUUID();
+            }
+            if (!fixed.bizType) {
+                fixed.bizType = 'fcl';
+            }
+            if (!fixed.status) {
+                fixed.status = '询价';
+            }
+            if (!fixed.createdAt) {
+                fixed.createdAt = new Date().toISOString();
+            }
+            if (!fixed.updatedAt) {
+                fixed.updatedAt = new Date().toISOString();
+            }
+            if (!fixed.statusHistory) {
+                fixed.statusHistory = [];
+            }
+            return fixed;
+        });
     } catch(e) { return []; }
 }
 function crmSave(data) {
@@ -8492,6 +8506,75 @@ function crmAutoSync() {
         });
     }, 3000);
 }
+
+function crmGenerateTrackingData() {
+    const orders = crmLoad();
+    
+    if (orders.length === 0) {
+        showToast('❌ 没有订单数据');
+        return;
+    }
+    
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    
+    const filteredOrders = orders.filter(order => {
+        const orderDate = new Date(order.updatedAt || order.createdAt);
+        return orderDate >= sixtyDaysAgo;
+    });
+    
+    const cleanData = filteredOrders.map(order => ({
+        id: order.id,
+        orderno: order.orderno,
+        clientOrderNo: order.clientOrderNo,
+        mbl: order.mbl,
+        hbl: order.hbl,
+        shipMode: order.shipMode,
+        pol: order.pol,
+        pod: order.pod,
+        recvaddr: order.recvaddr,
+        goods: order.goods,
+        billWeight: order.billWeight || (order.fees && order.fees.billWeight),
+        cbm: order.cbm,
+        ctype: order.ctype,
+        cqty: order.cqty,
+        status: order.status,
+        etd: order.etd,
+        eta: order.eta,
+        ata: order.ata,
+        signed: order.signed,
+        warehouse: order.warehouse,
+        flight: order.flight,
+        airSigned: order.airSigned,
+        airBookedDate: order.airBookedDate,
+        airAta: order.airAta,
+        airClearedDate: order.airClearedDate,
+        tracking: order.tracking,
+        carrierType: order.carrierType,
+        bookedDate: order.bookedDate,
+        loadedDate: order.loadedDate,
+        clearedDate: order.clearedDate,
+        pickup: order.pickup,
+        deliveryDate: order.deliveryDate,
+        statusHistory: order.statusHistory,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt
+    }));
+    
+    const jsonStr = JSON.stringify(cleanData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tracking-data.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(`✅ 已生成轨迹数据文件（${cleanData.length}条订单）`);
+}
+
 function crmToggleShipMode() {
     const modalTitle = document.getElementById('crm-modal-title');
     const editId = document.getElementById('crm-edit-id')?.value;
@@ -9404,12 +9487,11 @@ function crmRender() {
         const selected = crmSelectedIds.has(r.id);
         const selStyle = selected ? 'background:rgba(74,144,226,0.08); box-shadow:0 0 0 2px #4a90e2 inset, 0 12px 28px rgba(31,58,93,0.08);' : '';
         const cbHtml = crmSelectMode
-            ? `<div style="flex-shrink:0; display:flex; align-items:center; padding-right:4px;" onclick="crmToggleSelect('${r.id}', event)">
-                <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} onclick="crmToggleSelect('${r.id}', event)" style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
+            ? `<div style="flex-shrink:0; display:flex; align-items:center; padding-right:4px;">
+                <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
                </div>`
             : '';
-        const cardClick = crmSelectMode ? `crmToggleSelect('${r.id}', event)` : `crmShowDetail('${r.id}')`;
-        return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" onclick="${cardClick}">
+        return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" data-order-id="${r.id}">
             <div style="display:flex; align-items:flex-start; gap:8px;">
                 ${cbHtml}
                 <div style="flex:1; min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; flex-wrap:wrap;">
@@ -9429,6 +9511,20 @@ function crmRender() {
             ${r.goods ? `<div style="margin-top:4px; font-size:11px; color:#95a5a6; padding-left:${crmSelectMode?'26px':'0'}">货：${r.goods}</div>` : ''}
         </div>`;
     }).join('');
+    
+    setTimeout(() => {
+        document.querySelectorAll('[data-order-id]').forEach(card => {
+            card.onclick = function(e) {
+                if (e.target.tagName === 'INPUT') return;
+                const orderId = this.getAttribute('data-order-id');
+                if (crmSelectMode) {
+                    crmToggleSelect(orderId, e);
+                } else {
+                    crmShowDetail(orderId);
+                }
+            };
+        });
+    }, 0);
 }
 
 
