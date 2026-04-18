@@ -1694,6 +1694,15 @@
         <div id="crm-stats-bar" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
     </div>
 
+    <!-- 订单统计卡片 -->
+    <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <div style="font-size:14px; font-weight:bold; color:#2c3e50; border-left:4px solid #27ae60; padding-left:8px;">📊 订单统计</div>
+            <span id="crm-stats-mode" style="font-size:11px; color:#888;"></span>
+        </div>
+        <div id="crm-summary-stats" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+    </div>
+
     <!-- OCR识别区域 -->
     <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer;" onclick="toggleOcrSection()">
@@ -9819,25 +9828,25 @@ function crmUpdateBulkBar() {
     if (el) el.textContent = '已选 ' + n + ' 条';
     
     const statsEl = document.getElementById('crm-bulk-stats');
-    if (!statsEl) return;
-    
-    if (n === 0) {
-        statsEl.innerHTML = '';
-        return;
+    if (statsEl) {
+        if (n === 0) {
+            statsEl.innerHTML = '';
+        } else {
+            const data = crmLoad();
+            const selectedOrders = data.filter(r => crmSelectedIds.has(String(r.id)));
+            const stats = crmCalculateStats(selectedOrders);
+            statsEl.innerHTML = crmRenderStatsHtml(stats);
+        }
     }
     
-    const data = crmLoad();
-    const selectedOrders = data.filter(r => crmSelectedIds.has(String(r.id)));
+    crmUpdateSummaryStats();
+}
+
+function crmCalculateStats(orders) {
+    let totalPkgs = 0, totalWeight = 0, totalCbm = 0, totalBillWeight = 0;
+    let totalReceivable = 0, totalPayable = 0, totalProfit = 0;
     
-    let totalPkgs = 0;
-    let totalWeight = 0;
-    let totalCbm = 0;
-    let totalBillWeight = 0;
-    let totalReceivable = 0;
-    let totalPayable = 0;
-    let totalProfit = 0;
-    
-    selectedOrders.forEach(r => {
+    orders.forEach(r => {
         totalPkgs += Number(r.pkgs) || 0;
         totalWeight += Number(r.weight) || 0;
         totalCbm += Number(r.cbm) || 0;
@@ -9847,7 +9856,8 @@ function crmUpdateBulkBar() {
         totalProfit += Number(r.profit) || 0;
     });
     
-    const stats = [
+    return [
+        { label: '订单', value: orders.length, unit: '单', color: '#667eea' },
         { label: '件数', value: totalPkgs, unit: '件', color: '#3498db' },
         { label: '毛重', value: totalWeight, unit: 'kg', color: '#9b59b6' },
         { label: '体积', value: totalCbm, unit: 'CBM', color: '#1abc9c' },
@@ -9856,12 +9866,47 @@ function crmUpdateBulkBar() {
         { label: '应付', value: '¥' + totalPayable.toLocaleString(), unit: '', color: '#e74c3c' },
         { label: '毛利', value: (totalProfit >= 0 ? '' : '-') + '¥' + Math.abs(totalProfit).toLocaleString(), unit: '', color: totalProfit >= 0 ? '#27ae60' : '#e74c3c' }
     ];
-    
-    statsEl.innerHTML = stats.map(s => 
-        `<span style="background:${s.color}22; color:${s.color}; padding:3px 8px; border-radius:6px; border:1px solid ${s.color}44;">
+}
+
+function crmRenderStatsHtml(stats) {
+    return stats.map(s => 
+        `<span style="background:${s.color}22; color:${s.color}; padding:3px 8px; border-radius:6px; border:1px solid ${s.color}44; font-size:11px;">
             ${s.label}: ${typeof s.value === 'number' ? s.value.toLocaleString() : s.value}${s.unit}
         </span>`
     ).join('');
+}
+
+function crmUpdateSummaryStats() {
+    const summaryEl = document.getElementById('crm-summary-stats');
+    const modeEl = document.getElementById('crm-stats-mode');
+    if (!summaryEl) return;
+    
+    const data = crmLoad();
+    let orders = [];
+    let modeText = '';
+    
+    if (crmSelectedIds.size > 0) {
+        orders = data.filter(r => crmSelectedIds.has(String(r.id)));
+        modeText = '已选 ' + orders.length + ' 单';
+    } else {
+        const container = document.getElementById('crm-list');
+        const visibleIds = new Set();
+        container.querySelectorAll('[data-order-id]').forEach(el => {
+            visibleIds.add(el.getAttribute('data-order-id'));
+        });
+        orders = data.filter(r => visibleIds.has(String(r.id)));
+        modeText = '当前筛选 ' + orders.length + ' 单';
+    }
+    
+    if (modeEl) modeEl.textContent = modeText;
+    
+    if (orders.length === 0) {
+        summaryEl.innerHTML = '<span style="color:#888; font-size:12px;">暂无订单数据</span>';
+        return;
+    }
+    
+    const stats = crmCalculateStats(orders);
+    summaryEl.innerHTML = crmRenderStatsHtml(stats);
 }
 
 function crmRender() {
@@ -9948,6 +9993,8 @@ function crmRender() {
             };
         });
     }, 0);
+    
+    setTimeout(() => crmUpdateSummaryStats(), 10);
 }
 
 
