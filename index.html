@@ -8114,10 +8114,11 @@ function appendHomeQuoteWidget(container, symbol) {
     script.type = 'text/javascript';
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
     script.async = true;
+    const isDark = document.body.classList.contains('dark-mode');
     script.innerHTML = JSON.stringify({
         symbol: HOME_QUOTE_TV_SYMBOL_MAP[symbol] || symbol,
         width: '100%',
-        colorTheme: 'light',
+        colorTheme: isDark ? 'dark' : 'light',
         isTransparent: true,
         locale: 'zh_CN',
         showSymbolLogo: false
@@ -12850,12 +12851,18 @@ function toggleTheme() {
     btn.textContent = isDark ? '☀️' : '🌙';
     localStorage.setItem('hgcd_theme', isDark ? 'dark' : 'light');
     
-    // 通知所有 iframe 切换主题
     document.querySelectorAll('iframe').forEach(iframe => {
         try {
             iframe.contentWindow.postMessage({ type: 'theme-change', isDark: isDark }, '*');
         } catch(e) {}
     });
+
+    const quoteGrid = document.getElementById('home-quote-grid');
+    if (quoteGrid) {
+        quoteGrid.dataset.ready = 'false';
+        quoteGrid.innerHTML = '';
+        renderHomeQuoteGrid();
+    }
 }
 
 function initTheme() {
