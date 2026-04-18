@@ -875,18 +875,14 @@
 </div>
 
 <!-- API配置弹窗 -->
-<div id="api-config-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center;">
-    <div style="background:var(--bg-primary); border-radius:12px; padding:24px; width:400px; max-width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-        <div style="font-size:18px; font-weight:bold; margin-bottom:20px; color:var(--text-primary);">⚙️ Cloudflare API 配置</div>
-        <div style="margin-bottom:16px;">
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:6px; color:var(--text-secondary);">API URL</label>
-            <input type="text" id="config-api-url" placeholder="https://your-worker.workers.dev" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary);">
+<div id="api-config-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; justify-content:center; align-items:center; overflow-y:auto;">
+    <div style="background:var(--bg-primary); border-radius:12px; padding:24px; width:450px; max-width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <div style="font-size:18px; font-weight:bold; margin-bottom:20px; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center;">
+            <span>⚙️ Cloudflare API 配置</span>
+            <button onclick="hideApiConfig()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-secondary);">×</button>
         </div>
-        <div style="margin-bottom:16px;">
-            <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:6px; color:var(--text-secondary);">API Key</label>
-            <input type="text" id="config-api-key" placeholder="输入你的API密钥" style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary);">
-        </div>
-        <div style="margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg-gray); border-radius:8px;">
+        
+        <div style="margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg-gray); border-radius:8px;">
             <div>
                 <div style="font-size:14px; font-weight:bold; color:var(--text-primary);">自动同步</div>
                 <div style="font-size:12px; color:var(--text-secondary);">保存订单时自动同步到云端</div>
@@ -897,21 +893,35 @@
                 <span id="auto-sync-dot" style="position:absolute; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; pointer-events:none;"></span>
             </label>
         </div>
-        <div style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; padding:12px; background:var(--bg-gray); border-radius:8px;">
-            <div>
-                <div style="font-size:14px; font-weight:bold; color:var(--text-primary);">同步其他数据</div>
-                <div style="font-size:12px; color:var(--text-secondary);">报价单、待办事项、备忘录等</div>
+        
+        <div style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:14px; font-weight:bold; color:var(--text-primary);">API 配置列表</span>
+                <button onclick="addNewApiConfig()" style="background:#9b59b6; color:#fff; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:12px; font-weight:bold;">+ 添加配置</button>
             </div>
-            <label style="position:relative; display:inline-block; width:50px; height:26px; cursor:pointer;">
-                <input type="checkbox" id="config-sync-other" style="opacity:0; width:0; height:0; position:absolute;">
-                <span id="sync-other-slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:0.3s; border-radius:26px;"></span>
-                <span id="sync-other-dot" style="position:absolute; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; pointer-events:none;"></span>
-            </label>
+            <div id="api-config-list" style="max-height:300px; overflow-y:auto;"></div>
         </div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="saveApiConfig()" style="flex:1; padding:10px; background:#9b59b6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">保存配置</button>
-            <button onclick="hideApiConfig()" style="flex:1; padding:10px; background:#95a5a6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">取消</button>
+        
+        <div id="api-edit-section" style="display:none; margin-bottom:16px; padding:16px; background:var(--bg-secondary); border-radius:8px; border:1px solid var(--border-color);">
+            <div style="font-size:14px; font-weight:bold; margin-bottom:12px; color:var(--text-primary);" id="api-edit-title">添加新配置</div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--text-secondary);">配置名称</label>
+                <input type="text" id="config-name" placeholder="例如：生产环境、测试环境" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary); font-size:13px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--text-secondary);">API URL</label>
+                <input type="text" id="config-api-url" placeholder="https://your-worker.workers.dev" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary); font-size:13px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--text-secondary);">API Key</label>
+                <input type="text" id="config-api-key" placeholder="输入你的API密钥" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary); font-size:13px;">
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button onclick="saveCurrentApiConfig()" style="flex:1; padding:8px; background:#27ae60; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;">保存</button>
+                <button onclick="cancelEditApiConfig()" style="flex:1; padding:8px; background:#95a5a6; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;">取消</button>
+            </div>
         </div>
+        
         <div id="api-config-status" style="margin-top:12px; font-size:13px; text-align:center; display:none;"></div>
     </div>
 </div>
@@ -9580,22 +9590,72 @@ function crmExportCSV(selectionOnly = false) {
 }
 
 const DEFAULT_API_URL = 'https://crm-tracking-api.wubairan.workers.dev';
-const DEFAULT_API_KEY = 'crm2024secretkey123';
+const DEFAULT_API_KEY_ENCRYPTED = 'Y3JtMjAyNHNlY3JldGtleTEyMw==';
+let editingApiIndex = -1;
+
+function decryptApiKey(encrypted) {
+    try {
+        return atob(encrypted);
+    } catch(e) {
+        return '';
+    }
+}
+
+function encryptApiKey(key) {
+    try {
+        return btoa(key);
+    } catch(e) {
+        return '';
+    }
+}
+
+function getApiConfigs() {
+    const stored = localStorage.getItem('crm_api_configs');
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch(e) {}
+    }
+    return [{
+        id: 'default',
+        name: '默认配置',
+        url: DEFAULT_API_URL,
+        key: DEFAULT_API_KEY_ENCRYPTED,
+        isDefault: true
+    }];
+}
+
+function saveApiConfigs(configs) {
+    localStorage.setItem('crm_api_configs', JSON.stringify(configs));
+}
+
+function getCurrentApiConfig() {
+    const configs = getApiConfigs();
+    const currentId = localStorage.getItem('crm_current_api_id') || 'default';
+    return configs.find(c => c.id === currentId) || configs[0];
+}
+
+function getDecryptedKey(config) {
+    if (config.isDefault) {
+        return decryptApiKey(DEFAULT_API_KEY_ENCRYPTED);
+    }
+    return decryptApiKey(config.key);
+}
 
 function showApiConfig() {
     const modal = document.getElementById('api-config-modal');
     modal.style.display = 'flex';
-    document.getElementById('config-api-url').value = localStorage.getItem('cloudflare_api_url') || DEFAULT_API_URL;
-    document.getElementById('config-api-key').value = localStorage.getItem('cloudflare_api_key') || DEFAULT_API_KEY;
+    
     const autoSyncValue = localStorage.getItem('crm_auto_sync');
     const autoSync = autoSyncValue === null ? true : autoSyncValue === 'true';
     document.getElementById('config-auto-sync').checked = autoSync;
     updateAutoSyncSlider();
-    const syncOtherValue = localStorage.getItem('crm_sync_other');
-    const syncOther = syncOtherValue === 'true';
-    document.getElementById('config-sync-other').checked = syncOther;
-    updateSyncOtherSlider();
+    
     document.getElementById('api-config-status').style.display = 'none';
+    document.getElementById('api-edit-section').style.display = 'none';
+    editingApiIndex = -1;
+    
+    renderApiConfigList();
     
     const slider = document.getElementById('auto-sync-slider');
     slider.onclick = function() {
@@ -9603,26 +9663,141 @@ function showApiConfig() {
         checkbox.checked = !checkbox.checked;
         updateAutoSyncSlider();
     };
-    
-    const otherSlider = document.getElementById('sync-other-slider');
-    otherSlider.onclick = function() {
-        const checkbox = document.getElementById('config-sync-other');
-        checkbox.checked = !checkbox.checked;
-        updateSyncOtherSlider();
-    };
 }
 
-function updateSyncOtherSlider() {
-    const checkbox = document.getElementById('config-sync-other');
-    const slider = document.getElementById('sync-other-slider');
-    const dot = document.getElementById('sync-other-dot');
-    if (checkbox.checked) {
-        slider.style.backgroundColor = '#9b59b6';
-        dot.style.left = '27px';
-    } else {
-        slider.style.backgroundColor = '#ccc';
-        dot.style.left = '3px';
+function renderApiConfigList() {
+    const configs = getApiConfigs();
+    const currentId = localStorage.getItem('crm_current_api_id') || 'default';
+    const listEl = document.getElementById('api-config-list');
+    
+    if (configs.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:20px;">暂无API配置，请添加</div>';
+        return;
     }
+    
+    listEl.innerHTML = configs.map((config, index) => {
+        const isCurrent = config.id === currentId;
+        const maskedKey = config.isDefault ? '••••••••••••' : '••••••••••••';
+        return `
+            <div style="padding:12px; margin-bottom:8px; background:var(--bg-primary); border:1px solid ${isCurrent ? '#9b59b6' : 'var(--border-color)'}; border-radius:8px; ${isCurrent ? 'box-shadow:0 0 0 2px rgba(155,89,182,0.2);' : ''}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:bold; color:var(--text-primary);">${config.name}</span>
+                        ${isCurrent ? '<span style="background:#9b59b6; color:#fff; padding:2px 8px; border-radius:4px; font-size:10px;">当前使用</span>' : ''}
+                        ${config.isDefault ? '<span style="background:#27ae60; color:#fff; padding:2px 8px; border-radius:4px; font-size:10px;">系统默认</span>' : ''}
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        ${!isCurrent ? `<button onclick="selectApiConfig('${config.id}')" style="background:#3498db; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">选用</button>` : ''}
+                        ${!config.isDefault ? `<button onclick="editApiConfig(${index})" style="background:#f39c12; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">编辑</button>` : ''}
+                        ${!config.isDefault ? `<button onclick="deleteApiConfig('${config.id}')" style="background:#e74c3c; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:11px;">删除</button>` : ''}
+                    </div>
+                </div>
+                <div style="font-size:11px; color:var(--text-secondary);">
+                    <div style="margin-bottom:2px;">URL: ${config.url}</div>
+                    <div>Key: ${maskedKey}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function addNewApiConfig() {
+    editingApiIndex = -1;
+    document.getElementById('api-edit-title').textContent = '添加新配置';
+    document.getElementById('config-name').value = '';
+    document.getElementById('config-api-url').value = '';
+    document.getElementById('config-api-key').value = '';
+    document.getElementById('api-edit-section').style.display = 'block';
+}
+
+function editApiConfig(index) {
+    const configs = getApiConfigs();
+    const config = configs[index];
+    if (!config) return;
+    
+    editingApiIndex = index;
+    document.getElementById('api-edit-title').textContent = '编辑配置';
+    document.getElementById('config-name').value = config.name;
+    document.getElementById('config-api-url').value = config.url;
+    document.getElementById('config-api-key').value = '';
+    document.getElementById('config-api-key').placeholder = '留空则保持原密钥不变';
+    document.getElementById('api-edit-section').style.display = 'block';
+}
+
+function saveCurrentApiConfig() {
+    const name = document.getElementById('config-name').value.trim();
+    const url = document.getElementById('config-api-url').value.trim();
+    const key = document.getElementById('config-api-key').value.trim();
+    
+    if (!name || !url) {
+        showApiStatus('请填写配置名称和API URL', true);
+        return;
+    }
+    
+    const configs = getApiConfigs();
+    
+    if (editingApiIndex === -1) {
+        if (!key) {
+            showApiStatus('请填写API Key', true);
+            return;
+        }
+        configs.push({
+            id: 'api_' + Date.now(),
+            name: name,
+            url: url,
+            key: encryptApiKey(key),
+            isDefault: false
+        });
+        showApiStatus('✅ 配置已添加');
+    } else {
+        configs[editingApiIndex].name = name;
+        configs[editingApiIndex].url = url;
+        if (key) {
+            configs[editingApiIndex].key = encryptApiKey(key);
+        }
+        showApiStatus('✅ 配置已更新');
+    }
+    
+    saveApiConfigs(configs);
+    document.getElementById('api-edit-section').style.display = 'none';
+    renderApiConfigList();
+}
+
+function cancelEditApiConfig() {
+    document.getElementById('api-edit-section').style.display = 'none';
+    editingApiIndex = -1;
+}
+
+function selectApiConfig(id) {
+    localStorage.setItem('crm_current_api_id', id);
+    renderApiConfigList();
+    showApiStatus('✅ 已切换到此配置');
+}
+
+function deleteApiConfig(id) {
+    if (!confirm('确定要删除此API配置吗？')) return;
+    
+    const configs = getApiConfigs();
+    const newConfigs = configs.filter(c => c.id !== id);
+    saveApiConfigs(newConfigs);
+    
+    const currentId = localStorage.getItem('crm_current_api_id');
+    if (currentId === id) {
+        localStorage.setItem('crm_current_api_id', 'default');
+    }
+    
+    renderApiConfigList();
+    showApiStatus('✅ 配置已删除');
+}
+
+function showApiStatus(msg, isError = false) {
+    const status = document.getElementById('api-config-status');
+    status.style.display = 'block';
+    status.style.color = isError ? '#e74c3c' : '#27ae60';
+    status.textContent = msg;
+    setTimeout(() => {
+        status.style.display = 'none';
+    }, 2000);
 }
 
 function updateAutoSyncSlider() {
@@ -9632,9 +9807,11 @@ function updateAutoSyncSlider() {
     if (checkbox.checked) {
         slider.style.backgroundColor = '#9b59b6';
         dot.style.left = '27px';
+        localStorage.setItem('crm_auto_sync', 'true');
     } else {
         slider.style.backgroundColor = '#ccc';
         dot.style.left = '3px';
+        localStorage.setItem('crm_auto_sync', 'false');
     }
 }
 
@@ -9642,39 +9819,10 @@ function hideApiConfig() {
     document.getElementById('api-config-modal').style.display = 'none';
 }
 
-function saveApiConfig() {
-    const apiUrl = document.getElementById('config-api-url').value.trim();
-    const apiKey = document.getElementById('config-api-key').value.trim();
-    const autoSync = document.getElementById('config-auto-sync').checked;
-    const syncOther = document.getElementById('config-sync-other').checked;
-    
-    if (!apiUrl || !apiKey) {
-        const status = document.getElementById('api-config-status');
-        status.style.display = 'block';
-        status.style.color = '#e74c3c';
-        status.textContent = '请填写完整的API配置';
-        return;
-    }
-    
-    localStorage.setItem('cloudflare_api_url', apiUrl);
-    localStorage.setItem('cloudflare_api_key', apiKey);
-    localStorage.setItem('crm_auto_sync', autoSync ? 'true' : 'false');
-    localStorage.setItem('crm_sync_other', syncOther ? 'true' : 'false');
-    
-    const status = document.getElementById('api-config-status');
-    status.style.display = 'block';
-    status.style.color = '#27ae60';
-    status.textContent = '✅ 配置已保存' + (autoSync ? '（自动同步已启用）' : '');
-    
-    setTimeout(() => {
-        hideApiConfig();
-    }, 1000);
-}
-
 function crmExportTracking() {
-    const apiUrl = localStorage.getItem('cloudflare_api_url') || DEFAULT_API_URL;
-    const apiKey = localStorage.getItem('cloudflare_api_key') || DEFAULT_API_KEY;
-    const syncOther = localStorage.getItem('crm_sync_other') === 'true';
+    const config = getCurrentApiConfig();
+    const apiUrl = config.url;
+    const apiKey = getDecryptedKey(config);
     
     const allData = {
         orders: [],
@@ -9686,12 +9834,8 @@ function crmExportTracking() {
         calendarMemos: [],
         shipmentNotes: null,
         appState: null,
-        apiSettings: {
-            url: apiUrl,
-            key: apiKey,
-            autoSync: localStorage.getItem('crm_auto_sync') !== 'false',
-            syncOther: syncOther
-        }
+        apiConfigs: getApiConfigs(),
+        currentApiId: localStorage.getItem('crm_current_api_id') || 'default'
     };
     
     const ordersData = crmLoad();
@@ -9742,54 +9886,52 @@ function crmExportTracking() {
         }));
     }
     
-    if (syncOther) {
-        try {
-            const clientsData = localStorage.getItem('logistics_client_data');
-            if (clientsData) allData.clients = JSON.parse(clientsData);
-        } catch(e) {}
-        
-        try {
-            const suppliersData = localStorage.getItem('logistics_supplier_data');
-            if (suppliersData) allData.suppliers = JSON.parse(suppliersData);
-        } catch(e) {}
-        
-        try {
-            const airQuotesData = localStorage.getItem('freight_air_cache_v1');
-            if (airQuotesData) allData.airQuotes = [{ id: '1', data: JSON.parse(airQuotesData) }];
-        } catch(e) {}
-        
-        try {
-            const fclQuotesData = localStorage.getItem('freight_fcl_cache_v1');
-            if (fclQuotesData) allData.fclQuotes = [{ id: '1', data: JSON.parse(fclQuotesData) }];
-        } catch(e) {}
-        
-        try {
-            const todosData = localStorage.getItem('dashboard_todos_v1');
-            if (todosData) allData.todos = JSON.parse(todosData);
-        } catch(e) {}
-        
-        try {
-            const memosData = localStorage.getItem('hcn_calendar_memos');
-            if (memosData) {
-                const memos = JSON.parse(memosData);
-                allData.calendarMemos = Object.entries(memos).map(([date, content]) => ({
-                    id: crypto.randomUUID(),
-                    date: date,
-                    content: content
-                }));
-            }
-        } catch(e) {}
-        
-        try {
-            const shipmentNotes = localStorage.getItem('shipment_notes_v1');
-            if (shipmentNotes) allData.shipmentNotes = shipmentNotes;
-        } catch(e) {}
-        
-        try {
-            const appState = localStorage.getItem('logistics_workbench_state_v1');
-            if (appState) allData.appState = JSON.parse(appState);
-        } catch(e) {}
-    }
+    try {
+        const clientsData = localStorage.getItem('logistics_client_data');
+        if (clientsData) allData.clients = JSON.parse(clientsData);
+    } catch(e) {}
+    
+    try {
+        const suppliersData = localStorage.getItem('logistics_supplier_data');
+        if (suppliersData) allData.suppliers = JSON.parse(suppliersData);
+    } catch(e) {}
+    
+    try {
+        const airQuotesData = localStorage.getItem('freight_air_cache_v1');
+        if (airQuotesData) allData.airQuotes = [{ id: '1', data: JSON.parse(airQuotesData) }];
+    } catch(e) {}
+    
+    try {
+        const fclQuotesData = localStorage.getItem('freight_fcl_cache_v1');
+        if (fclQuotesData) allData.fclQuotes = [{ id: '1', data: JSON.parse(fclQuotesData) }];
+    } catch(e) {}
+    
+    try {
+        const todosData = localStorage.getItem('dashboard_todos_v1');
+        if (todosData) allData.todos = JSON.parse(todosData);
+    } catch(e) {}
+    
+    try {
+        const memosData = localStorage.getItem('hcn_calendar_memos');
+        if (memosData) {
+            const memos = JSON.parse(memosData);
+            allData.calendarMemos = Object.entries(memos).map(([date, content]) => ({
+                id: crypto.randomUUID(),
+                date: date,
+                content: content
+            }));
+        }
+    } catch(e) {}
+    
+    try {
+        const shipmentNotes = localStorage.getItem('shipment_notes_v1');
+        if (shipmentNotes) allData.shipmentNotes = shipmentNotes;
+    } catch(e) {}
+    
+    try {
+        const appState = localStorage.getItem('logistics_workbench_state_v1');
+        if (appState) allData.appState = JSON.parse(appState);
+    } catch(e) {}
     
     showToast('正在同步数据到云端...');
     
@@ -9815,8 +9957,9 @@ function crmExportTracking() {
 }
 
 function crmRestoreFromCloud() {
-    const apiUrl = localStorage.getItem('cloudflare_api_url') || '';
-    const apiKey = localStorage.getItem('cloudflare_api_key') || '';
+    const config = getCurrentApiConfig();
+    const apiUrl = config.url;
+    const apiKey = getDecryptedKey(config);
     
     if (!apiUrl || !apiKey) {
         showToast('请先配置Cloudflare API');
@@ -9899,19 +10042,14 @@ function crmRestoreFromCloud() {
                 }
             }
             
-            if (data.apiSettings) {
-                if (data.apiSettings.url) {
-                    localStorage.setItem('cloudflare_api_url', data.apiSettings.url);
-                    restoreCount++;
-                }
-                if (data.apiSettings.key) {
-                    localStorage.setItem('cloudflare_api_key', data.apiSettings.key);
-                    restoreCount++;
-                }
-                if (data.apiSettings.autoSync !== undefined) {
-                    localStorage.setItem('crm_auto_sync', data.apiSettings.autoSync ? 'true' : 'false');
-                    restoreCount++;
-                }
+            if (data.apiConfigs && data.apiConfigs.length) {
+                saveApiConfigs(data.apiConfigs);
+                restoreCount++;
+            }
+            
+            if (data.currentApiId) {
+                localStorage.setItem('crm_current_api_id', data.currentApiId);
+                restoreCount++;
             }
             
             showToast('✅ 已从云端恢复 ' + restoreCount + ' 条数据！');
