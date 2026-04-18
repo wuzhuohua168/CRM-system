@@ -8965,7 +8965,7 @@ function crmRecordToForm(r) {
         if (cEl) cEl.value = c.cur || 'CNY';
         if (rEl) rEl.value = c.rate || (c.cur === 'CNY' || !c.cur ? 1 : '');
     });
-    crmToggleBizType();
+    crmToggleShipMode();
     crmUpdateFeeTotal();
 }
 
@@ -8974,18 +8974,43 @@ function crmSaveRecord() {
     if (!rec.client) { showToast('请填写客户名称'); return; }
     const data = crmLoad();
     const editId = document.getElementById('crm-edit-id').value;
+    const now = new Date().toISOString();
+    
     if (editId) {
         const idx = data.findIndex(r => String(r.id) === String(editId));
-        if (idx >= 0) { rec.id = data[idx].id; rec.createdAt = data[idx].createdAt; data[idx] = rec; }
+        if (idx >= 0) {
+            const oldRecord = data[idx];
+            rec.id = oldRecord.id;
+            rec.createdAt = oldRecord.createdAt;
+            
+            if (rec.status !== oldRecord.status) {
+                if (!rec.statusHistory) {
+                    rec.statusHistory = oldRecord.statusHistory || [];
+                }
+                rec.statusHistory.push({
+                    status: rec.status,
+                    timestamp: now,
+                    previousStatus: oldRecord.status
+                });
+            } else {
+                rec.statusHistory = oldRecord.statusHistory || [];
+            }
+            
+            data[idx] = rec;
+        }
     } else {
         rec.id = crmNextId(data);
-        rec.createdAt = new Date().toISOString();
+        rec.createdAt = now;
+        rec.statusHistory = [{
+            status: rec.status,
+            timestamp: now,
+            previousStatus: null
+        }];
         data.unshift(rec);
     }
     crmSave(data);
     crmCloseModal();
     crmRender();
-    // Refresh linked modules after CRM data changes
     reminderGenerateFromCRM();
     reconciliationGenerateFromCRM();
     showToast(editId ? '已更新' : '已保存');
