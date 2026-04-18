@@ -8821,22 +8821,36 @@ async function crmShareTimelineAsImage() {
         return;
     }
     
+    if (typeof html2canvas === 'undefined') {
+        showToast('❌ 图片生成库未加载，请刷新页面重试');
+        return;
+    }
+    
     shareBtns.style.display = 'none';
+    showToast('正在生成图片...');
     
     try {
         const canvas = await html2canvas(content, {
             scale: 2,
             backgroundColor: '#ffffff',
-            useCORS: true
+            useCORS: true,
+            logging: false
         });
         
+        const order = crmCurrentTimelineOrder || {};
+        const orderNo = order.orderno || order.mbl || 'tracking';
+        const fileName = `轨迹图_${orderNo}.png`;
+        
         canvas.toBlob(function(blob) {
-            const order = crmCurrentTimelineOrder || {};
-            const orderNo = order.orderno || order.mbl || 'tracking';
-            const fileName = `轨迹图_${orderNo}.png`;
+            if (!blob) {
+                showToast('❌ 图片生成失败');
+                shareBtns.style.display = 'flex';
+                return;
+            }
             
-            if (navigator.share && navigator.canShare) {
-                const file = new File([blob], fileName, { type: 'image/png' });
+            const file = new File([blob], fileName, { type: 'image/png' });
+            
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 navigator.share({
                     title: `订单轨迹 - ${orderNo}`,
                     text: `订单 ${orderNo} 的物流轨迹`,
@@ -8846,25 +8860,33 @@ async function crmShareTimelineAsImage() {
                 }).catch((err) => {
                     console.log('分享取消:', err);
                     crmDownloadTimelineImage(canvas, orderNo);
+                }).finally(() => {
+                    shareBtns.style.display = 'flex';
                 });
             } else {
                 crmDownloadTimelineImage(canvas, orderNo);
+                shareBtns.style.display = 'flex';
             }
-        });
+        }, 'image/png');
     } catch (error) {
         console.error('图片生成失败:', error);
-        showToast('❌ 图片生成失败，请重试');
+        showToast('❌ 图片生成失败: ' + error.message);
+        shareBtns.style.display = 'flex';
     }
-    
-    shareBtns.style.display = 'flex';
 }
 
 function crmDownloadTimelineImage(canvas, orderNo) {
-    const link = document.createElement('a');
-    link.download = `轨迹图_${orderNo}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    showToast('✅ 图片已下载！');
+    try {
+        const link = document.createElement('a');
+        link.download = `轨迹图_${orderNo}.png`;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('✅ 图片已下载！');
+    } catch (e) {
+        showToast('❌ 下载失败，请长按图片保存');
+    }
 }
 
 async function crmShareTimelineAsPDF() {
@@ -8876,13 +8898,20 @@ async function crmShareTimelineAsPDF() {
         return;
     }
     
+    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        showToast('❌ PDF生成库未加载，请刷新页面重试');
+        return;
+    }
+    
     shareBtns.style.display = 'none';
+    showToast('正在生成PDF...');
     
     try {
         const canvas = await html2canvas(content, {
             scale: 2,
             backgroundColor: '#ffffff',
-            useCORS: true
+            useCORS: true,
+            logging: false
         });
         
         const imgData = canvas.toDataURL('image/png');
@@ -8918,7 +8947,7 @@ async function crmShareTimelineAsPDF() {
         const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
         
         let shared = false;
-        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
             try {
                 await navigator.share({ 
                     files: [pdfFile], 
@@ -8938,7 +8967,7 @@ async function crmShareTimelineAsPDF() {
         }
     } catch (error) {
         console.error('PDF生成失败:', error);
-        showToast('❌ PDF生成失败，请重试');
+        showToast('❌ PDF生成失败: ' + error.message);
     }
     
     shareBtns.style.display = 'flex';
@@ -13239,6 +13268,13 @@ function initTheme() {
     if (saved === 'dark') {
         document.body.classList.add('dark-mode');
         if (btn) btn.textContent = '☀️';
+    }
+    
+    const quoteGrid = document.getElementById('home-quote-grid');
+    if (quoteGrid) {
+        quoteGrid.dataset.ready = 'false';
+        quoteGrid.innerHTML = '';
+        renderHomeQuoteGrid();
     }
 }
 
