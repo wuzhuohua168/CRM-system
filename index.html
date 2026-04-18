@@ -1746,8 +1746,9 @@
     <div id="crm-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无整柜记录，点击"＋ 新增"开始录入</div>
 
     <!-- 批量操作浮动栏 -->
-    <div id="crm-bulk-bar" style="display:none; position:fixed; bottom:68px; left:50%; transform:translateX(-50%); z-index:9990; background:rgba(30,40,55,0.95); color:#fff; border-radius:999px; padding:10px 18px; box-shadow:0 8px 28px rgba(0,0,0,0.28); align-items:center; gap:10px; white-space:nowrap; backdrop-filter:blur(10px);">
+    <div id="crm-bulk-bar" style="display:none; position:fixed; bottom:68px; left:50%; transform:translateX(-50%); z-index:9990; background:rgba(30,40,55,0.95); color:#fff; border-radius:16px; padding:12px 18px; box-shadow:0 8px 28px rgba(0,0,0,0.28); align-items:center; gap:10px; white-space:nowrap; backdrop-filter:blur(10px); flex-wrap:wrap; justify-content:center;">
         <span id="crm-bulk-count" style="font-size:13px; font-weight:bold;">已选 0 条</span>
+        <div id="crm-bulk-stats" style="display:flex; gap:6px; flex-wrap:wrap; font-size:11px; align-items:center;"></div>
         <button onclick="crmSelectAll()" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer;">全选</button>
         <button onclick="crmSelectNone()" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer;">清空</button>
         <button onclick="crmExportPDF(true)" style="background:#e74c3c; border:none; color:#fff; border-radius:999px; padding:5px 14px; font-size:12px; font-weight:bold; cursor:pointer;">导出PDF</button>
@@ -9816,6 +9817,51 @@ function crmUpdateBulkBar() {
     const n = crmSelectedIds.size;
     const el = document.getElementById('crm-bulk-count');
     if (el) el.textContent = '已选 ' + n + ' 条';
+    
+    const statsEl = document.getElementById('crm-bulk-stats');
+    if (!statsEl) return;
+    
+    if (n === 0) {
+        statsEl.innerHTML = '';
+        return;
+    }
+    
+    const data = crmLoad();
+    const selectedOrders = data.filter(r => crmSelectedIds.has(String(r.id)));
+    
+    let totalPkgs = 0;
+    let totalWeight = 0;
+    let totalCbm = 0;
+    let totalBillWeight = 0;
+    let totalReceivable = 0;
+    let totalPayable = 0;
+    let totalProfit = 0;
+    
+    selectedOrders.forEach(r => {
+        totalPkgs += Number(r.pkgs) || 0;
+        totalWeight += Number(r.weight) || 0;
+        totalCbm += Number(r.cbm) || 0;
+        totalBillWeight += Number(r.billWeight) || 0;
+        totalReceivable += Number((r.fees || {}).total) || 0;
+        totalPayable += Number((r.costs || {})._total) || 0;
+        totalProfit += Number(r.profit) || 0;
+    });
+    
+    const stats = [
+        { label: '件数', value: totalPkgs, unit: '件', color: '#3498db' },
+        { label: '毛重', value: totalWeight, unit: 'kg', color: '#9b59b6' },
+        { label: '体积', value: totalCbm, unit: 'CBM', color: '#1abc9c' },
+        { label: '计费重', value: totalBillWeight, unit: 'kg', color: '#e67e22' },
+        { label: '应收', value: '¥' + totalReceivable.toLocaleString(), unit: '', color: '#2c7be5' },
+        { label: '应付', value: '¥' + totalPayable.toLocaleString(), unit: '', color: '#e74c3c' },
+        { label: '毛利', value: (totalProfit >= 0 ? '' : '-') + '¥' + Math.abs(totalProfit).toLocaleString(), unit: '', color: totalProfit >= 0 ? '#27ae60' : '#e74c3c' }
+    ];
+    
+    statsEl.innerHTML = stats.map(s => 
+        `<span style="background:${s.color}22; color:${s.color}; padding:3px 8px; border-radius:6px; border:1px solid ${s.color}44;">
+            ${s.label}: ${typeof s.value === 'number' ? s.value.toLocaleString() : s.value}${s.unit}
+        </span>`
+    ).join('');
 }
 
 function crmRender() {
@@ -9849,7 +9895,7 @@ function crmRender() {
     }
     empty.style.display = 'none';
 
-    container.innerHTML = list.map(r => {
+    container.innerHTML = list.map((r, idx) => {
         const col = CRM_STATUS_COLOR[r.status] || '#888';
         const fees = r.fees || {};
         const isLcl = (r.bizType || 'fcl') === 'lcl';
@@ -9866,8 +9912,10 @@ function crmRender() {
                 <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
                </div>`
             : '';
+        const indexHtml = `<div style="flex-shrink:0; min-width:28px; height:28px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; margin-right:8px;">${idx + 1}</div>`;
         return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" data-order-id="${r.id}">
             <div style="display:flex; align-items:flex-start; gap:8px;">
+                ${indexHtml}
                 ${cbHtml}
                 <div style="flex:1; min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; flex-wrap:wrap;">
                     <div style="min-width:0;">
@@ -9882,8 +9930,8 @@ function crmRender() {
                     </div>
                 </div>
             </div>
-            ${etdStr || etaStr ? `<div style="margin-top:8px; font-size:11px; color:#888; padding-left:${crmSelectMode?'26px':'0'}">${[etdStr, etaStr].filter(Boolean).join('　')}</div>` : ''}
-            ${r.goods ? `<div style="margin-top:4px; font-size:11px; color:#95a5a6; padding-left:${crmSelectMode?'26px':'0'}">货：${r.goods}</div>` : ''}
+            ${etdStr || etaStr ? `<div style="margin-top:8px; font-size:11px; color:#888; padding-left:${crmSelectMode?'62px':'36px'}">${[etdStr, etaStr].filter(Boolean).join('　')}</div>` : ''}
+            ${r.goods ? `<div style="margin-top:4px; font-size:11px; color:#95a5a6; padding-left:${crmSelectMode?'62px':'36px'}">货：${r.goods}</div>` : ''}
         </div>`;
     }).join('');
     
