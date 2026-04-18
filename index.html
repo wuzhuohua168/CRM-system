@@ -8773,7 +8773,7 @@ function crmShowTimelineModal() {
     }
     
     const orders = crmLoad();
-    const order = orders.find(o => o.id === selectedIds[0]);
+    const order = orders.find(o => String(o.id) === String(selectedIds[0]));
     
     if (!order) {
         showToast('❌ 未找到订单');
@@ -9560,7 +9560,7 @@ function crmSaveRecord() {
 
 function crmEditRecord(id) {
     const data = crmLoad();
-    const r = data.find(x => x.id === id);
+    const r = data.find(x => String(x.id) === String(id));
     if (!r) return;
     crmRecordToForm(r);
     document.getElementById('crm-edit-id').value = id;
@@ -9572,7 +9572,7 @@ function crmEditRecord(id) {
 
 function crmDeleteRecord(id) {
     if (!confirm('确认删除该条记录？')) return;
-    const data = crmLoad().filter(x => x.id !== id);
+    const data = crmLoad().filter(x => String(x.id) !== String(id));
     crmSave(data);
     document.getElementById('crm-detail-modal').style.display = 'none';
     crmRender();
@@ -9583,7 +9583,7 @@ function crmDeleteRecord(id) {
 
 function crmShowDetail(id) {
     const data = crmLoad();
-    const r = data.find(x => x.id === id);
+    const r = data.find(x => String(x.id) === String(id));
     if (!r) return;
     const fmt = v => v || '—';
     const fmtMoney = v => v ? '¥' + Number(v).toLocaleString() : '—';
@@ -9785,7 +9785,7 @@ function crmSelectAll() {
         const matchQ = !q || [r.client,r.orderno,r.mbl,r.hbl,r.pol,r.pod,r.goods,r.carrier,r.vessel,r.shipMode,r.bizType].join(' ').toLowerCase().includes(q);
         const matchS = !sf || r.status === sf;
         return matchQ && matchS;
-    }).forEach(r => crmSelectedIds.add(r.id));
+    }).forEach(r => crmSelectedIds.add(String(r.id)));
     crmUpdateBulkBar();
     crmRender();
 }
@@ -9859,7 +9859,7 @@ function crmRender() {
         const cinfo = isLcl
             ? [r.shipMode, r.billWeight ? `计费重${Number(r.billWeight).toLocaleString()}kg` : ''].filter(Boolean).join('　')
             : [r.ctype, r.cqty > 1 ? `×${r.cqty}` : ''].filter(Boolean).join('');
-        const selected = crmSelectedIds.has(r.id);
+        const selected = crmSelectedIds.has(String(r.id));
         const selStyle = selected ? 'background:rgba(74,144,226,0.08); box-shadow:0 0 0 2px #4a90e2 inset, 0 12px 28px rgba(31,58,93,0.08);' : '';
         const cbHtml = crmSelectMode
             ? `<div style="flex-shrink:0; display:flex; align-items:center; padding-right:4px;">
@@ -10186,7 +10186,7 @@ function crmRenderStats() {
 function crmExportCSV(selectionOnly = false) {
     let data = crmLoad();
     if (selectionOnly && crmSelectedIds.size > 0) {
-        data = data.filter(r => crmSelectedIds.has(r.id));
+        data = data.filter(r => crmSelectedIds.has(String(r.id)));
     }
     if (!data.length) { showToast('暂无数据'); return; }
     const headers = ['业务类型','客户','订单号','MBL','HBL','运输方式','起运港','目的港','发货地址','收货地址','柜型','柜数','船公司','船名航次',
@@ -10703,7 +10703,7 @@ function crmExportPDF(selectionOnly = false) {
     let list;
     const shouldUseSelection = crmSelectedIds.size > 0 && (selectionOnly || crmSelectMode);
     if (shouldUseSelection) {
-        list = data.filter(r => crmSelectedIds.has(r.id));
+        list = data.filter(r => crmSelectedIds.has(String(r.id)));
     } else {
         const q = (document.getElementById('crm-search').value || '').toLowerCase();
         const sf = document.getElementById('crm-filter-status').value;
@@ -10928,7 +10928,7 @@ function crmBuildAndDownloadPDF(mode) {
 
 async function crmShareClientPdf(id) {
     const data = crmLoad();
-    const record = data.find(x => x.id === id);
+    const record = data.find(x => String(x.id) === String(id));
     if (!record) { showToast('未找到订单', true); return; }
 
     const html = crmBuildPdfHtml([record], 'client', { includeActions: false });
@@ -11515,8 +11515,8 @@ function reminderRender(){
 function reminderGoToOrder(orderId){
     switchTab(15);
     setTimeout(() => {
-        const order = crmLoad().find(r => r.id === orderId);
-        if(order) showCrmDetail(order);
+        const order = crmLoad().find(r => String(r.id) === String(orderId));
+        if(order) crmShowDetail(order.id);
     }, 300);
 }
 
@@ -12746,7 +12746,7 @@ function getPreviewHtml_Reminder(reminder){
     };
     const sc = statusColors[reminder.status] || statusColors['normal'];
     const crmData = crmLoad();
-    const order = crmData.find(r => r.id === reminder.orderId);
+    const order = crmData.find(r => String(r.id) === String(reminder.orderId));
     return `
         <div class="preview-card-header">
             <div class="preview-card-icon" style="background: ${sc.bg}; border: 2px solid ${sc.border};">🔔</div>
@@ -13311,11 +13311,11 @@ function silentSyncFromCloud(apiUrl, apiKey) {
             
             if (data.orders && data.orders.length) {
                 const localOrders = crmLoad();
-                const localOrderMap = new Map(localOrders.map(o => [o.id, o]));
+                const localOrderMap = new Map(localOrders.map(o => [String(o.id), o]));
                 let hasChanges = false;
                 
                 data.orders.forEach(serverOrder => {
-                    const localOrder = localOrderMap.get(serverOrder.id);
+                    const localOrder = localOrderMap.get(String(serverOrder.id));
                     if (!localOrder) {
                         localOrders.push(serverOrder);
                         restoreCount++;
@@ -13324,7 +13324,7 @@ function silentSyncFromCloud(apiUrl, apiKey) {
                         const serverUpdated = new Date(serverOrder.updatedAt || serverOrder.createdAt).getTime();
                         const localUpdated = new Date(localOrder.updatedAt || localOrder.createdAt).getTime();
                         if (serverUpdated > localUpdated) {
-                            const idx = localOrders.findIndex(o => o.id === serverOrder.id);
+                            const idx = localOrders.findIndex(o => String(o.id) === String(serverOrder.id));
                             if (idx >= 0) {
                                 localOrders[idx] = serverOrder;
                                 restoreCount++;
@@ -13369,7 +13369,7 @@ function silentSyncFromCloud(apiUrl, apiKey) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HG Investing Pro</title><script src="https://s3.tradingview.com/tv.js"><\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script><style>
+<title>HG Investing Pro</title><script src="https://s3.tradingview.com/tv.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><style>
 *{
     margin:0;
     padding:0;
