@@ -886,6 +886,7 @@
             <div>
                 <div style="font-size:14px; font-weight:bold; color:var(--text-primary);">自动同步</div>
                 <div style="font-size:12px; color:var(--text-secondary);">保存订单时自动同步到云端</div>
+                <div style="font-size:10px; color:#9b59b6; margin-top:2px;">← 关闭 | 开启 →</div>
             </div>
             <label style="position:relative; display:inline-block; width:50px; height:26px; cursor:pointer;">
                 <input type="checkbox" id="config-auto-sync" style="opacity:0; width:0; height:0; position:absolute;">
@@ -9646,8 +9647,12 @@ function showApiConfig() {
     const modal = document.getElementById('api-config-modal');
     modal.style.display = 'flex';
     
-    const autoSyncValue = localStorage.getItem('crm_auto_sync');
-    const autoSync = autoSyncValue === null ? true : autoSyncValue === 'true';
+    let autoSyncValue = localStorage.getItem('crm_auto_sync');
+    if (autoSyncValue === null) {
+        localStorage.setItem('crm_auto_sync', 'true');
+        autoSyncValue = 'true';
+    }
+    const autoSync = autoSyncValue === 'true';
     document.getElementById('config-auto-sync').checked = autoSync;
     updateAutoSyncSlider();
     
