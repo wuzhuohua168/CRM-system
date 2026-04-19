@@ -7484,16 +7484,21 @@ function financeExportCSV() {
 // 汇率转换功能
 async function initRates() {
     const cached = localStorage.getItem('hcn_rates_cache');
+    const CACHE_EXPIRY = 6 * 60 * 60 * 1000; // 6小时过期
     if (cached) {
         try {
             const obj = JSON.parse(cached);
-            if (obj && obj.rates) {
+            if (obj && obj.rates && obj.ts && (Date.now() - obj.ts < CACHE_EXPIRY)) {
                 rates = obj.rates;
                 setRateStatus('已加载缓存汇率');
                 convertRate('left');
                 convertTriple('JPY');
+            } else if (obj && obj.rates) {
+                localStorage.removeItem('hcn_rates_cache');
             }
-        } catch (e) {}
+        } catch (e) {
+            localStorage.removeItem('hcn_rates_cache');
+        }
     }
     try {
         setRateStatus('汇率更新中...');
@@ -10304,8 +10309,8 @@ function crmToggleShipMode() {
     
     if (ctypeWrap) ctypeWrap.style.display = isFcl ? 'block' : 'none';
     if (cqtyWrap) cqtyWrap.style.display = isFcl ? 'block' : 'none';
-    if (billWeightWrap) billWeightWrap.style.display = isFcl ? 'block' : 'none';
-    if (unitPriceWrap) unitPriceWrap.style.display = isFcl ? 'block' : 'none';
+    if (billWeightWrap) billWeightWrap.style.display = 'block';
+    if (unitPriceWrap) unitPriceWrap.style.display = 'block';
     if (fclFeeArea) fclFeeArea.style.display = isFcl ? 'block' : 'none';
     if (lclFeeArea) lclFeeArea.style.display = isLcl ? 'block' : 'none';
     
