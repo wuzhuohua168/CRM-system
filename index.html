@@ -11111,7 +11111,8 @@ function crmShowDetail(id) {
             ['毛重', r.weight ? r.weight + ' kg' : '—'],
             ['件数', r.pkgs ? r.pkgs + ' 件' : '—'],
             ['体积', r.cbm ? r.cbm + ' CBM' : '—'],
-            ...(isLcl ? [['计费重', r.billWeight ? r.billWeight + ' kg' : '—'], ['报价单价', r.unitPrice ? `¥${Number(r.unitPrice).toLocaleString()}/kg` : '—']] : []),
+            ['计费重', r.billWeight ? r.billWeight + ' kg' : '—'],
+            ['报价单价', r.unitPrice ? `¥${Number(r.unitPrice).toLocaleString()}/kg` : '—'],
         ])}
         ${section('关键日期', isLcl && (r.shipMode === '空运' || r.shipMode === '快递') ? [
             ['入仓日期', fmt(r.warehouse)],
