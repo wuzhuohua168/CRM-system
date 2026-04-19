@@ -7419,7 +7419,7 @@ async function initRates() {
     }
     try {
         setRateStatus('汇率更新中...');
-        const res = await fetch('https://open.er-api.com/v6/latest/USD');
+        const res = await fetch('https://api.frankfurter.app/latest?from=USD');
         const data = await res.json();
         if (data && data.rates) {
             rates = data.rates;
@@ -7500,19 +7500,21 @@ async function loadJpyTrend(days) {
     const endStr = formatDate(end);
 
     try {
-        const url = `https://api.frankfurter.dev/v2/rates?from=${startStr}&to=${endStr}&base=JPY&quotes=CNY`;
+        const url = `https://api.frankfurter.app/${startStr}..${endStr}?from=JPY&to=CNY`;
         const res = await fetch(url);
         const data = await res.json();
-        if (!Array.isArray(data)) throw new Error('invalid trend data');
-        trendPoints = data
-            .filter(item => item && item.quote === 'CNY' && typeof item.rate === 'number')
-            .map(item => ({ date: item.date, value: item.rate }))
-            .sort((a, b) => a.date.localeCompare(b.date));
-
-        if (!trendPoints.length) throw new Error('empty trend data');
-        drawJpyTrendChart(trendPoints);
-        updateTrendSummary(trendPoints);
-        setJpyTrendStatus(`近${days}天 JPY/CNY 历史汇率`);
+        if (data && data.rates) {
+            trendPoints = Object.entries(data.rates)
+                .map(([date, rates]) => ({ date, value: rates.CNY }))
+                .sort((a, b) => a.date.localeCompare(b.date));
+            
+            if (!trendPoints.length) throw new Error('empty trend data');
+            drawJpyTrendChart(trendPoints);
+            updateTrendSummary(trendPoints);
+            setJpyTrendStatus(`近${days}天 JPY/CNY 历史汇率`);
+        } else {
+            throw new Error('invalid trend data');
+        }
     } catch (e) {
         trendPoints = [];
         clearTrendCanvas();
