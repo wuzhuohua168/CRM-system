@@ -10211,13 +10211,13 @@ function crmSelectNone() {
 
 function crmToggleSelect(id, e) {
     e.stopPropagation();
-    if (crmSelectedIds.has(id)) crmSelectedIds.delete(id);
-    else crmSelectedIds.add(id);
+    const strId = String(id);
+    if (crmSelectedIds.has(strId)) crmSelectedIds.delete(strId);
+    else crmSelectedIds.add(strId);
     crmUpdateBulkBar();
-    // update just this card visually
     const card = document.getElementById('crm-card-' + id);
     if (card) {
-        const checked = crmSelectedIds.has(id);
+        const checked = crmSelectedIds.has(strId);
         card.style.background = checked ? 'rgba(74,144,226,0.08)' : '';
         card.style.boxShadow = checked ? '0 0 0 2px #4a90e2 inset, 0 12px 28px rgba(31,58,93,0.08)' : '';
         const cb = document.getElementById('crm-cb-' + id);
