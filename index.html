@@ -6837,7 +6837,85 @@ const PREFS = [
     '福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'
 ];
 
+function autoClearCache() {
+    const CACHE_KEYS = [
+        'hcn_rates_cache',
+        'hcn_air_freight_cache',
+        'hcn_fcl_freight_cache',
+        'hcn_calendar_memos',
+        'hcn_shipment_notes',
+        'hcn_dashboard_todos'
+    ];
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    
+    CACHE_KEYS.forEach(key => {
+        try {
+            const cached = localStorage.getItem(key);
+            if (cached) {
+                const data = JSON.parse(cached);
+                if (data && data.ts && (now - data.ts > ONE_DAY)) {
+                    localStorage.removeItem(key);
+                }
+            }
+        } catch (e) {}
+    });
+    
+    const lastClear = localStorage.getItem('hcn_last_cache_clear');
+    if (!lastClear || (now - parseInt(lastClear)) > ONE_DAY) {
+        localStorage.setItem('hcn_last_cache_clear', now.toString());
+    }
+}
+
+function autoBackup() {
+    const BACKUP_KEY = 'hcn_auto_backup';
+    const BACKUP_INTERVAL = 30 * 60 * 1000;
+    const now = Date.now();
+    
+    try {
+        const lastBackup = localStorage.getItem('hcn_last_auto_backup');
+        if (lastBackup && (now - parseInt(lastBackup)) < BACKUP_INTERVAL) {
+            return;
+        }
+        
+        const backupData = {
+            ts: now,
+            version: '1.0',
+            data: {}
+        };
+        
+        const KEYS_TO_BACKUP = [
+            'hgcd_crm_fcl_v1',
+            'logistics_client_data',
+            'logistics_supplier_data',
+            'logistics_reminders',
+            'logistics_rates_data'
+        ];
+        
+        KEYS_TO_BACKUP.forEach(key => {
+            const value = localStorage.getItem(key);
+            if (value) {
+                backupData.data[key] = value;
+            }
+        });
+        
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData));
+        localStorage.setItem('hcn_last_auto_backup', now.toString());
+        
+        const backups = JSON.parse(localStorage.getItem('hcn_auto_backups') || '[]');
+        backups.unshift({ ts: now, size: JSON.stringify(backupData).length });
+        if (backups.length > 10) backups.pop();
+        localStorage.setItem('hcn_auto_backups', JSON.stringify(backups));
+        
+    } catch (e) {
+        console.warn('Auto backup failed:', e);
+    }
+}
+
 function initAllModules(){
+    autoClearCache();
+    autoBackup();
+    setInterval(autoBackup, 30 * 60 * 1000);
     initLanguage();
     initRates();
     restoreAppState();
