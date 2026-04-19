@@ -2945,6 +2945,36 @@
         .exporting #capture-area-fcl button {
             display: none !important;
         }
+        
+        @media (max-width: 900px) {
+            .config-panel { padding: 15px; margin: 0 10px 20px; }
+            .form-grid { grid-template-columns: 1fr; gap: 12px; }
+            .action-area { flex-direction: column; gap: 10px; }
+            .action-area button { padding: 12px; font-size: 13px; }
+            .report-wrap { width: 100%; min-height: auto; padding: 20px 15px; box-shadow: none; }
+            .fcl-wrap { width: 100%; min-height: auto; padding: 20px 15px; }
+            .report-container { padding: 0 10px 30px; }
+            .company-cn { font-size: 18px; }
+            .company-en { font-size: 8px; }
+            .doc-name { font-size: 18px; margin: 20px 0; letter-spacing: 3px; }
+            .meta-box { flex-direction: column; gap: 8px; font-size: 12px; }
+            .route-info { padding: 12px 15px; margin-bottom: 20px; }
+            .route-title { font-size: 15px; }
+            .route-detail { font-size: 11px; }
+            .main-table { font-size: 10px; }
+            .main-table th { padding: 8px 3px; font-size: 9px; }
+            .main-table td { padding: 8px 3px; font-size: 10px; }
+            .fee-row { flex-direction: column; }
+            .fee-head { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding: 10px; font-size: 12px; }
+            .fee-body { padding: 10px; font-size: 14px; }
+            .fcl-title { font-size: 14px; letter-spacing: 1px; }
+            .fcl-subline { font-size: 8px; }
+            .fcl-table { font-size: 8px; }
+            .fcl-table th, .fcl-table td { padding: 4px 2px; }
+            .input-item label { font-size: 12px; }
+            input, textarea, select { font-size: 16px; padding: 12px; }
+            textarea { height: 80px; }
+        }
     </style>
 </head>
 <body>
@@ -11763,78 +11793,107 @@ async function crmShareClientPdf(id) {
     const record = data.find(x => String(x.id) === String(id));
     if (!record) { showToast('未找到订单', true); return; }
 
+    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        showToast('PDF生成库未加载，请刷新页面重试');
+        const html = crmBuildPdfHtml([record], 'client', { includeActions: false });
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 3000);
+        return;
+    }
+
     const html = crmBuildPdfHtml([record], 'client', { includeActions: false });
-    const styleMatch = html.match(/<style>([\s\S]*?)<\/style>/i);
-    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     const wrap = document.createElement('div');
-    wrap.style.position = 'fixed';
-    wrap.style.left = '0';
-    wrap.style.top = '0';
-    wrap.style.width = '1120px';
-    wrap.style.background = '#fff';
-    wrap.style.opacity = '1';
-    wrap.style.pointerEvents = 'none';
-    wrap.style.zIndex = '99999';
-    wrap.innerHTML = `${styleMatch ? `<style>${styleMatch[1]}</style>` : ''}${bodyMatch ? bodyMatch[1] : html}`;
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:1120px;background:#fff;z-index:-9999;';
+    wrap.innerHTML = html;
     document.body.appendChild(wrap);
 
     const safeClient = String(record.client || '客户').replace(/[\/:*?"<>|]+/g, '-').trim();
     const safeOrder = String(record.orderno || record.mbl || record.id || 'record').replace(/[\/:*?"<>|]+/g, '-').trim();
     const bizLabel = (record.bizType || 'fcl') === 'lcl' ? '散货费用单' : '整柜费用单';
     const fileName = `客户版${bizLabel}_${safeClient}_${safeOrder}.pdf`;
-    const prevScrollX = window.scrollX;
-    const prevScrollY = window.scrollY;
+
+    showToast('正在生成客户版PDF...');
 
     try {
-        showToast('正在生成客户版PDF...');
-        await new Promise(resolve => setTimeout(resolve, 120));
-        const { jsPDF } = window.jspdf || {};
-        if (!jsPDF) throw new Error('PDF 组件未加载');
-
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         const canvas = await html2canvas(wrap, {
-            scale: isIOS ? 1.5 : 2,
-            useCORS: true,
+            scale: 2,
             backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false,
             width: wrap.scrollWidth,
-            height: wrap.scrollHeight,
-            windowWidth: wrap.scrollWidth,
-            windowHeight: wrap.scrollHeight,
-            scrollX: 0,
-            scrollY: 0
+            height: wrap.scrollHeight
         });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('l', 'mm', 'a4');
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgHeight = (canvas.height * pageWidth) / canvas.width;
+        
+        const pageWidth = 297;
+        const pageHeight = 210;
+        const margin = 5;
+        const imgWidth = pageWidth - margin * 2;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
         let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, imgHeight);
-        heightLeft -= pageHeight;
+        let position = margin;
+        
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - margin * 2);
+        
         while (heightLeft > 0) {
-            position -= pageHeight;
+            position = heightLeft - imgHeight + margin;
             pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, pageWidth, imgHeight);
-            heightLeft -= pageHeight;
+            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - margin * 2);
         }
-
+        
         const pdfBlob = pdf.output('blob');
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-        const canUseShare = navigator.share && navigator.canShare && navigator.canShare({ files: [file] });
-
-        if (canUseShare && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            await navigator.share({ files: [file], title: fileName });
-        } else {
-            downloadLocal(pdfBlob, fileName);
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        
+        let shared = false;
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+            try {
+                await navigator.share({
+                    title: fileName,
+                    files: [pdfFile]
+                });
+                shared = true;
+                showToast('客户版PDF已分享');
+            } catch (shareErr) {
+                console.log('分享取消或失败:', shareErr);
+            }
         }
-        showToast(canUseShare ? '客户版PDF已生成' : '客户版PDF已下载');
+        
+        if (!shared) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(pdfBlob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('客户版PDF已下载');
+        }
     } catch (err) {
-        console.error(err);
-        showToast(`客户版PDF生成失败: ${err.message || '未知错误'}`, true);
+        console.error('PDF生成失败:', err);
+        showToast('PDF生成失败: ' + (err.message || '未知错误'));
+        const html = crmBuildPdfHtml([record], 'client', { includeActions: false });
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 3000);
     } finally {
-        window.scrollTo(prevScrollX, prevScrollY);
         wrap.remove();
     }
 }
