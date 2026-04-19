@@ -654,6 +654,12 @@
             .quick-subgrid { gap: var(--space-1); }
             .quick-subcard { padding: var(--space-1) var(--space-2); font-size: 11px; }
             .floating-back-btn { right: var(--space-3); bottom: var(--space-4); padding: var(--space-3) var(--space-4); }
+            #crm-modal > div > div, #crm-detail-modal > div > div { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; margin: 0 !important; min-height: 100vh; }
+            #crm-modal, #crm-detail-modal { padding: 0 !important; }
+            #crm-modal-body, #crm-detail-body { max-height: none !important; padding: 12px !important; }
+            #crm-modal-body input, #crm-modal-body select, #crm-modal-body textarea { font-size: 16px !important; }
+            .btn-main { min-height: 44px; font-size: 14px !important; }
+            #api-config-modal > div { width: 100% !important; max-width: 100% !important; padding: 16px !important; }
         }
 
         #tab9 { position: relative; }
@@ -951,6 +957,24 @@
         </div>
         
         <div id="api-config-status" style="margin-top:12px; font-size:13px; text-align:center; display:none;"></div>
+        
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-color);">
+            <div style="font-size:14px; font-weight:bold; margin-bottom:12px; color:var(--text-primary);">🔐 修改系统密码</div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--text-secondary);">当前密码</label>
+                <input type="password" id="change-old-pwd" placeholder="输入当前密码" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary); font-size:13px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--text-secondary);">新密码</label>
+                <input type="password" id="change-new-pwd" placeholder="设置新密码（至少4位）" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary); font-size:13px;">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12px; font-weight:bold; margin-bottom:4px; color:var(--text-secondary);">确认新密码</label>
+                <input type="password" id="change-confirm-pwd" placeholder="再次输入新密码" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-primary); color:var(--text-primary); font-size:13px;">
+            </div>
+            <div id="change-pwd-error" style="display:none; color:#e74c3c; font-size:12px; margin-bottom:8px;"></div>
+            <button onclick="changePassword()" style="width:100%; padding:10px; background:#4a90e2; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;">修改密码</button>
+        </div>
     </div>
 </div>
 
@@ -1753,6 +1777,20 @@
     <!-- 记录列表 -->
     <div id="crm-list"></div>
     <div id="crm-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无整柜记录，点击"＋ 新增"开始录入</div>
+    
+    <!-- 分页控件 -->
+    <div id="crm-pagination" style="display:none; padding:12px 0; text-align:center; display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap;">
+        <button id="crm-prev-page" onclick="crmPrevPage()" style="background:#f0f4fa; border:1px solid #ddd; color:#4a90e2; border-radius:6px; padding:6px 14px; font-size:12px; cursor:pointer; display:none;">上一页</button>
+        <div id="crm-page-info" style="font-size:12px; color:#666;"></div>
+        <div id="crm-page-buttons" style="display:flex; gap:4px;"></div>
+        <button id="crm-next-page" onclick="crmNextPage()" style="background:#f0f4fa; border:1px solid #ddd; color:#4a90e2; border-radius:6px; padding:6px 14px; font-size:12px; cursor:pointer; display:none;">下一页</button>
+        <select id="crm-page-size" onchange="crmChangePageSize(this.value)" style="margin-left:10px; padding:4px 8px; border:1px solid #ddd; border-radius:6px; font-size:12px; background:#fff;">
+            <option value="10">10条/页</option>
+            <option value="20" selected>20条/页</option>
+            <option value="50">50条/页</option>
+            <option value="100">100条/页</option>
+        </select>
+    </div>
 
     <!-- 批量操作浮动栏 -->
     <div id="crm-bulk-bar" style="display:none; position:fixed; bottom:68px; left:50%; transform:translateX(-50%); z-index:9990; background:rgba(30,40,55,0.95); color:#fff; border-radius:16px; padding:12px 18px; box-shadow:0 8px 28px rgba(0,0,0,0.28); align-items:center; gap:10px; white-space:nowrap; backdrop-filter:blur(10px); flex-wrap:wrap; justify-content:center;">
@@ -1760,6 +1798,19 @@
         <div id="crm-bulk-stats" style="display:flex; gap:6px; flex-wrap:wrap; font-size:11px; align-items:center;"></div>
         <button onclick="crmSelectAll()" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer;">全选</button>
         <button onclick="crmSelectNone()" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer;">清空</button>
+        <select id="crm-bulk-status" onchange="crmBulkChangeStatus(this.value)" style="background:#4a90e2; border:none; color:#fff; border-radius:999px; padding:5px 10px; font-size:12px; cursor:pointer;">
+            <option value="">批量改状态</option>
+            <option value="询价">询价</option>
+            <option value="已下单">已下单</option>
+            <option value="已入库">已入库</option>
+            <option value="已审单">已审单</option>
+            <option value="已装柜">已装柜</option>
+            <option value="已开船">已开船</option>
+            <option value="已到港">已到港</option>
+            <option value="已清关">已清关</option>
+            <option value="已完结">已完结</option>
+            <option value="取消">取消</option>
+        </select>
         <button onclick="crmExportPDF(true)" style="background:#e74c3c; border:none; color:#fff; border-radius:999px; padding:5px 14px; font-size:12px; font-weight:bold; cursor:pointer;">导出PDF</button>
         <button onclick="crmExportCSV(true)" style="background:#27ae60; border:none; color:#fff; border-radius:999px; padding:5px 14px; font-size:12px; font-weight:bold; cursor:pointer;">导出CSV</button>
         <button onclick="crmToggleSelectMode()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#ccc; border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer;">退出</button>
@@ -2260,6 +2311,11 @@
                             <option>FCA</option><option>CPT</option><option>CIP</option>
                         </select>
                     </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">订单标签 <span style="color:#aaa; font-weight:normal;">(多个标签用逗号分隔)</span></label>
+                    <input type="text" id="crm-f-tags" placeholder="如: 急件, VIP, 特殊货物" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px;">
+                    <div id="crm-tag-suggestions" style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;"></div>
                 </div>
                 <div style="margin-bottom:12px;">
                     <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">备注 / 操作日志</label>
@@ -6040,6 +6096,44 @@ function lockSystem(){
     showLoginForm();
 }
 
+function changePassword(){
+    const oldPwd = document.getElementById('change-old-pwd').value;
+    const newPwd = document.getElementById('change-new-pwd').value;
+    const confirmPwd = document.getElementById('change-confirm-pwd').value;
+    const errorEl = document.getElementById('change-pwd-error');
+    
+    const storedHash = localStorage.getItem(PASSWORD_KEY);
+    const oldHash = simpleHash(oldPwd);
+    
+    if(oldHash !== storedHash){
+        errorEl.textContent = '当前密码错误';
+        errorEl.style.display = 'block';
+        return;
+    }
+    
+    if(newPwd.length < 4){
+        errorEl.textContent = '新密码至少需要4位';
+        errorEl.style.display = 'block';
+        return;
+    }
+    
+    if(newPwd !== confirmPwd){
+        errorEl.textContent = '两次输入的新密码不一致';
+        errorEl.style.display = 'block';
+        return;
+    }
+    
+    const newHash = simpleHash(newPwd);
+    localStorage.setItem(PASSWORD_KEY, newHash);
+    
+    document.getElementById('change-old-pwd').value = '';
+    document.getElementById('change-new-pwd').value = '';
+    document.getElementById('change-confirm-pwd').value = '';
+    errorEl.style.display = 'none';
+    
+    showToast('密码修改成功');
+}
+
 function updateActivity(){
     lastActivityTime = Date.now();
 }
@@ -9711,6 +9805,84 @@ function crmUpdateCostTotal() {
     }
 }
 
+function crmValidateRecord(rec) {
+    const errors = [];
+    if (!rec.client || !rec.client.trim()) {
+        errors.push('请填写客户名称');
+    }
+    if (!rec.shipMode) {
+        errors.push('请选择运输方式');
+    }
+    if (rec.weight !== undefined && rec.weight !== null && rec.weight < 0) {
+        errors.push('毛重不能为负数');
+    }
+    if (rec.cbm !== undefined && rec.cbm !== null && rec.cbm < 0) {
+        errors.push('体积不能为负数');
+    }
+    if (rec.pkgs !== undefined && rec.pkgs !== null && rec.pkgs < 0) {
+        errors.push('件数不能为负数');
+    }
+    if (rec.billWeight !== undefined && rec.billWeight !== null && rec.billWeight < 0) {
+        errors.push('计费重不能为负数');
+    }
+    if (rec.etd && rec.eta) {
+        const etdDate = new Date(rec.etd);
+        const etaDate = new Date(rec.eta);
+        if (etaDate < etdDate) {
+            errors.push('ETA日期不能早于ETD日期');
+        }
+    }
+    if (rec.etd && rec.ata) {
+        const etdDate = new Date(rec.etd);
+        const ataDate = new Date(rec.ata);
+        if (ataDate < etdDate) {
+            errors.push('ATA日期不能早于ETD日期');
+        }
+    }
+    return errors;
+}
+
+function crmValidateField(fieldId, rules) {
+    const el = document.getElementById(fieldId);
+    if (!el) return true;
+    const value = el.value.trim();
+    let isValid = true;
+    let errorMsg = '';
+    if (rules.required && !value) {
+        isValid = false;
+        errorMsg = rules.requiredMsg || '此字段为必填项';
+    }
+    if (isValid && rules.numeric && value) {
+        const num = parseFloat(value);
+        if (isNaN(num)) {
+            isValid = false;
+            errorMsg = '请输入有效的数字';
+        } else if (rules.min !== undefined && num < rules.min) {
+            isValid = false;
+            errorMsg = '数值不能小于 ' + rules.min;
+        } else if (rules.max !== undefined && num > rules.max) {
+            isValid = false;
+            errorMsg = '数值不能大于 ' + rules.max;
+        }
+    }
+    if (isValid && rules.date && value) {
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        if (!datePattern.test(value)) {
+            isValid = false;
+            errorMsg = '请输入有效的日期格式 (YYYY-MM-DD)';
+        }
+    }
+    if (!isValid) {
+        el.style.borderColor = '#e74c3c';
+        el.style.backgroundColor = '#fdf2f2';
+        showToast(errorMsg);
+    } else {
+        el.style.borderColor = '#ddd';
+        el.style.backgroundColor = '#fff';
+    }
+    return isValid;
+}
+
 function crmFormToRecord() {
     const g = id => (document.getElementById(id)?.value || '').trim();
     const n = id => parseFloat(document.getElementById(id)?.value) || 0;
@@ -9818,6 +9990,7 @@ function crmFormToRecord() {
         margin,
         status:   g('crm-f-status'),
         incoterm: g('crm-f-incoterm'),
+        tags:     g('crm-f-tags').split(',').map(t => t.trim()).filter(t => t),
         notes:    g('crm-f-notes'),
         updatedAt: new Date().toISOString(),
     };
@@ -9870,7 +10043,7 @@ function crmRecordToForm(r) {
     }
     crmRenderFeeFxRows({ ...legacyFeesFx, ...((r.fees||{}).fx || {}) });
     s('crm-f-tracking', r.tracking); s('crm-f-carrier-type', r.carrierType);
-    s('crm-f-status', r.status); s('crm-f-incoterm', r.incoterm); s('crm-f-notes', r.notes);
+    s('crm-f-status', r.status); s('crm-f-incoterm', r.incoterm); s('crm-f-tags', (r.tags || []).join(', ')); s('crm-f-notes', r.notes);
     crmRenderCostRows(r.costs || {});
     const costs = r.costs || {};
     CRM_COST_ITEMS.forEach(item => {
@@ -9888,7 +10061,11 @@ function crmRecordToForm(r) {
 
 function crmSaveRecord() {
     const rec = crmFormToRecord();
-    if (!rec.client) { showToast('请填写客户名称'); return; }
+    const validationErrors = crmValidateRecord(rec);
+    if (validationErrors.length > 0) {
+        showToast(validationErrors[0]);
+        return;
+    }
     const data = crmLoad();
     const editId = document.getElementById('crm-edit-id').value;
     const now = new Date().toISOString();
@@ -9994,6 +10171,28 @@ function crmDeleteRecord(id) {
     showToast('已删除');
 }
 
+function crmCloneRecord(id) {
+    const data = crmLoad();
+    const r = data.find(x => String(x.id) === String(id));
+    if (!r) return;
+    const clone = JSON.parse(JSON.stringify(r));
+    delete clone.id;
+    delete clone.createdAt;
+    delete clone.orderno;
+    delete clone.mbl;
+    delete clone.hbl;
+    delete clone.statusHistory;
+    clone.status = '待处理';
+    clone.notes = (clone.notes || '') + '\n[复制自订单: ' + (r.orderno || r.id) + ']';
+    crmRecordToForm(clone);
+    document.getElementById('crm-edit-id').value = '';
+    document.getElementById('crm-modal-title').textContent = '复制订单';
+    document.getElementById('crm-detail-modal').style.display = 'none';
+    document.getElementById('crm-modal').style.display = 'block';
+    crmBindFeeCalc();
+    showToast('已复制订单信息，请修改后保存');
+}
+
 function crmShowDetail(id) {
     const data = crmLoad();
     const r = data.find(x => String(x.id) === String(id));
@@ -10063,6 +10262,7 @@ function crmShowDetail(id) {
             <div style="font-size:18px; font-weight:bold; color:#2c3e50;">${fmt(r.client)}</div>
             <span style="background:${isLcl?'#16a08522':'#4a90e222'}; color:${isLcl?'#16a085':'#4a90e2'}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${isLcl?'散货':'整柜'}</span>
             <span style="background:${color}22; color:${color}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${r.status}</span>
+            ${(r.tags && r.tags.length) ? r.tags.map(t => `<span style="background:#9b59b622; color:#9b59b6; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:bold;">${t}</span>`).join('') : ''}
             ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">${r.orderno}<button onclick="event.stopPropagation(); navigator.clipboard.writeText('${r.orderno}').then(() => alert('订单号已复制：${r.orderno}'));" style="background:none; border:none; cursor:pointer; padding:0; font-size:12px; color:#4a90e2; margin-left:2px;" title="复制订单号">📋</button></span>` : ''}
         </div>
         ${section(isLcl ? '运单 & 单号' : '提单 & 单号', [[isLcl ? '运单号' : '主单号 MBL', fmt(r.mbl)], [isLcl ? '参考单号' : '分单号 HBL', fmt(r.hbl)]])}
@@ -10163,10 +10363,11 @@ function crmShowDetail(id) {
         <div style="font-size:10px; color:#aaa; margin-bottom:12px;">
             创建：${r.createdAt ? r.createdAt.slice(0,10) : '—'} &nbsp;|&nbsp; 更新：${r.updatedAt ? r.updatedAt.slice(0,10) : '—'}
         </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-main" style="background:#4a90e2; flex:1; padding:11px;" onclick="crmEditRecord('${r.id}')">✏️ 编辑</button>
-            <button class="btn-main" style="background:#27ae60; flex:1; padding:11px;" onclick="crmShareClientPdf('${r.id}')">📤 客户版PDF</button>
-            <button class="btn-main" style="background:#e74c3c; flex:1; padding:11px;" onclick="crmDeleteRecord('${r.id}')">🗑 删除</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn-main" style="background:#4a90e2; flex:1; padding:11px; min-width:100px;" onclick="crmEditRecord('${r.id}')">✏️ 编辑</button>
+            <button class="btn-main" style="background:#9b59b6; flex:1; padding:11px; min-width:100px;" onclick="crmCloneRecord('${r.id}')">📋 复制</button>
+            <button class="btn-main" style="background:#27ae60; flex:1; padding:11px; min-width:100px;" onclick="crmShareClientPdf('${r.id}')">📤 客户版PDF</button>
+            <button class="btn-main" style="background:#e74c3c; flex:1; padding:11px; min-width:100px;" onclick="crmDeleteRecord('${r.id}')">🗑 删除</button>
         </div>`;
     document.getElementById('crm-detail-modal').style.display = 'block';
 }
@@ -10207,6 +10408,48 @@ function crmSelectNone() {
     crmSelectedIds.clear();
     crmUpdateBulkBar();
     crmRender();
+}
+
+function crmBulkChangeStatus(newStatus) {
+    if (!newStatus || crmSelectedIds.size === 0) return;
+    if (!confirm(`确认将选中的 ${crmSelectedIds.size} 条订单状态改为「${newStatus}」？`)) {
+        document.getElementById('crm-bulk-status').value = '';
+        return;
+    }
+    const data = crmLoad();
+    const now = new Date().toISOString();
+    const today = new Date().toISOString().split('T')[0];
+    let updated = 0;
+    data.forEach(r => {
+        if (crmSelectedIds.has(String(r.id))) {
+            r.status = newStatus;
+            r.updatedAt = now;
+            if (!r.statusHistory) r.statusHistory = [];
+            r.statusHistory.push({
+                status: newStatus,
+                timestamp: now,
+                previousStatus: r.status
+            });
+            const shipMode = r.shipMode || '';
+            const isAirOrExpress = shipMode === '空运' || shipMode === '快递';
+            if (newStatus === '已下单' && !r.bookedDate && !isAirOrExpress) r.bookedDate = today;
+            if (newStatus === '已下单' && !r.airBookedDate && isAirOrExpress) r.airBookedDate = today;
+            if (newStatus === '已装柜' && !r.loadedDate) r.loadedDate = today;
+            if (newStatus === '已入库' && !r.warehouse) r.warehouse = today;
+            if (newStatus === '已开船' && !r.etd && !isAirOrExpress) r.etd = today;
+            if (newStatus === '已到港' && !r.ata && !isAirOrExpress) r.ata = today;
+            if (newStatus === '已到港' && !r.airAta && isAirOrExpress) r.airAta = today;
+            if (newStatus === '已清关' && !r.clearedDate && !isAirOrExpress) r.clearedDate = today;
+            if (newStatus === '已清关' && !r.airClearedDate && isAirOrExpress) r.airClearedDate = today;
+            if (newStatus === '已完结' && !r.signed && !isAirOrExpress) r.signed = today;
+            if (newStatus === '已完结' && !r.airSigned && isAirOrExpress) r.airSigned = today;
+            updated++;
+        }
+    });
+    crmSave(data);
+    document.getElementById('crm-bulk-status').value = '';
+    crmRender();
+    showToast(`已更新 ${updated} 条订单状态`);
 }
 
 function crmToggleSelect(id, e) {
@@ -10312,6 +10555,80 @@ function crmUpdateSummaryStats() {
     summaryEl.innerHTML = crmRenderStatsHtml(stats);
 }
 
+let crmCurrentPage = 1;
+let crmPageSize = 20;
+let crmFilteredTotal = 0;
+
+function crmPrevPage() {
+    if (crmCurrentPage > 1) {
+        crmCurrentPage--;
+        crmRender();
+    }
+}
+
+function crmNextPage() {
+    const totalPages = Math.ceil(crmFilteredTotal / crmPageSize);
+    if (crmCurrentPage < totalPages) {
+        crmCurrentPage++;
+        crmRender();
+    }
+}
+
+function crmGoToPage(page) {
+    const totalPages = Math.ceil(crmFilteredTotal / crmPageSize);
+    if (page >= 1 && page <= totalPages) {
+        crmCurrentPage = page;
+        crmRender();
+    }
+}
+
+function crmChangePageSize(size) {
+    crmPageSize = parseInt(size);
+    crmCurrentPage = 1;
+    crmRender();
+}
+
+function crmUpdatePagination() {
+    const totalPages = Math.ceil(crmFilteredTotal / crmPageSize);
+    const pagination = document.getElementById('crm-pagination');
+    const prevBtn = document.getElementById('crm-prev-page');
+    const nextBtn = document.getElementById('crm-next-page');
+    const pageInfo = document.getElementById('crm-page-info');
+    const pageButtons = document.getElementById('crm-page-buttons');
+    
+    if (crmFilteredTotal <= crmPageSize) {
+        pagination.style.display = 'none';
+        return;
+    }
+    
+    pagination.style.display = 'flex';
+    prevBtn.style.display = crmCurrentPage > 1 ? 'inline-block' : 'none';
+    nextBtn.style.display = crmCurrentPage < totalPages ? 'inline-block' : 'none';
+    
+    pageInfo.textContent = `第 ${crmCurrentPage}/${totalPages} 页 · 共 ${crmFilteredTotal} 条`;
+    
+    let btnHtml = '';
+    const startPage = Math.max(1, crmCurrentPage - 2);
+    const endPage = Math.min(totalPages, crmCurrentPage + 2);
+    
+    if (startPage > 1) {
+        btnHtml += `<button onclick="crmGoToPage(1)" style="background:#f0f4fa; border:1px solid #ddd; color:#4a90e2; border-radius:4px; padding:4px 10px; font-size:12px; cursor:pointer;">1</button>`;
+        if (startPage > 2) btnHtml += `<span style="color:#aaa;">...</span>`;
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === crmCurrentPage;
+        btnHtml += `<button onclick="crmGoToPage(${i})" style="background:${isActive?'#4a90e2':'#f0f4fa'}; border:1px solid ${isActive?'#4a90e2':'#ddd'}; color:${isActive?'#fff':'#4a90e2'}; border-radius:4px; padding:4px 10px; font-size:12px; cursor:pointer;">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) btnHtml += `<span style="color:#aaa;">...</span>`;
+        btnHtml += `<button onclick="crmGoToPage(${totalPages})" style="background:#f0f4fa; border:1px solid #ddd; color:#4a90e2; border-radius:4px; padding:4px 10px; font-size:12px; cursor:pointer;">${totalPages}</button>`;
+    }
+    
+    pageButtons.innerHTML = btnHtml;
+}
+
 function crmRender() {
     const data = crmLoad();
     const q = (document.getElementById('crm-search').value || '').toLowerCase();
@@ -10334,16 +10651,25 @@ function crmRender() {
         return matchQ && matchS;
     });
 
+    crmFilteredTotal = list.length;
+    const totalPages = Math.ceil(crmFilteredTotal / crmPageSize);
+    if (crmCurrentPage > totalPages && totalPages > 0) crmCurrentPage = totalPages;
+    
+    const startIndex = (crmCurrentPage - 1) * crmPageSize;
+    const endIndex = startIndex + crmPageSize;
+    const pageList = list.slice(startIndex, endIndex);
+
     const container = document.getElementById('crm-list');
     const empty = document.getElementById('crm-empty');
     if (list.length === 0) {
         container.innerHTML = '';
         empty.style.display = 'block';
+        document.getElementById('crm-pagination').style.display = 'none';
         return;
     }
     empty.style.display = 'none';
 
-    container.innerHTML = list.map((r, idx) => {
+    container.innerHTML = pageList.map((r, idx) => {
         const col = CRM_STATUS_COLOR[r.status] || '#888';
         const fees = r.fees || {};
         const isLcl = (r.bizType || 'fcl') === 'lcl';
@@ -10360,7 +10686,8 @@ function crmRender() {
                 <input type="checkbox" id="crm-cb-${r.id}" ${selected?'checked':''} style="width:18px; height:18px; cursor:pointer; accent-color:#4a90e2;">
                </div>`
             : '';
-        const indexHtml = `<div style="flex-shrink:0; min-width:28px; height:28px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; margin-right:8px;">${idx + 1}</div>`;
+        const globalIdx = startIndex + idx + 1;
+        const indexHtml = `<div style="flex-shrink:0; min-width:28px; height:28px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; margin-right:8px;">${globalIdx}</div>`;
         return `<div id="crm-card-${r.id}" class="module-card" style="margin-bottom:10px; cursor:pointer; border-left:4px solid ${col}; ${selStyle}" data-order-id="${r.id}">
             <div style="display:flex; align-items:flex-start; gap:8px;">
                 ${indexHtml}
@@ -10380,6 +10707,7 @@ function crmRender() {
             </div>
             ${etdStr || etaStr ? `<div style="margin-top:8px; font-size:11px; color:#888; padding-left:${crmSelectMode?'62px':'36px'}">${[etdStr, etaStr].filter(Boolean).join('　')}</div>` : ''}
             ${r.goods ? `<div style="margin-top:4px; font-size:11px; color:#95a5a6; padding-left:${crmSelectMode?'62px':'36px'}">货：${r.goods}</div>` : ''}
+            ${(r.tags && r.tags.length) ? `<div style="margin-top:4px; padding-left:${crmSelectMode?'62px':'36px'}; display:flex; flex-wrap:wrap; gap:4px;">${r.tags.map(t => `<span style="background:#9b59b622; color:#9b59b6; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:bold;">${t}</span>`).join('')}</div>` : ''}
         </div>`;
     }).join('');
     
@@ -10398,6 +10726,7 @@ function crmRender() {
     }, 0);
     
     setTimeout(() => crmUpdateSummaryStats(), 10);
+    crmUpdatePagination();
 }
 
 
