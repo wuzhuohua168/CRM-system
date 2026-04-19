@@ -10226,8 +10226,8 @@ function crmToggleShipMode() {
     
     if (ctypeWrap) ctypeWrap.style.display = isFcl ? 'block' : 'none';
     if (cqtyWrap) cqtyWrap.style.display = isFcl ? 'block' : 'none';
-    if (billWeightWrap) billWeightWrap.style.display = 'none';
-    if (unitPriceWrap) unitPriceWrap.style.display = 'none';
+    if (billWeightWrap) billWeightWrap.style.display = isFcl ? 'block' : 'none';
+    if (unitPriceWrap) unitPriceWrap.style.display = isFcl ? 'block' : 'none';
     if (fclFeeArea) fclFeeArea.style.display = isFcl ? 'block' : 'none';
     if (lclFeeArea) lclFeeArea.style.display = isLcl ? 'block' : 'none';
     
