@@ -1393,19 +1393,20 @@
                     <div class="quick-subcard" onclick="switchTab(12)"><b>宏观系统</b></div>
                 </div>
             </div>
-            <div class="quick-card" onclick="switchTab(3)"><b>汇率</b>看汇率、三币联动、日元走势图</div>
-            <div class="quick-card" onclick="switchTab(6)"><b>地址</b>多国家地址查询与亚马逊仓库代码</div>
-            <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
-            <div class="quick-card" onclick="switchTab(8)"><b>货车</b>多国家货车尺寸、方数、载重</div>
-            <div class="quick-card" onclick="openLabelTool()"><b>标签生成</b>站内打开标签页，打印和分享更方便</div>
-            <div class="quick-card" onclick="switchTab(10)"><b>报价单制作</b>站内打开 Logistics-Quotation 工作页</div>
-            <div class="quick-card" onclick="switchTab(11)"><b>费用单制作</b>站内打开 Intelligent-freight-generation-system 工作页</div>
-            <div class="quick-card" onclick="switchTab(15)"><b>CRM 整柜台账</b>记录整柜订单全流程，管理客户、费用与节点</div>
+            <div class="quick-card" onclick="switchTab(15)"><b>CRM 订单管理</b>记录订单全流程，管理客户、费用与节点</div>
             <div class="quick-card" onclick="switchTab(16)"><b>客户档案</b>管理客户信息、等级分类、联系方式</div>
             <div class="quick-card" onclick="switchTab(17)"><b>供应商管理</b>船代理、拖车行、报关行、仓库等</div>
             <div class="quick-card" onclick="switchTab(18)"><b>提醒中心</b>ETD/ETA提醒、免柜期到期、应收逾期</div>
             <div class="quick-card" onclick="switchTab(19)"><b>应收应付对账</b>按客户/供应商汇总对账</div>
+            <div class="quick-card" onclick="switchTab(21)"><b>财务分析</b>收入趋势、客户贡献、利润分析报表</div>
+            <div class="quick-card" onclick="switchTab(10)"><b>报价单制作</b>散货/整柜报价单生成与导出</div>
+            <div class="quick-card" onclick="switchTab(11)"><b>费用单制作</b>散货/整柜费用单生成与导出</div>
             <div class="quick-card" onclick="switchTab(20)"><b>运价管理</b>各航线运价记录、有效期管理</div>
+            <div class="quick-card" onclick="switchTab(3)"><b>汇率查询</b>看汇率、三币联动、日元走势图</div>
+            <div class="quick-card" onclick="switchTab(6)"><b>地址查询</b>多国家地址查询与亚马逊仓库代码</div>
+            <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
+            <div class="quick-card" onclick="switchTab(8)"><b>货车尺寸</b>多国家货车尺寸、方数、载重</div>
+            <div class="quick-card" onclick="openLabelTool()"><b>标签生成</b>站内打开标签页，打印和分享更方便</div>
         </div>
     </div>
 
@@ -2333,7 +2334,7 @@
 
                 <!-- 状态 + 备注 -->
                 <div style="font-size:12px; font-weight:bold; color:#4a90e2; margin-bottom:8px;">状态 & 备注</div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
                     <div>
                         <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">当前状态</label>
                         <select id="crm-f-status" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
@@ -2347,6 +2348,14 @@
                             <option value="已清关">已清关</option>
                             <option value="已完结">已完结</option>
                             <option value="取消">取消</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; color:#666; display:block; margin-bottom:4px;">结算状态</label>
+                        <select id="crm-f-settlement-status" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:8px; font-size:13px; background:#fff;">
+                            <option value="未结算">未结算</option>
+                            <option value="部分结算">部分结算</option>
+                            <option value="已结算">已结算</option>
                         </select>
                     </div>
                     <div>
@@ -2955,7 +2964,6 @@
     <div class="tab-item" onclick="switchTab(3)"><span class="tab-icon">💴</span><span>汇率</span></div>
     <div class="tab-item" onclick="switchTab(4)"><span class="tab-icon">📅</span><span>日历</span></div>
     <div class="tab-item" onclick="switchTab(15)"><span class="tab-icon">📦</span><span>CRM</span></div>
-    <div class="tab-item" onclick="switchTab(21)"><span class="tab-icon">📊</span><span>财务</span></div>
     <div class="tab-item" onclick="switchTab(6)"><span class="tab-icon">📮</span><span>邮编</span></div>
     <div class="tab-item" onclick="switchTab(7)"><span class="tab-icon">🚢</span><span>柜型</span></div>
 </div>
@@ -6861,7 +6869,7 @@ function switchTab(idx) {
     document.querySelectorAll('.tab-item').forEach(i => i.classList.remove('active'));
     const tabEl = document.getElementById('tab' + idx);
     if(tabEl) tabEl.classList.add('active');
-    const order = {9: 0, 3: 1, 4: 2, 15: 3, 21: 4, 6: 5, 7: 6};
+    const order = {9: 0, 3: 1, 4: 2, 15: 3, 6: 4, 7: 5};
     if (order[idx] !== undefined) {
         const tabItems = document.querySelectorAll('.tab-item');
         if(tabItems[order[idx]]) tabItems[order[idx]].classList.add('active');
@@ -10665,8 +10673,11 @@ function crmFormToRecord() {
         carrierType: g('crm-f-carrier-type'),
         fees,
         costs,
+        receivable: fees.total || 0,
+        payable: costTotal || 0,
         profit,
         margin,
+        settlementStatus: g('crm-f-settlement-status') || '未结算',
         status:   g('crm-f-status'),
         incoterm: g('crm-f-incoterm'),
         tags:     g('crm-f-tags').split(',').map(t => t.trim()).filter(t => t),
@@ -10722,7 +10733,7 @@ function crmRecordToForm(r) {
     }
     crmRenderFeeFxRows({ ...legacyFeesFx, ...((r.fees||{}).fx || {}) });
     s('crm-f-tracking', r.tracking); s('crm-f-carrier-type', r.carrierType);
-    s('crm-f-status', r.status); s('crm-f-incoterm', r.incoterm); s('crm-f-tags', (r.tags || []).join(', ')); s('crm-f-notes', r.notes);
+    s('crm-f-status', r.status); s('crm-f-settlement-status', r.settlementStatus || '未结算'); s('crm-f-incoterm', r.incoterm); s('crm-f-tags', (r.tags || []).join(', ')); s('crm-f-notes', r.notes);
     crmRenderCostRows(r.costs || {});
     const costs = r.costs || {};
     CRM_COST_ITEMS.forEach(item => {
@@ -10941,6 +10952,7 @@ function crmShowDetail(id) {
             <div style="font-size:18px; font-weight:bold; color:#2c3e50;">${fmt(r.client)}</div>
             <span style="background:${isLcl?'#16a08522':'#4a90e222'}; color:${isLcl?'#16a085':'#4a90e2'}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${isLcl?'散货':'整柜'}</span>
             <span style="background:${color}22; color:${color}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${r.status}</span>
+            <span style="background:${(r.settlementStatus === '已结算') ? '#27ae6022' : ((r.settlementStatus === '部分结算') ? '#f39c1222' : '#e74c3c22')}; color:${(r.settlementStatus === '已结算') ? '#27ae60' : ((r.settlementStatus === '部分结算') ? '#f39c12' : '#e74c3c')}; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:bold;">${r.settlementStatus || '未结算'}</span>
             ${(r.tags && r.tags.length) ? r.tags.map(t => `<span style="background:#9b59b622; color:#9b59b6; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:bold;">${t}</span>`).join('') : ''}
             ${r.orderno ? `<span style="background:#f0f4fa; color:#607d8b; padding:4px 10px; border-radius:999px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">${r.orderno}<button onclick="event.stopPropagation(); navigator.clipboard.writeText('${r.orderno}').then(() => alert('订单号已复制：${r.orderno}'));" style="background:none; border:none; cursor:pointer; padding:0; font-size:12px; color:#4a90e2; margin-left:2px;" title="复制订单号">📋</button></span>` : ''}
         </div>
@@ -11378,7 +11390,10 @@ function crmRender() {
                         ${r.orderno || r.mbl ? `<div style="font-size:11px; color:#aaa; margin-top:3px;">${[r.orderno, r.mbl].filter(Boolean).join(' | ')}</div>` : ''}
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;">
-                        <span style="background:${col}22; color:${col}; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:bold;">${r.status}</span>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                            <span style="background:${col}22; color:${col}; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:bold;">${r.status}</span>
+                            <span style="background:${(r.settlementStatus === '已结算') ? '#27ae6022' : ((r.settlementStatus === '部分结算') ? '#f39c1222' : '#e74c3c22')}; color:${(r.settlementStatus === '已结算') ? '#27ae60' : ((r.settlementStatus === '部分结算') ? '#f39c12' : '#e74c3c')}; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">${r.settlementStatus || '未结算'}</span>
+                        </div>
                         ${fees.total ? `<span style="font-size:12px; font-weight:bold; color:#2c7be5;">应收 ¥${Number(fees.total).toLocaleString()}</span>` : ''}
                     ${(r.profit !== undefined && (r.costs||{})._total) ? `<span style="font-size:11px; font-weight:bold; color:${r.profit>=0?'#1f7a5c':'#e74c3c'};">利 ${r.profit>=0?'':'-'}¥${Math.abs(r.profit).toLocaleString()}${r.margin?` (${(r.margin*100).toFixed(0)}%)`:''}</span>` : ''}
                     </div>
@@ -12012,10 +12027,13 @@ function crmExportTracking() {
             tracking: r.tracking || '',
             carrierType: r.carrierType || '',
             status: r.status || '',
+            settlementStatus: r.settlementStatus || '未结算',
             incoterm: r.incoterm || '',
             notes: r.notes || '',
             fees: r.fees || null,
             costs: r.costs || null,
+            receivable: r.receivable || 0,
+            payable: r.payable || 0,
             profit: r.profit || 0,
             margin: r.margin || 0,
             statusHistory: r.statusHistory || [],
