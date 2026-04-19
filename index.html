@@ -6947,6 +6947,7 @@ function financeRefresh() {
     const data = financeGetFilteredData();
     
     const totalOrders = data.length;
+    const withCosts = data.filter(r => r.costs && r.costs._total);
     let totalReceivable = 0;
     let totalPayable = 0;
     let totalProfit = 0;
@@ -6955,10 +6956,14 @@ function financeRefresh() {
     
     data.forEach(r => {
         const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
+        totalReceivable += rec;
+    });
+    
+    withCosts.forEach(r => {
+        const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
         const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
         const prof = parseFloat(r.profit) || (rec - pay);
         const marg = parseFloat(r.margin) || (rec > 0 ? prof / rec : 0);
-        totalReceivable += rec;
         totalPayable += pay;
         totalProfit += prof;
         if (marg > 0 || marg < 0) {
@@ -6967,13 +6972,13 @@ function financeRefresh() {
         }
     });
     
-    const avgMargin = validMarginCount > 0 ? (marginSum / validMarginCount) : 0;
+    const avgMargin = withCosts.length > 0 ? (totalProfit / totalReceivable) : 0;
     
-    document.getElementById('finance-total-orders').textContent = totalOrders;
+    document.getElementById('finance-total-orders').textContent = totalOrders + '票 (含' + withCosts.length + '票有应付数据)';
     document.getElementById('finance-total-receivable').textContent = '¥' + totalReceivable.toLocaleString();
     document.getElementById('finance-total-payable').textContent = '¥' + totalPayable.toLocaleString();
     document.getElementById('finance-total-profit').textContent = '¥' + totalProfit.toLocaleString();
-    document.getElementById('finance-avg-margin').textContent = avgMargin.toFixed(1) + '%';
+    document.getElementById('finance-avg-margin').textContent = (avgMargin * 100).toFixed(1) + '%';
     
     financeRenderMonthlyChart(data);
     financeRenderStatusChart(data);
@@ -6989,6 +6994,7 @@ function financeRenderMonthlyChart(data) {
     
     if (financeCharts.monthly) financeCharts.monthly.destroy();
     
+    const withCosts = data.filter(r => r.costs && r.costs._total);
     const monthlyData = {};
     data.forEach(r => {
         if (!r.createdAt) return;
@@ -6997,12 +7003,18 @@ function financeRenderMonthlyChart(data) {
             monthlyData[month] = { receivable: 0, payable: 0, profit: 0, count: 0 };
         }
         const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
+        monthlyData[month].receivable += rec;
+        monthlyData[month].count++;
+    });
+    
+    withCosts.forEach(r => {
+        if (!r.createdAt) return;
+        const month = r.createdAt.slice(0, 7);
+        const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
         const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
         const prof = parseFloat(r.profit) || (rec - pay);
-        monthlyData[month].receivable += rec;
         monthlyData[month].payable += pay;
         monthlyData[month].profit += prof;
-        monthlyData[month].count++;
     });
     
     const sortedMonths = Object.keys(monthlyData).sort();
@@ -7141,6 +7153,7 @@ function financeRenderClientTable(data) {
     const tbody = document.getElementById('finance-client-table');
     if (!tbody) return;
     
+    const withCosts = data.filter(r => r.costs && r.costs._total);
     const clientData = {};
     data.forEach(r => {
         const c = r.client || '未知';
@@ -7148,10 +7161,15 @@ function financeRenderClientTable(data) {
             clientData[c] = { count: 0, receivable: 0, payable: 0, profit: 0 };
         }
         const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
-        const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
-        const prof = parseFloat(r.profit) || (rec - pay);
         clientData[c].count++;
         clientData[c].receivable += rec;
+    });
+    
+    withCosts.forEach(r => {
+        const c = r.client || '未知';
+        const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
+        const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
+        const prof = parseFloat(r.profit) || (rec - pay);
         clientData[c].payable += pay;
         clientData[c].profit += prof;
     });
@@ -7178,6 +7196,7 @@ function financeRenderMonthlyTable(data) {
     const tbody = document.getElementById('finance-monthly-table');
     if (!tbody) return;
     
+    const withCosts = data.filter(r => r.costs && r.costs._total);
     const monthlyData = {};
     data.forEach(r => {
         if (!r.createdAt) return;
@@ -7186,10 +7205,16 @@ function financeRenderMonthlyTable(data) {
             monthlyData[month] = { count: 0, receivable: 0, payable: 0, profit: 0 };
         }
         const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
-        const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
-        const prof = parseFloat(r.profit) || (rec - pay);
         monthlyData[month].count++;
         monthlyData[month].receivable += rec;
+    });
+    
+    withCosts.forEach(r => {
+        if (!r.createdAt) return;
+        const month = r.createdAt.slice(0, 7);
+        const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
+        const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
+        const prof = parseFloat(r.profit) || (rec - pay);
         monthlyData[month].payable += pay;
         monthlyData[month].profit += prof;
     });
@@ -7220,12 +7245,16 @@ async function financeExportPDF() {
     
     showToast('正在生成PDF...');
     
+    const withCosts = data.filter(r => r.costs && r.costs._total);
     let totalReceivable = 0, totalPayable = 0, totalProfit = 0;
     data.forEach(r => {
         const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
+        totalReceivable += rec;
+    });
+    withCosts.forEach(r => {
+        const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
         const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
         const prof = parseFloat(r.profit) || (rec - pay);
-        totalReceivable += rec;
         totalPayable += pay;
         totalProfit += prof;
     });
@@ -7308,15 +7337,20 @@ async function financeExportPDF() {
 }
 
 function financeGetClientRows(data) {
+    const withCosts = data.filter(r => r.costs && r.costs._total);
     const clientData = {};
     data.forEach(r => {
         const c = r.client || '未知';
         if (!clientData[c]) clientData[c] = { count: 0, receivable: 0, payable: 0, profit: 0 };
         clientData[c].count++;
         const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
+        clientData[c].receivable += rec;
+    });
+    withCosts.forEach(r => {
+        const c = r.client || '未知';
+        const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
         const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
         const prof = parseFloat(r.profit) || (rec - pay);
-        clientData[c].receivable += rec;
         clientData[c].payable += pay;
         clientData[c].profit += prof;
     });
@@ -7333,15 +7367,20 @@ function financeExportCSV() {
         return;
     }
     
+    const withCosts = data.filter(r => r.costs && r.costs._total);
     const clientData = {};
     data.forEach(r => {
         const c = r.client || '未知';
         if (!clientData[c]) clientData[c] = { count: 0, receivable: 0, payable: 0, profit: 0 };
         clientData[c].count++;
         const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
+        clientData[c].receivable += rec;
+    });
+    withCosts.forEach(r => {
+        const c = r.client || '未知';
+        const rec = parseFloat(r.receivable) || parseFloat((r.fees || {}).total) || 0;
         const pay = parseFloat(r.payable) || parseFloat((r.costs || {})._total) || 0;
         const prof = parseFloat(r.profit) || (rec - pay);
-        clientData[c].receivable += rec;
         clientData[c].payable += pay;
         clientData[c].profit += prof;
     });
@@ -12164,13 +12203,40 @@ function crmRestoreFromCloud() {
             }
             
             if (data.clients && data.clients.length) {
-                localStorage.setItem('logistics_client_data', JSON.stringify(data.clients));
-                restoreCount += data.clients.length;
+                const clients = data.clients.map(c => ({
+                    id: c.id || Date.now().toString(),
+                    name: c.name || '',
+                    level: c.level || 'B',
+                    contact: c.contact || '',
+                    phone: c.phone || '',
+                    email: c.email || '',
+                    route: c.route || '',
+                    address: c.address || '',
+                    notes: c.notes || '',
+                    createdAt: c.createdAt || new Date().toISOString(),
+                    updatedAt: c.updatedAt || new Date().toISOString()
+                }));
+                localStorage.setItem('logistics_client_data', JSON.stringify(clients));
+                restoreCount += clients.length;
             }
             
             if (data.suppliers && data.suppliers.length) {
-                localStorage.setItem('logistics_supplier_data', JSON.stringify(data.suppliers));
-                restoreCount += data.suppliers.length;
+                const suppliers = data.suppliers.map(s => ({
+                    id: s.id || Date.now().toString(),
+                    name: s.name || '',
+                    type: s.type || '船代理',
+                    contact: s.contact || '',
+                    phone: s.phone || '',
+                    email: s.email || '',
+                    region: s.region || '',
+                    address: s.address || '',
+                    bank: s.bank || '',
+                    notes: s.notes || '',
+                    createdAt: s.createdAt || new Date().toISOString(),
+                    updatedAt: s.updatedAt || new Date().toISOString()
+                }));
+                localStorage.setItem('logistics_supplier_data', JSON.stringify(suppliers));
+                restoreCount += suppliers.length;
             }
             
             if (data.airQuotes && data.airQuotes.length) {
@@ -12590,7 +12656,21 @@ const CLIENT_STORAGE_KEY = 'logistics_client_data';
 function clientLoadData(){
     try{
         const saved = localStorage.getItem(CLIENT_STORAGE_KEY);
-        clientData = saved ? JSON.parse(saved) : [];
+        const loaded = saved ? JSON.parse(saved) : [];
+        clientData = loaded.map(c => ({
+            id: c.id || Date.now().toString(),
+            name: c.name || '',
+            level: c.level || 'B',
+            contact: c.contact || '',
+            phone: c.phone || '',
+            email: c.email || '',
+            route: c.route || '',
+            address: c.address || '',
+            notes: c.notes || '',
+            createdAt: c.createdAt || new Date().toISOString(),
+            updatedAt: c.updatedAt || new Date().toISOString()
+        }));
+        localStorage.setItem(CLIENT_STORAGE_KEY, JSON.stringify(clientData));
     }catch{
         clientData = [];
     }
@@ -12769,7 +12849,22 @@ const SUPPLIER_STORAGE_KEY = 'logistics_supplier_data';
 function supplierLoadData(){
     try{
         const saved = localStorage.getItem(SUPPLIER_STORAGE_KEY);
-        supplierData = saved ? JSON.parse(saved) : [];
+        const loaded = saved ? JSON.parse(saved) : [];
+        supplierData = loaded.map(s => ({
+            id: s.id || Date.now().toString(),
+            name: s.name || '',
+            type: s.type || '船代理',
+            contact: s.contact || '',
+            phone: s.phone || '',
+            email: s.email || '',
+            region: s.region || '',
+            address: s.address || '',
+            bank: s.bank || '',
+            notes: s.notes || '',
+            createdAt: s.createdAt || new Date().toISOString(),
+            updatedAt: s.updatedAt || new Date().toISOString()
+        }));
+        localStorage.setItem(SUPPLIER_STORAGE_KEY, JSON.stringify(supplierData));
     }catch{
         supplierData = [];
     }
