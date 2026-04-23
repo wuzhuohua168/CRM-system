@@ -7522,7 +7522,7 @@
         return null;
     }
 
-    function initRates() {
+    async function initRates() {
         // 立即使用备用汇率，确保界面快速响应
         if (!rates.USD) rates = { ...FALLBACK_RATES };
         convertRate('left');
@@ -7530,36 +7530,37 @@
         const el = document.getElementById('rate-status');
         if (el) el.innerText = '汇率加载中...';
         
-        // 后台更新汇率
-        fetch('https://open.er-api.com/v6/latest/USD')
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.rates) {
-                    rates = data.rates;
-                    localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates }));
-                    convertRate('left');
-                    convertTriple('JPY');
-                    if (el) el.innerText = '汇率已加载';
-                }
-            })
-            .catch(() => {
-                // 尝试从缓存加载
-                const cached = localStorage.getItem('hcn_rates_cache');
-                if (cached) {
-                    try {
-                        const obj = JSON.parse(cached);
-                        if (obj && obj.rates) {
-                            rates = obj.rates;
-                            convertRate('left');
-                            convertTriple('JPY');
-                        }
-                    } catch(e) {}
-                }
-                if (el) el.innerText = rates.USD ? '使用缓存汇率' : '使用备用汇率';
-            });
+        try {
+            const res = await fetch('https://open.er-api.com/v6/latest/USD');
+            const data = await res.json();
+            if (data && data.rates) {
+                rates = data.rates;
+                localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates }));
+                convertRate('left');
+                convertTriple('JPY');
+                if (el) el.innerText = '汇率已加载';
+            }
+        } catch(e) {
+            // 尝试从缓存加载
+            const cached = localStorage.getItem('hcn_rates_cache');
+            if (cached) {
+                try {
+                    const obj = JSON.parse(cached);
+                    if (obj && obj.rates) {
+                        rates = obj.rates;
+                        convertRate('left');
+                        convertTriple('JPY');
+                    }
+                } catch(e) {}
+            }
+            if (el) el.innerText = rates.USD ? '使用缓存汇率' : '使用备用汇率';
+        }
     }
     function convertRate(dir) {
-        if(!rates.USD) return;
+        if(!rates.USD) {
+            // 确保有备用汇率
+            if (!rates.USD) rates = { ...FALLBACK_RATES };
+        }
         const from = document.getElementById('cur-left').value, to = document.getElementById('cur-right').value;
         const l = document.getElementById('val-left'), r = document.getElementById('val-right');
         if(dir === 'left') {
@@ -7579,7 +7580,10 @@
     }
 
     function convertTriple(src) {
-        if(!rates.USD) return;
+        if(!rates.USD) {
+            // 确保有备用汇率
+            if (!rates.USD) rates = { ...FALLBACK_RATES };
+        }
         const jpyInput = document.getElementById('val-jpy-link');
         const cnyInput = document.getElementById('val-cny-link');
         const usdInput = document.getElementById('val-usd-link');
