@@ -7507,6 +7507,7 @@
     }
 
     // 汇率转换功能
+    let rates = {};
     const FALLBACK_RATES = {
         USD: 1,
         CNY: 7.24,
@@ -7543,38 +7544,28 @@
     }
 
     async function initRates() {
-        // 立即使用备用汇率，确保界面快速响应
-        if (!rates.USD) rates = { ...FALLBACK_RATES };
-        convertRate('left');
-        convertTriple('JPY');
-        const el = document.getElementById('rate-status');
-        if (el) el.innerText = '汇率加载中...';
-        
         try {
             const res = await fetch('https://open.er-api.com/v6/latest/USD');
             const data = await res.json();
             if (data && data.rates) {
                 rates = data.rates;
                 localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates }));
-                convertRate('left');
-                convertTriple('JPY');
-                if (el) el.innerText = '汇率已加载';
             }
-        } catch(e) {
-            // 尝试从缓存加载
+        } catch(e) {}
+        if (!rates.USD) {
             const cached = localStorage.getItem('hcn_rates_cache');
             if (cached) {
                 try {
                     const obj = JSON.parse(cached);
-                    if (obj && obj.rates) {
-                        rates = obj.rates;
-                        convertRate('left');
-                        convertTriple('JPY');
-                    }
+                    if (obj && obj.rates) rates = obj.rates;
                 } catch(e) {}
             }
-            if (el) el.innerText = rates.USD ? '使用缓存汇率' : '使用备用汇率';
         }
+        if (!rates.USD) rates = { ...FALLBACK_RATES };
+        convertRate('left');
+        convertTriple('JPY');
+        const el = document.getElementById('rate-status');
+        if (el) el.innerText = rates.USD ? '汇率已加载' : '使用备用汇率';
     }
     function convertRate(dir) {
         if(!rates.USD) {
