@@ -6336,7 +6336,7 @@
         document.body.classList.remove('locked');
     }
 
-    function handleLogin(){
+    async function handleLogin(){
         const password = document.getElementById('login-password').value;
         const storedHash = localStorage.getItem(PASSWORD_KEY);
         const inputHash = simpleHash(password);
@@ -6344,7 +6344,7 @@
         if(inputHash === storedHash){
             createSession();
             hideLoginScreen();
-            initAllModules();
+            await initAllModules();
         } else {
             document.getElementById('login-error').style.display = 'block';
             document.getElementById('login-password').value = '';
