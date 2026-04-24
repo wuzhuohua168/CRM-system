@@ -6352,7 +6352,7 @@
         }
     }
 
-    function setNewPassword(){
+    async function setNewPassword(){
         const newPwd = document.getElementById('new-password').value;
         const confirmPwd = document.getElementById('confirm-password').value;
         
@@ -6365,7 +6365,7 @@
         localStorage.setItem(PASSWORD_KEY, hash);
         createSession();
         hideLoginScreen();
-        initAllModules();
+        await initAllModules();
         showToast('密码设置成功');
     }
 
