@@ -5976,7 +5976,8 @@
 
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { background: #f4f7f9; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+            body { background: var(--bg-primary, #f4f7f9); font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+            body.dark { background: var(--bg-primary, #1a1a2e); }
             
             #overlay {
                 display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -5985,18 +5986,22 @@
             }
 
             .controls { 
-                max-width: 500px; margin: 20px auto; background: #fff; padding: 20px; 
+                max-width: 500px; margin: 20px auto; background: var(--bg-primary, #fff); padding: 20px; 
                 border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
             }
+            body.dark .controls { background: var(--bg-primary, #2d2d44); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
             .row { margin-bottom: 12px; }
-            label { font-size: 12px; font-weight: bold; color: #666; display: block; margin-bottom: 4px; }
-            input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; }
+            label { font-size: 12px; font-weight: bold; color: var(--text-secondary, #666); display: block; margin-bottom: 4px; }
+            body.dark label { color: var(--text-secondary, #aaa); }
+            input, select { width: 100%; padding: 10px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 15px; background: var(--bg-primary, #fff); color: var(--text-primary, #333); }
+            body.dark input, body.dark select { background: var(--bg-secondary, #3d3d5c); border-color: #4d4d6d; color: #fff; }
             
             .btn-group { display: flex; gap: 10px; margin-top: 15px; }
             button { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; color: #fff; cursor: pointer; font-size: 16px; }
             
             /* 提示信息样式 */
-            .info-tip { background: #e7f3ff; border-left: 4px solid #4a90e2; padding: 10px; margin-top: 10px; font-size: 12px; color: #555; border-radius: 4px; line-height: 1.6; }
+            .info-tip { background: var(--bg-info, #e7f3ff); border-left: 4px solid #4a90e2; padding: 10px; margin-top: 10px; font-size: 12px; color: var(--text-secondary, #555); border-radius: 4px; line-height: 1.6; }
+            body.dark .info-tip { background: #2d3a4d; color: #aabbd1; }
             .copyright-info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; margin-top: 10px; font-size: 12px; border-radius: 8px; text-align: center; }
 
             /* 标签预览区域 */
@@ -6088,11 +6093,26 @@
         let currentMainTracking = "";
         let finalModeName = "";
 
+        function syncDarkMode() {
+            try {
+                const parentDark = window.parent.document.body.classList.contains('dark-mode');
+                if (parentDark) {
+                    document.body.classList.add('dark');
+                } else {
+                    document.body.classList.remove('dark');
+                }
+            } catch(e) {}
+        }
+
         function checkCustomMode() {
             const select = document.getElementById('modeSelect');
             const input = document.getElementById('customInput');
             input.style.display = (select.value === 'CUSTOM') ? 'block' : 'none';
         }
+
+        // 初始化暗夜模式同步
+        syncDarkMode();
+        setInterval(syncDarkMode, 500);
 
         function renderPreview() {
             const qty = parseInt(document.getElementById('qty').value) || 1;
@@ -6419,12 +6439,12 @@
         }
     });
 
-    function initAuth(){
+    async function initAuth(){
         if(!hasPassword()){
             showSetPasswordForm();
         } else if(checkSession()){
             hideLoginScreen();
-            initAllModules();
+            await initAllModules();
         } else {
             showLoginForm();
         }
@@ -6916,12 +6936,12 @@
         }
     }
 
-    function initAllModules(){
+    async function initAllModules(){
         autoClearCache();
         autoBackup();
         setInterval(autoBackup, 30 * 60 * 1000);
         initLanguage();
-        initRates();
+        await initRates();
         restoreAppState();
         renderContainerTable();
         renderShippingTable();
@@ -12990,10 +13010,10 @@
         const totalB = clientData.filter(c => c.level === 'B').length;
         const totalC = clientData.filter(c => c.level === 'C').length;
         statsBar.innerHTML = `
-            <span style="background:#e8f4fd; color:#2980b9; padding:4px 10px; border-radius:12px; font-size:11px;">A级: ${totalA}</span>
-            <span style="background:#e8f8f0; color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">B级: ${totalB}</span>
-            <span style="background:#fef5e7; color:#f39c12; padding:4px 10px; border-radius:12px; font-size:11px;">C级: ${totalC}</span>
-            <span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${clientData.length} 条</span>
+            <span style="background:var(--bg-urgent, #e8f4fd); color:#2980b9; padding:4px 10px; border-radius:12px; font-size:11px;">A级: ${totalA}</span>
+            <span style="background:var(--bg-normal, #e8f8f0); color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">B级: ${totalB}</span>
+            <span style="background:var(--bg-warning, #fef5e7); color:#f39c12; padding:4px 10px; border-radius:12px; font-size:11px;">C级: ${totalC}</span>
+            <span style="background:var(--bg-secondary); color:var(--text-secondary); padding:4px 10px; border-radius:12px; font-size:11px;">共 ${clientData.length} 条</span>
         `;
         if(filtered.length === 0){
             listEl.innerHTML = '';
@@ -13006,21 +13026,21 @@
             const levelBg = c.level === 'A' ? '#fdeaea' : (c.level === 'B' ? '#e8f8f0' : '#fef5e7');
             const clientJson = JSON.stringify(c).replace(/"/g, '&quot;');
             return `
-            <div class="module-card" style="padding:12px 14px; margin-bottom:8px;">
+            <div class="module-card" style="padding:12px 14px; margin-bottom:8px; background:var(--bg-primary);">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                     <div style="flex:1;">
                         <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                            <span style="font-size:15px; font-weight:bold; color:#2c3e50;">${c.name}</span>
+                            <span style="font-size:15px; font-weight:bold; color:var(--text-primary);">${c.name}</span>
                             <span style="background:${levelBg}; color:${levelColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${c.level}级</span>
                         </div>
-                        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:#666;">
+                        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--text-secondary);">
                             ${c.contact ? `<span>👤 ${c.contact}</span>` : ''}
                             ${c.phone ? `<span>📞 ${c.phone}</span>` : ''}
                             ${c.email ? `<span>📧 ${c.email}</span>` : ''}
                             ${c.route ? `<span>🚢 ${c.route}</span>` : ''}
                         </div>
-                        ${c.address ? `<div style="font-size:12px; color:#888; margin-top:4px;">📍 ${c.address}</div>` : ''}
-                        ${c.notes ? `<div style="font-size:11px; color:#999; margin-top:4px; padding:6px; background:#f8f9fa; border-radius:6px;">${c.notes}</div>` : ''}
+                        ${c.address ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">📍 ${c.address}</div>` : ''}
+                        ${c.notes ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:4px; padding:6px; background:var(--bg-secondary); border-radius:6px;">${c.notes}</div>` : ''}
                     </div>
                     <div style="display:flex; gap:6px; flex-shrink:0;">
                         <button onclick="clientShowEditModal('${c.id}')" style="background:#3498db; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">编辑</button>
@@ -13185,9 +13205,9 @@
         });
         const typeCounts = {};
         supplierData.forEach(s => { typeCounts[s.type] = (typeCounts[s.type] || 0) + 1; });
-        let statsHtml = `<span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${supplierData.length} 条</span>`;
+        let statsHtml = `<span style="background:var(--bg-secondary); color:var(--text-secondary); padding:4px 10px; border-radius:12px; font-size:11px;">共 ${supplierData.length} 条</span>`;
         Object.entries(typeCounts).forEach(([type, count]) => {
-            statsHtml += `<span style="background:#fef5e7; color:#e67e22; padding:4px 10px; border-radius:12px; font-size:11px;">${type}: ${count}</span>`;
+            statsHtml += `<span style="background:var(--bg-warning, #fef5e7); color:#e67e22; padding:4px 10px; border-radius:12px; font-size:11px;">${type}: ${count}</span>`;
         });
         statsBar.innerHTML = statsHtml;
         if(filtered.length === 0){
@@ -13199,22 +13219,22 @@
         listEl.innerHTML = filtered.map(s => {
             const typeColor = s.type === '船代理' ? '#3498db' : (s.type === '拖车行' ? '#9b59b6' : (s.type === '报关行' ? '#1abc9c' : '#e67e22'));
             return `
-            <div class="module-card" style="padding:12px 14px; margin-bottom:8px;">
+            <div class="module-card" style="padding:12px 14px; margin-bottom:8px; background:var(--bg-primary);">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                     <div style="flex:1;">
                         <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                            <span style="font-size:15px; font-weight:bold; color:#2c3e50;">${s.name}</span>
-                            <span style="background:#fef5e7; color:${typeColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${s.type}</span>
+                            <span style="font-size:15px; font-weight:bold; color:var(--text-primary);">${s.name}</span>
+                            <span style="background:var(--bg-warning, #fef5e7); color:${typeColor}; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${s.type}</span>
                         </div>
-                        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:#666;">
+                        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--text-secondary);">
                             ${s.contact ? `<span>👤 ${s.contact}</span>` : ''}
                             ${s.phone ? `<span>📞 ${s.phone}</span>` : ''}
                             ${s.email ? `<span>📧 ${s.email}</span>` : ''}
                             ${s.region ? `<span>🌍 ${s.region}</span>` : ''}
                         </div>
-                        ${s.address ? `<div style="font-size:12px; color:#888; margin-top:4px;">📍 ${s.address}</div>` : ''}
-                        ${s.bank ? `<div style="font-size:11px; color:#888; margin-top:4px; padding:6px; background:#f0f8ff; border-radius:6px;">🏦 ${s.bank}</div>` : ''}
-                        ${s.notes ? `<div style="font-size:11px; color:#999; margin-top:4px; padding:6px; background:#f8f9fa; border-radius:6px;">${s.notes}</div>` : ''}
+                        ${s.address ? `<div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">📍 ${s.address}</div>` : ''}
+                        ${s.bank ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:4px; padding:6px; background:var(--bg-secondary); border-radius:6px;">🏦 ${s.bank}</div>` : ''}
+                        ${s.notes ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:4px; padding:6px; background:var(--bg-secondary); border-radius:6px;">${s.notes}</div>` : ''}
                     </div>
                     <div style="display:flex; gap:6px; flex-shrink:0;">
                         <button onclick="supplierShowEditModal('${s.id}')" style="background:#e67e22; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">编辑</button>
@@ -13352,10 +13372,10 @@
         const warningCount = filtered.filter(r => r.status === 'warning').length;
         const normalCount = filtered.filter(r => r.status === 'normal').length;
         statsBar.innerHTML = `
-            <span style="background:#fdeaea; color:#e74c3c; padding:4px 10px; border-radius:12px; font-size:11px;">紧急: ${urgentCount}</span>
-            <span style="background:#fef5e7; color:#f39c12; padding:4px 10px; border-radius:12px; font-size:11px;">注意: ${warningCount}</span>
-            <span style="background:#e8f8f0; color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">正常: ${normalCount}</span>
-            <span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${filtered.length} 条</span>
+            <span style="background:var(--bg-urgent, #fdeaea); color:#e74c3c; padding:4px 10px; border-radius:12px; font-size:11px;">紧急: ${urgentCount}</span>
+            <span style="background:var(--bg-warning, #fef5e7); color:#f39c12; padding:4px 10px; border-radius:12px; font-size:11px;">注意: ${warningCount}</span>
+            <span style="background:var(--bg-normal, #e8f8f0); color:#27ae60; padding:4px 10px; border-radius:12px; font-size:11px;">正常: ${normalCount}</span>
+            <span style="background:var(--bg-secondary); color:var(--text-secondary); padding:4px 10px; border-radius:12px; font-size:11px;">共 ${filtered.length} 条</span>
         `;
         if(filtered.length === 0){
             listEl.innerHTML = '';
@@ -13371,14 +13391,14 @@
             const textColor = r.status === 'urgent' ? '#c0392b' : (r.status === 'warning' ? '#d68910' : '#1e8449');
             const reminderJson = JSON.stringify(r).replace(/"/g, '&quot;');
             return `
-            <div class="module-card" style="padding:12px 14px; margin-bottom:8px; border-left:4px solid ${borderColor}; background:${bgColor};">
+            <div class="module-card" style="padding:12px 14px; margin-bottom:8px; border-left:4px solid ${borderColor}; background:var(--bg-primary);">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
                     <div style="flex:1;">
                         <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
                             <span style="font-size:16px;">${typeIcons[r.type] || '🔔'}</span>
                             <span style="font-size:14px; font-weight:bold; color:${textColor};">${r.title}</span>
                         </div>
-                        <div style="font-size:12px; color:#666;">
+                        <div style="font-size:12px; color:var(--text-secondary);">
                             <span>📅 ${r.date}</span>
                             <span style="margin-left:12px; font-weight:bold; color:${textColor};">${r.daysLeft === 0 ? '今天到期！' : `还有 ${r.daysLeft} 天`}</span>
                         </div>
@@ -13762,9 +13782,9 @@
         });
         const routeCounts = {};
         freightData.forEach(f => { routeCounts[f.route] = (routeCounts[f.route] || 0) + 1; });
-        let statsHtml = `<span style="background:#f5f5f5; color:#666; padding:4px 10px; border-radius:12px; font-size:11px;">共 ${freightData.length} 条</span>`;
+        let statsHtml = `<span style="background:var(--bg-secondary); color:var(--text-secondary); padding:4px 10px; border-radius:12px; font-size:11px;">共 ${freightData.length} 条</span>`;
         Object.entries(routeCounts).forEach(([route, count]) => {
-            statsHtml += `<span style="background:#e8f8f0; color:#16a085; padding:4px 10px; border-radius:12px; font-size:11px;">${route}: ${count}</span>`;
+            statsHtml += `<span style="background:var(--bg-normal, #e8f8f0); color:#16a085; padding:4px 10px; border-radius:12px; font-size:11px;">${route}: ${count}</span>`;
         });
         statsBar.innerHTML = statsHtml;
         if(filtered.length === 0){
@@ -13778,22 +13798,22 @@
             const isExpired = f.validTo && f.validTo < today;
             const expireColor = isExpired ? '#e74c3c' : (f.validTo ? '#27ae60' : '#666');
             return `
-            <div class="module-card" style="padding:12px 14px; margin-bottom:8px; ${isExpired ? 'opacity:0.6;' : ''}">
+            <div class="module-card" style="padding:12px 14px; margin-bottom:8px; ${isExpired ? 'opacity:0.6;' : ''} background:var(--bg-primary);">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                     <div style="flex:1;">
                         <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                            <span style="font-size:15px; font-weight:bold; color:#2c3e50;">${f.pol || '?'} → ${f.pod || '?'}</span>
-                            <span style="background:#e8f8f0; color:#16a085; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${f.route}</span>
-                            <span style="background:#fef5e7; color:#e67e22; padding:2px 8px; border-radius:10px; font-size:10px;">${f.type}</span>
+                            <span style="font-size:15px; font-weight:bold; color:var(--text-primary);">${f.pol || '?'} → ${f.pod || '?'}</span>
+                            <span style="background:var(--bg-normal, #e8f8f0); color:#16a085; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold;">${f.route}</span>
+                            <span style="background:var(--bg-secondary); color:#e67e22; padding:2px 8px; border-radius:10px; font-size:10px;">${f.type}</span>
                             ${isExpired ? '<span style="background:#fdeaea; color:#e74c3c; padding:2px 8px; border-radius:10px; font-size:10px;">已过期</span>' : ''}
                         </div>
-                        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:#666;">
+                        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:12px; color:var(--text-secondary);">
                             ${f.carrier ? `<span>🚢 ${f.carrier}</span>` : ''}
                             ${f.containerType ? `<span>📦 ${f.containerType}</span>` : ''}
                             <span style="color:#16a085; font-weight:bold;">¥${Math.round(f.price)}</span>
                             ${f.validTo ? `<span style="color:${expireColor};">有效期: ${f.validTo}</span>` : ''}
                         </div>
-                        ${f.notes ? `<div style="font-size:11px; color:#999; margin-top:4px; padding:6px; background:#f8f9fa; border-radius:6px;">${f.notes}</div>` : ''}
+                        ${f.notes ? `<div style="font-size:11px; color:var(--text-secondary); margin-top:4px; padding:6px; background:var(--bg-secondary); border-radius:6px;">${f.notes}</div>` : ''}
                     </div>
                     <div style="display:flex; gap:6px; flex-shrink:0;">
                         <button onclick="freightShowEditModal('${f.id}')" style="background:#16a085; color:#fff; border:none; border-radius:6px; padding:6px 10px; font-size:11px; cursor:pointer;">编辑</button>
@@ -15136,9 +15156,9 @@
         }
     }
 
-    window.onload = function(){
+    window.onload = async function(){
         initTheme();
-        initAuth();
+        await initAuth();
         checkAndAutoSyncFromCloud();
     };
 
