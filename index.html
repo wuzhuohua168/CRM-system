@@ -838,11 +838,20 @@
                 box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12) !important; 
             }
             body.dark-mode #freight-modal label { color: var(--text-secondary) !important; }
-            body.dark-mode #crm-modal-body input,
-            body.dark-mode #crm-modal-body select,
+            body.dark-mode #crm-pdf-modal > div { background: var(--bg-primary) !important; }
+            body.dark-mode #crm-timeline-modal > div > div { background: var(--bg-primary) !important; }
+            body.dark-mode #crm-timeline-content { background: var(--bg-primary) !important; }
+            body.dark-mode #crm-modal-body input[type="text"],
+            body.dark-mode #crm-modal-body input[type="number"],
+            body.dark-mode #crm-modal-body input[type="date"],
+            body.dark-mode #crm-detail-body input[type="text"],
+            body.dark-mode #crm-detail-body input[type="number"],
+            body.dark-mode #crm-detail-body input[type="date"] { 
+                background: var(--bg-secondary) !important; 
+                color: var(--text-primary) !important; 
+                border-color: var(--border-color-strong) !important; 
+            }
             body.dark-mode #crm-modal-body textarea,
-            body.dark-mode #crm-detail-body input,
-            body.dark-mode #crm-detail-body select,
             body.dark-mode #crm-detail-body textarea { 
                 background: var(--bg-secondary) !important; 
                 color: var(--text-primary) !important; 
@@ -863,6 +872,26 @@
             body.dark-mode #crm-detail-body div[style*="color:#666"] { color: var(--text-secondary) !important; }
             body.dark-mode #crm-modal-body div[style*="color:#4a90e2"],
             body.dark-mode #crm-detail-body div[style*="color:#4a90e2"] { color: var(--accent-blue) !important; }
+            body.dark-mode #crm-modal-body div[style*="background:#f8f8f8"],
+            body.dark-mode #crm-modal-body div[style*="background: #f8f8f8"],
+            body.dark-mode #crm-detail-body div[style*="background:#f8f8f8"],
+            body.dark-mode #crm-detail-body div[style*="background: #f8f8f8"] { background: var(--bg-tertiary) !important; }
+            body.dark-mode #crm-modal-body div[style*="background:#f0f7ff"],
+            body.dark-mode #crm-modal-body div[style*="background: #f0f7ff"],
+            body.dark-mode #crm-detail-body div[style*="background:#f0f7ff"],
+            body.dark-mode #crm-detail-body div[style*="background: #f0f7ff"] { background: rgba(10, 132, 255, 0.1) !important; }
+            body.dark-mode #crm-modal-body div[style*="border:1px solid #e0e0e0"],
+            body.dark-mode #crm-modal-body div[style*="border: 1px solid #e0e0e0"],
+            body.dark-mode #crm-detail-body div[style*="border:1px solid #e0e0e0"],
+            body.dark-mode #crm-detail-body div[style*="border: 1px solid #e0e0e0"] { border-color: var(--border-color) !important; }
+            body.dark-mode #crm-detail-body div[style*="background:#f8fbff"],
+            body.dark-mode #crm-detail-body div[style*="background: #f8fbff"] { background: rgba(10, 132, 255, 0.1) !important; }
+            body.dark-mode #crm-detail-body div[style*="color:#2c3e50"],
+            body.dark-mode #crm-detail-body div[style*="color: #2c3e50"] { color: var(--text-primary) !important; }
+            body.dark-mode #crm-detail-body div[style*="color:#888"],
+            body.dark-mode #crm-detail-body div[style*="color: #888"] { color: var(--text-secondary) !important; }
+            body.dark-mode #crm-detail-body div[style*="border-bottom:1px solid #e8f0f8"],
+            body.dark-mode #crm-detail-body div[style*="border-bottom: 1px solid #e8f0f8"] { border-bottom-color: var(--border-color) !important; }
 
             .preview-card-header {
                 display: flex;
