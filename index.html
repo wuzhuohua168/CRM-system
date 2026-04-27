@@ -908,6 +908,33 @@
             body.dark-mode #crm-f-lcl-profit { color: var(--accent-green) !important; }
             body.dark-mode #crm-f-margin,
             body.dark-mode #crm-f-lcl-margin { background: rgba(39, 174, 96, 0.3) !important; color: var(--accent-green) !important; }
+            body.dark-mode #crm-fee-fx-rows input,
+            body.dark-mode #crm-fee-fx-rows select,
+            body.dark-mode #crm-cost-rows input,
+            body.dark-mode #crm-cost-rows select { 
+                background: var(--bg-secondary) !important; 
+                color: var(--text-primary) !important; 
+                border-color: var(--border-color-strong) !important; 
+            }
+            body.dark-mode #crm-fee-fx-rows input:focus,
+            body.dark-mode #crm-fee-fx-rows select:focus,
+            body.dark-mode #crm-cost-rows input:focus,
+            body.dark-mode #crm-cost-rows select:focus { 
+                border-color: var(--accent-blue) !important; 
+                box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12) !important; 
+            }
+            body.dark-mode #crm-fee-fx-rows div[style*="background:#f0fff4"],
+            body.dark-mode #crm-fee-fx-rows div[style*="background: #f0fff4"] { 
+                background: rgba(39, 174, 96, 0.15) !important; 
+                border-color: rgba(39, 174, 96, 0.3) !important; 
+                color: var(--accent-green) !important; 
+            }
+            body.dark-mode #crm-cost-rows div[style*="background:#fff8f0"],
+            body.dark-mode #crm-cost-rows div[style*="background: #fff8f0"] { 
+                background: rgba(230, 126, 34, 0.15) !important; 
+                border-color: rgba(230, 126, 34, 0.3) !important; 
+                color: var(--accent-orange) !important; 
+            }
 
             .preview-card-header {
                 display: flex;
