@@ -14767,56 +14767,20 @@ function createQRCode(container, text){
 }
 
 function exportLabelToPDF(){
-    console.log('exportLabelToPDF called');
     const preview = document.getElementById('shipping-label-preview');
-    console.log('preview element:', preview);
-    
-    if(!preview){
-        console.error('Preview element not found');
+    if(!preview || !preview.innerHTML.trim()){
         alert('请先生成面单预览');
         return;
     }
     
     const tracking = document.getElementById('label-tracking').value || 'label';
-    console.log('tracking:', tracking);
+    const goods = document.getElementById('label-goods').value || '';
+    const pieces = document.getElementById('label-pieces').value || '1';
     
-    if(typeof html2canvas === 'undefined'){
-        console.log('html2canvas not loaded, loading...');
-        const script1 = document.createElement('script');
-        script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        script1.onload = () => {
-            console.log('html2canvas loaded');
-            const script2 = document.createElement('script');
-            script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            script2.onload = () => {
-                console.log('jsPDF loaded');
-                exportLabelToPDFActual(preview, tracking);
-            };
-            script2.onerror = () => {
-                console.error('Failed to load jsPDF');
-                alert('PDF库加载失败，请重试');
-            };
-            document.head.appendChild(script2);
-        };
-        script1.onerror = () => {
-            console.error('Failed to load html2canvas');
-            alert('图片库加载失败，请重试');
-        };
-        document.head.appendChild(script1);
-    } else {
-        console.log('html2canvas already loaded');
-        exportLabelToPDFActual(preview, tracking);
-    }
-}
-
-function exportLabelToPDFActual(preview, tracking){
-    console.log('exportLabelToPDFActual called');
-    console.log('html2canvas available:', typeof html2canvas);
-    console.log('jsPDF available:', typeof window.jspdf);
+    const fileName = `${tracking}${goods ? '_' + goods : ''}_${pieces}件.pdf`;
     
     try {
         html2canvas(preview, { scale: 2, backgroundColor: '#fff' }).then(canvas => {
-            console.log('Canvas created:', canvas.width, 'x', canvas.height);
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
@@ -14832,55 +14796,24 @@ function exportLabelToPDFActual(preview, tracking){
             const y = (pH - finalH) / 2;
             
             pdf.addImage(imgData, 'JPEG', x, y, finalW, finalH);
-            pdf.save(`shipping_label_${tracking}.pdf`);
-            console.log('PDF saved successfully');
+            pdf.save(fileName);
         }).catch(err => {
-            console.error('html2canvas error:', err);
             alert('PDF生成失败: ' + err.message);
         });
     } catch(e) {
-        console.error('exportLabelToPDFActual error:', e);
         alert('PDF生成失败: ' + e.message);
     }
 }
 
 function shareLabelAsImage(){
-    console.log('shareLabelAsImage called');
     const preview = document.getElementById('shipping-label-preview');
-    console.log('preview element:', preview);
-    
-    if(!preview){
-        console.error('Preview element not found');
+    if(!preview || !preview.innerHTML.trim()){
         alert('请先生成面单预览');
         return;
     }
     
-    if(typeof html2canvas === 'undefined'){
-        console.log('html2canvas not loaded, loading...');
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        script.onload = () => {
-            console.log('html2canvas loaded');
-            shareLabelAsImageActual(preview);
-        };
-        script.onerror = () => {
-            console.error('Failed to load html2canvas');
-            alert('图片库加载失败，请重试');
-        };
-        document.head.appendChild(script);
-    } else {
-        console.log('html2canvas already loaded');
-        shareLabelAsImageActual(preview);
-    }
-}
-
-function shareLabelAsImageActual(preview){
-    console.log('shareLabelAsImageActual called');
-    console.log('html2canvas available:', typeof html2canvas);
-    
     try {
         html2canvas(preview, { scale: 2, backgroundColor: '#fff' }).then(canvas => {
-            console.log('Canvas created:', canvas.width, 'x', canvas.height);
             canvas.toBlob(blob => {
                 if(navigator.share && navigator.canShare && navigator.canShare({ files: [blob] })){
                     const file = new File([blob], 'shipping_label.png', { type: 'image/png' });
@@ -14888,21 +14821,17 @@ function shareLabelAsImageActual(preview){
                         files: [file],
                         title: 'Shipping Label',
                         text: 'Shipping Label Image'
-                    }).catch(err => {
-                        console.log('Share failed:', err);
+                    }).catch(() => {
                         downloadImage(canvas);
                     });
                 } else {
-                    console.log('Web Share API not available, downloading...');
                     downloadImage(canvas);
                 }
             });
         }).catch(err => {
-            console.error('html2canvas error:', err);
             alert('图片生成失败: ' + err.message);
         });
     } catch(e) {
-        console.error('shareLabelAsImageActual error:', e);
         alert('图片生成失败: ' + e.message);
     }
 }
