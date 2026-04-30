@@ -3993,12 +3993,23 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         showToast('正在生成图片...');
         
         try {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            
+            if (isDarkMode) {
+                document.body.classList.remove('dark-mode');
+                await new Promise(r => requestAnimationFrame(r));
+            }
+            
             const canvas = await html2canvas(content, {
                 scale: 2,
                 backgroundColor: '#ffffff',
                 useCORS: true,
                 logging: false
             });
+            
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
             
             const order = crmCurrentTimelineOrder || {};
             const orderNo = order.orderno || order.mbl || 'tracking';
@@ -4032,6 +4043,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 }
             }, 'image/png');
         } catch (error) {
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
             console.error('图片生成失败:', error);
             showToast('❌ 图片生成失败: ' + error.message);
             shareBtns.style.display = 'flex';
