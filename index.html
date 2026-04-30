@@ -19,25 +19,6 @@
     </head>
     <body>
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
-    <div id="lang-selector" class="lang-selector" style="position:fixed; top:12px; right:60px; z-index:10000;">
-        <button onclick="toggleLangDropdown()" style="width:40px; height:40px; border-radius:50%; background:var(--bg-primary); border:0.5px solid var(--border-color); box-shadow:var(--shadow-md); cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center;" title="切换语言">
-            <span id="current-lang-flag">🇨🇳</span>
-        </button>
-        <div id="lang-dropdown" class="lang-dropdown" style="display:none; position:absolute; top:48px; right:0; background:var(--bg-primary); border:0.5px solid var(--border-color); border-radius:12px; box-shadow:var(--shadow-lg); padding:8px 0; min-width:140px;">
-            <div class="lang-option" data-lang="zh-CN" onclick="selectLanguage('zh-CN')" style="padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background 0.15s;">
-                <span>🇨🇳</span>
-                <span style="font-size:13px; color:var(--text-primary);">中文</span>
-            </div>
-            <div class="lang-option" data-lang="en-US" onclick="selectLanguage('en-US')" style="padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background 0.15s;">
-                <span>🇺🇸</span>
-                <span style="font-size:13px; color:var(--text-primary);">English</span>
-            </div>
-            <div class="lang-option" data-lang="ja-JP" onclick="selectLanguage('ja-JP')" style="padding:10px 16px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background 0.15s;">
-                <span>🇯🇵</span>
-                <span style="font-size:13px; color:var(--text-primary);">日本語</span>
-            </div>
-        </div>
-    </div>
     <!-- 登录界面 -->
     <div id="login-screen">
         <div class="login-card">
