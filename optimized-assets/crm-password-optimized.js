@@ -6527,18 +6527,117 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         if (!list || !list.length) return;
         crmClosePdfModal();
 
-        const html = crmBuildPdfHtml(list, mode, { includeActions: true });
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+            showToast('PDF生成库未加载，正在加载...');
+            const script1 = document.createElement('script');
+            script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script1.onload = () => {
+                const script2 = document.createElement('script');
+                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script2.onload = () => crmBuildAndDownloadPDFActual(list, mode);
+                document.head.appendChild(script2);
+            };
+            document.head.appendChild(script1);
+            return;
+        }
+        
+        crmBuildAndDownloadPDFActual(list, mode);
+    }
 
-        // Use Blob URL (works in WeChat / mobile browsers, avoids popup block)
-        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.target   = '_blank';
-        a.rel      = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 3000);
+    async function crmBuildAndDownloadPDFActual(list, mode) {
+        const isClient = mode === 'client';
+        const bizTypes = [...new Set(list.map(r => r.bizType || 'fcl'))];
+        const bizLabel = bizTypes.length === 1
+            ? (bizTypes[0] === 'lcl' ? '散货费用单' : '整柜费用单')
+            : '业务费用单';
+        
+        const firstRecord = list[0];
+        const safeOrder = String(firstRecord.orderno || firstRecord.mbl || firstRecord.id || 'record').replace(/[\/:*?"<>|]+/g, '-').trim();
+        const safeGoods = String(firstRecord.goods || '').replace(/[\/:*?"<>|]+/g, '-').trim().substring(0, 20);
+        const totalPieces = list.reduce((sum, r) => sum + (parseInt(r.pieces) || parseInt(r.cqty) || 1), 0);
+        
+        const fileNameParts = [safeOrder];
+        if (safeGoods) fileNameParts.push(safeGoods);
+        fileNameParts.push(`${totalPieces}件`);
+        const fileName = `${fileNameParts.join('_')}.pdf`;
+
+        showToast('正在生成PDF...');
+
+        const html = crmBuildPdfHtml(list, mode, { includeActions: false });
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:1120px;background:#fff;z-index:-9999;';
+        wrap.innerHTML = html;
+        document.body.appendChild(wrap);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            const canvas = await html2canvas(wrap, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                logging: false,
+                width: wrap.scrollWidth,
+                height: wrap.scrollHeight
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4');
+            
+            const pageWidth = 297;
+            const pageHeight = 210;
+            const margin = 5;
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            let heightLeft = imgHeight;
+            let position = margin;
+            
+            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - margin * 2);
+            
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight + margin;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - margin * 2);
+            }
+            
+            const pdfBlob = pdf.output('blob');
+            const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                try {
+                    await navigator.share({
+                        title: fileName,
+                        files: [pdfFile]
+                    });
+                    wrap.remove();
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') {
+                        wrap.remove();
+                        return;
+                    }
+                }
+            }
+            
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 3000);
+            
+            showToast('PDF已下载');
+        } catch (err) {
+            console.error(err);
+            showToast('PDF生成失败：' + (err.message || '未知错误'), true);
+        } finally {
+            wrap.remove();
+        }
     }
 
     async function crmShareClientPdf(id) {
@@ -9291,6 +9390,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     }
 
     function exportLabelToPDFActual(preview, tracking){
+        const goods = document.getElementById('label-goods').value || '';
+        const pieces = document.getElementById('label-pieces').value || '1';
+        
         html2canvas(preview, { scale: 2, backgroundColor: '#fff', useCORS: true }).then(async canvas => {
             if (!window.jspdf || !window.jspdf.jsPDF) {
                 throw new Error('jsPDF 未加载');
@@ -9311,7 +9413,10 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             
             pdf.addImage(imgData, 'JPEG', x, y, finalW, finalH);
 
-            const fileName = `shipping_label_${tracking}.pdf`;
+            const fileNameParts = [tracking];
+            if (goods) fileNameParts.push(goods);
+            fileNameParts.push(`${pieces}件`);
+            const fileName = `${fileNameParts.join('_')}.pdf`;
             const blob = pdf.output('blob');
             const file = new File([blob], fileName, { type: 'application/pdf' });
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -9451,6 +9556,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
 
     window.onload = async function(){
         initTheme();
+        initLanguage();
         await initAuth();
         checkAndAutoSyncFromCloud();
     };
