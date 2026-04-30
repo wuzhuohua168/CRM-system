@@ -5259,6 +5259,7 @@
             /* 标签预览区域 */
             #container { margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
             .page-wrapper { background: #fff; margin-bottom: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1); overflow: hidden; }
+            body.dark .page-wrapper { box-shadow: 0 0 12px rgba(0,0,0,0.45); }
             .size-100 { width: 100mm; height: 100mm; }
             .size-80 { width: 80mm; height: 80mm; }
             .size-50 { width: 100mm; height: 50mm; }
@@ -5322,6 +5323,7 @@
         <div class="btn-group">
             <button style="background:#4a90e2" onclick="renderPreview()">Generate</button>
             <button style="background:#28a745" onclick="exportToPDF()">Export</button>
+            <button style="background:#e67e22" onclick="sharePreviewAsImage()">Share</button>
             <button style="background:#9b59b6" onclick="copyLabelInfo()">Copy</button>
             <button style="background:#e67e22" onclick="copySimpleInfo()">Easy</button>
         </div>
@@ -5455,12 +5457,62 @@
 
                 // 修改点：导出文件名格式：运输方式_单号_件数
                 const fileName = `${finalModeName || '标签'}_${currentMainTracking}_${pages.length}件.pdf`;
-                pdf.save(fileName);
+                const blob = pdf.output('blob');
+                const file = new File([blob], fileName, { type: 'application/pdf' });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({ files: [file], title: fileName });
+                        return;
+                    } catch (err) {
+                        if (err && err.name === 'AbortError') return;
+                    }
+                }
+                downloadBlob(blob, fileName);
             } catch (e) {
                 alert("导出异常：" + e.message);
             } finally {
                 overlay.style.display = 'none';
             }
+        }
+
+        async function sharePreviewAsImage() {
+            const pages = document.querySelectorAll('.page-wrapper');
+            if (pages.length === 0) return alert("请先生成预览！");
+            try {
+                const firstPage = pages[0];
+                const canvas = await html2canvas(firstPage, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (!blob) throw new Error('图片生成失败');
+                const fileName = `${finalModeName || '标签'}_${currentMainTracking || 'preview'}.png`;
+                const file = new File([blob], fileName, { type: 'image/png' });
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({ files: [file], title: fileName });
+                        return;
+                    } catch (err) {
+                        if (err && err.name === 'AbortError') return;
+                    }
+                }
+                downloadBlob(blob, fileName);
+            } catch (e) {
+                alert("分享图片失败：" + e.message);
+            }
+        }
+
+        function downloadBlob(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         function copyLabelInfo() {
