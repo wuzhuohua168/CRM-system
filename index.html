@@ -5586,12 +5586,29 @@
             return Number.isFinite(value) && value > 0 ? value : null;
         }
 
-        window.initRates = async function initRatesOverride() {
+        async function fetchLatestRates() {
+            try {
+                const res = await fetch('https://api.frankfurter.dev/v1/latest?base=USD');
+                const data = await res.json();
+                if (data && data.rates) {
+                    return { USD: 1, ...data.rates };
+                }
+            } catch (e) {}
             try {
                 const res = await fetch('https://open.er-api.com/v6/latest/USD');
                 const data = await res.json();
                 if (data && data.rates) {
-                    window.rates = data.rates;
+                    return { USD: 1, ...data.rates };
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        window.initRates = async function initRatesOverride() {
+            try {
+                const latestRates = await fetchLatestRates();
+                if (latestRates) {
+                    window.rates = latestRates;
                     localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates: window.rates }));
                 }
             } catch (e) {}
@@ -5719,7 +5736,7 @@
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 8000);
-                const url = `https://api.frankfurter.dev/v2/rates?from=${formatDate(start)}&to=${formatDate(end)}&base=JPY&symbols=CNY`;
+                const url = `https://api.frankfurter.dev/v1/${formatDate(start)}..${formatDate(end)}?base=JPY&symbols=CNY`;
                 const res = await fetch(url, { signal: controller.signal });
                 clearTimeout(timeoutId);
                 const data = await res.json();
@@ -5727,7 +5744,7 @@
 
                 if (data && data.rates && typeof data.rates === 'object') {
                     Object.entries(data.rates).forEach(([date, entry]) => {
-                        const value = Number(entry && (entry.CNY ?? entry.JPYCNY ?? (entry.rates && entry.rates.CNY)));
+                        const value = Number(entry && entry.CNY);
                         if (Number.isFinite(value) && value > 0) {
                             points.push({ date, value });
                         }
@@ -5948,6 +5965,7 @@
         });
 
         setTimeout(() => { hardRefreshDashboardModules().catch(() => {}); }, 300);
+        setInterval(() => { hardRefreshDashboardModules().catch(() => {}); }, 15000);
     })();
     </script>
 
