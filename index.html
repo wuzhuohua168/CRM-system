@@ -5866,6 +5866,88 @@
             if (typeof originalReminderRefresh === 'function') originalReminderRefresh();
             window.updateDashboard();
         };
+
+        function readRatesFromCache() {
+            try {
+                const cached = JSON.parse(localStorage.getItem('hcn_rates_cache') || '{}');
+                if (cached && cached.rates) return cached.rates;
+            } catch (e) {}
+            return null;
+        }
+
+        function readRemindersDirect() {
+            try {
+                const direct = JSON.parse(localStorage.getItem('logistics_reminder_data') || '[]');
+                if (Array.isArray(direct) && direct.length) return direct;
+            } catch (e) {}
+            try {
+                const crmData = JSON.parse(localStorage.getItem('hgcd_crm_fcl_v1') || '[]');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return crmData.flatMap((r) => {
+                    const items = [];
+                    [
+                        ['etd', 'ETD提醒'],
+                        ['eta', 'ETA提醒'],
+                        ['freetime', '免柜期到期']
+                    ].forEach(([key, label]) => {
+                        if (!r[key]) return;
+                        const date = new Date(r[key]);
+                        if (Number.isNaN(date.getTime())) return;
+                        const daysLeft = Math.ceil((date - today) / 86400000);
+                        if (daysLeft < 0 || daysLeft > 30) return;
+                        items.push({
+                            title: `${label}: ${r.client || r.orderno || r.id || ''}`,
+                            date: r[key],
+                            daysLeft
+                        });
+                    });
+                    return items;
+                });
+            } catch (e) {}
+            return [];
+        }
+
+        async function hardRefreshDashboardModules() {
+            if (!getSafeRateValue('USD')) {
+                const cachedRates = readRatesFromCache();
+                if (cachedRates) window.rates = cachedRates;
+            }
+
+            if (typeof window.updateDashboard === 'function') {
+                const reminders = readRemindersDirect();
+                if (reminders.length) {
+                    const titleEl = document.getElementById('dashboard-holiday-title');
+                    const infoEl = document.getElementById('dashboard-holiday-info');
+                    if (titleEl && infoEl) {
+                        titleEl.innerText = '本月提醒';
+                        infoEl.innerText = reminders
+                            .sort((a, b) => a.daysLeft - b.daysLeft)
+                            .slice(0, 3)
+                            .map(item => `${item.date} ${item.title}`)
+                            .join(' | ');
+                    }
+                }
+                window.updateDashboard();
+            }
+
+            if (typeof window.convertRate === 'function') window.convertRate('left');
+            if (typeof window.convertTriple === 'function') window.convertTriple('JPY');
+            if (typeof window.loadJpyTrend === 'function') await window.loadJpyTrend(window.trendDays || 30);
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(() => { hardRefreshDashboardModules().catch(() => {}); }, 100);
+            setTimeout(() => { hardRefreshDashboardModules().catch(() => {}); }, 800);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                setTimeout(() => { hardRefreshDashboardModules().catch(() => {}); }, 150);
+            }
+        });
+
+        setTimeout(() => { hardRefreshDashboardModules().catch(() => {}); }, 300);
     })();
     </script>
 
