@@ -1,7 +1,12 @@
 const PASSWORD_KEY = 'crm_system_password_hash';
     const SESSION_KEY = 'crm_system_session';
     const LOCK_TIMEOUT = 30 * 60 * 1000;
+    const SESSION_ACTIVITY_SYNC_MS = 15000;
     let lastActivityTime = Date.now();
+    let lastSessionSyncTime = 0;
+    let modulesInitialized = false;
+    let dashboardNowTimer = null;
+    let autoBackupTimer = null;
 
     function simpleHash(str){
         let hash = 0;
@@ -17,19 +22,42 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         return localStorage.getItem(PASSWORD_KEY) !== null;
     }
 
-    function checkSession(){
+    function getSessionData(){
         const session = sessionStorage.getItem(SESSION_KEY);
-        if(!session) return false;
+        if(!session) return null;
         try {
             const data = JSON.parse(session);
-            return data && data.timestamp;
+            return data && typeof data === 'object' ? data : null;
         } catch(e) {
-            return false;
+            return null;
         }
     }
 
-    function createSession(){
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ timestamp: Date.now() }));
+    function checkSession(){
+        return !!getSessionData();
+    }
+
+    function createSession(activeAt = Date.now()){
+        const payload = {
+            timestamp: activeAt,
+            activeAt
+        };
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+        lastSessionSyncTime = activeAt;
+    }
+
+    function syncSessionActivity(force = false){
+        const now = Date.now();
+        if (!checkSession()) return;
+        if (!force && now - lastSessionSyncTime < SESSION_ACTIVITY_SYNC_MS) return;
+        createSession(now);
+    }
+
+    function isSessionExpired(sessionData = getSessionData()){
+        if (!sessionData) return false;
+        const lastActiveAt = Number(sessionData.activeAt || sessionData.timestamp || 0);
+        if (!lastActiveAt) return false;
+        return Date.now() - lastActiveAt > LOCK_TIMEOUT;
     }
 
     function clearSession(){
@@ -68,7 +96,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         if(inputHash === storedHash){
             createSession();
             hideLoginScreen();
-            await initAllModules();
+            await ensureModulesInitialized();
         } else {
             document.getElementById('login-error').style.display = 'block';
             document.getElementById('login-password').value = '';
@@ -89,7 +117,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         localStorage.setItem(PASSWORD_KEY, hash);
         createSession();
         hideLoginScreen();
-        await initAllModules();
+        await ensureModulesInitialized();
         showToast('密码设置成功');
     }
 
@@ -138,11 +166,13 @@ const PASSWORD_KEY = 'crm_system_password_hash';
 
     function updateActivity(){
         lastActivityTime = Date.now();
+        syncSessionActivity();
     }
 
     function checkAutoLock(){
-        if(hasPassword() && !checkSession()){
-            showLoginForm();
+        if(!hasPassword()) return;
+        if (isSessionExpired()) {
+            lockSystem();
         }
     }
 
@@ -152,13 +182,14 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     document.addEventListener('touchstart', updateActivity);
 
     setInterval(() => {
-        if(hasPassword() && Date.now() - lastActivityTime > LOCK_TIMEOUT){
+        if(hasPassword() && (Date.now() - lastActivityTime > LOCK_TIMEOUT || isSessionExpired())){
             lockSystem();
         }
     }, 60000);
 
     document.addEventListener('visibilitychange', () => {
         if(document.visibilityState === 'visible'){
+            updateActivity();
             checkAutoLock();
         }
     });
@@ -168,7 +199,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             showSetPasswordForm();
         } else if(checkSession()){
             hideLoginScreen();
-            await initAllModules();
+            lastActivityTime = Date.now();
+            syncSessionActivity(true);
+            await ensureModulesInitialized();
         } else {
             showLoginForm();
         }
@@ -660,10 +693,16 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         }
     }
 
+    async function ensureModulesInitialized() {
+        if (modulesInitialized) return;
+        modulesInitialized = true;
+        await initAllModules();
+    }
+
     async function initAllModules(){
         autoClearCache();
         autoBackup();
-        setInterval(autoBackup, 30 * 60 * 1000);
+        if (!autoBackupTimer) autoBackupTimer = setInterval(autoBackup, 30 * 60 * 1000);
         initLanguage();
         await initRates();
         restoreAppState();
@@ -685,7 +724,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         updateDashboard();
         renderHomeQuoteGrid();
         updateDashboardNow();
-        setInterval(updateDashboardNow, 1000);
+        if (!dashboardNowTimer) dashboardNowTimer = setInterval(updateDashboardNow, 1000);
         updateStorageStatus();
         initNewModules();
     }
@@ -3976,6 +4015,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     }
 
     async function crmShareTimelineAsImage() {
+        console.log('crmShareTimelineAsImage called');
         const content = document.getElementById('crm-timeline-content');
         const shareBtns = document.getElementById('crm-timeline-share-btns');
         
@@ -3984,6 +4024,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             return;
         }
         
+        console.log('html2canvas type:', typeof html2canvas);
         if (typeof html2canvas === 'undefined') {
             showToast('❌ 图片生成库未加载，请刷新页面重试');
             return;
@@ -3992,20 +4033,24 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         shareBtns.style.display = 'none';
         showToast('正在生成图片...');
         
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        console.log('isDarkMode:', isDarkMode);
+        
         try {
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            
             if (isDarkMode) {
                 document.body.classList.remove('dark-mode');
                 await new Promise(r => requestAnimationFrame(r));
+                await new Promise(r => setTimeout(r, 100));
             }
             
+            console.log('Starting html2canvas...');
             const canvas = await html2canvas(content, {
                 scale: 2,
                 backgroundColor: '#ffffff',
                 useCORS: true,
                 logging: false
             });
+            console.log('html2canvas completed, canvas:', canvas);
             
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
@@ -9224,6 +9269,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     function exportLabelToPDF(){
         const preview = document.getElementById('shipping-label-preview');
         if(!preview) return;
+        if(!preview.innerHTML.trim()) {
+            generateLabelPreview();
+        }
         
         const tracking = document.getElementById('label-tracking').value || 'label';
         
@@ -9243,7 +9291,10 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     }
 
     function exportLabelToPDFActual(preview, tracking){
-        html2canvas(preview, { scale: 2, backgroundColor: '#fff' }).then(canvas => {
+        html2canvas(preview, { scale: 2, backgroundColor: '#fff', useCORS: true }).then(async canvas => {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                throw new Error('jsPDF 未加载');
+            }
             const imgData = canvas.toDataURL('image/jpeg', 0.95);
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
@@ -9259,13 +9310,31 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             const y = (pH - finalH) / 2;
             
             pdf.addImage(imgData, 'JPEG', x, y, finalW, finalH);
-            pdf.save(`shipping_label_${tracking}.pdf`);
+
+            const fileName = `shipping_label_${tracking}.pdf`;
+            const blob = pdf.output('blob');
+            const file = new File([blob], fileName, { type: 'application/pdf' });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({ files: [file], title: fileName });
+                    return;
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return;
+                }
+            }
+            downloadBlob(blob, fileName);
+        }).catch(err => {
+            console.error(err);
+            showToast(`PDF 导出失败: ${err.message || '未知错误'}`, true);
         });
     }
 
     function shareLabelAsImage(){
         const preview = document.getElementById('shipping-label-preview');
         if(!preview) return;
+        if(!preview.innerHTML.trim()) {
+            generateLabelPreview();
+        }
         
         if(typeof html2canvas === 'undefined'){
             const script = document.createElement('script');
@@ -9278,21 +9347,27 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     }
 
     function shareLabelAsImageActual(preview){
-        html2canvas(preview, { scale: 2, backgroundColor: '#fff' }).then(canvas => {
+        html2canvas(preview, { scale: 2, backgroundColor: '#fff', useCORS: true }).then(canvas => {
             canvas.toBlob(blob => {
-                if(navigator.share && navigator.canShare && navigator.canShare({ files: [blob] })){
-                    const file = new File([blob], 'shipping_label.png', { type: 'image/png' });
+                if (!blob) {
+                    throw new Error('图片生成失败');
+                }
+                const file = new File([blob], 'shipping_label.png', { type: 'image/png' });
+                if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
                     navigator.share({
                         files: [file],
                         title: 'Shipping Label',
                         text: 'Shipping Label Image'
                     }).catch(err => {
-                        downloadImage(canvas);
+                        if (!err || err.name !== 'AbortError') downloadImage(canvas);
                     });
                 } else {
                     downloadImage(canvas);
                 }
-            });
+            }, 'image/png');
+        }).catch(err => {
+            console.error(err);
+            showToast(`图片分享失败: ${err.message || '未知错误'}`, true);
         });
     }
 
@@ -9301,6 +9376,17 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         link.download = 'shipping_label.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
+    }
+
+    function downloadBlob(blob, fileName){
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     function copyLabelInfo(){
