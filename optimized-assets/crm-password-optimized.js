@@ -1327,25 +1327,44 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         if (!rates.USD) rates = { ...FALLBACK_RATES };
         convertRate('left');
         convertTriple('JPY');
+        updateDashboard();
         const el = document.getElementById('rate-status');
         if (el) el.innerText = rates.USD ? '汇率已加载' : '使用备用汇率';
     }
+
+    function getSafeRate(code) {
+        const value = Number(rates?.[code]);
+        return Number.isFinite(value) && value > 0 ? value : null;
+    }
+
     function convertRate(dir) {
         if(!rates.USD) {
-            // 确保有备用汇率
-            if (!rates.USD) rates = { ...FALLBACK_RATES };
+            rates = { ...FALLBACK_RATES };
         }
-        const from = document.getElementById('cur-left').value, to = document.getElementById('cur-right').value;
-        const l = document.getElementById('val-left'), r = document.getElementById('val-right');
+        const fromEl = document.getElementById('cur-left');
+        const toEl = document.getElementById('cur-right');
+        const l = document.getElementById('val-left');
+        const r = document.getElementById('val-right');
+        if (!fromEl || !toEl || !l || !r) return;
+        const from = fromEl.value;
+        const to = toEl.value;
+        const fromRate = getSafeRate(from);
+        const toRate = getSafeRate(to);
+        if (!fromRate || !toRate) {
+            setRateStatus('部分币种汇率缺失');
+            return;
+        }
         if(dir === 'left') {
             const lv = parseFloat(l.value);
             if (isNaN(lv)) { r.value = ''; return; }
-            r.value = (lv / rates[from] * rates[to]).toFixed(2);
+            r.value = (lv / fromRate * toRate).toFixed(2);
         } else {
             const rv = parseFloat(r.value);
             if (isNaN(rv)) { l.value = ''; return; }
-            l.value = (rv / rates[to] * rates[from]).toFixed(2);
+            l.value = (rv / toRate * fromRate).toFixed(2);
         }
+        setRateStatus(`实时汇率：1 ${from} ≈ ${(toRate / fromRate).toFixed(4)} ${to}`);
+        updateDashboard();
     }
 
     function setRateStatus(msg) {
@@ -1355,31 +1374,35 @@ const PASSWORD_KEY = 'crm_system_password_hash';
 
     function convertTriple(src) {
         if(!rates.USD) {
-            // 确保有备用汇率
-            if (!rates.USD) rates = { ...FALLBACK_RATES };
+            rates = { ...FALLBACK_RATES };
         }
         const jpyInput = document.getElementById('val-jpy-link');
         const cnyInput = document.getElementById('val-cny-link');
         const usdInput = document.getElementById('val-usd-link');
+        if (!jpyInput || !cnyInput || !usdInput) return;
+        const jpyRate = getSafeRate('JPY');
+        const cnyRate = getSafeRate('CNY');
+        const usdRate = getSafeRate('USD') || 1;
+        if (!jpyRate || !cnyRate) return;
 
         let baseUsd = 0;
         if (src === 'JPY') {
             const v = parseFloat(jpyInput.value);
             if (isNaN(v)) { cnyInput.value = ''; usdInput.value = ''; return; }
-            baseUsd = v / rates.JPY;
+            baseUsd = v / jpyRate;
         } else if (src === 'CNY') {
             const v = parseFloat(cnyInput.value);
             if (isNaN(v)) { jpyInput.value = ''; usdInput.value = ''; return; }
-            baseUsd = v / rates.CNY;
+            baseUsd = v / cnyRate;
         } else {
             const v = parseFloat(usdInput.value);
             if (isNaN(v)) { jpyInput.value = ''; cnyInput.value = ''; return; }
-            baseUsd = v / rates.USD;
+            baseUsd = v / usdRate;
         }
 
-        if (src !== 'JPY') jpyInput.value = (baseUsd * rates.JPY).toFixed(2);
-        if (src !== 'CNY') cnyInput.value = (baseUsd * rates.CNY).toFixed(2);
-        if (src !== 'USD') usdInput.value = (baseUsd * rates.USD).toFixed(2);
+        if (src !== 'JPY') jpyInput.value = (baseUsd * jpyRate).toFixed(2);
+        if (src !== 'CNY') cnyInput.value = (baseUsd * cnyRate).toFixed(2);
+        if (src !== 'USD') usdInput.value = (baseUsd * usdRate).toFixed(2);
     }
 
     async function loadJpyTrend(days) {
@@ -1399,11 +1422,23 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
             const data = await res.json();
-            if (!Array.isArray(data)) throw new Error('invalid trend data');
-            trendPoints = data
-                .filter(item => item && item.quote === 'CNY' && typeof item.rate === 'number')
-                .map(item => ({ date: item.date, value: item.rate }))
-                .sort((a, b) => a.date.localeCompare(b.date));
+            const points = [];
+            if (Array.isArray(data)) {
+                data.forEach(item => {
+                    const value = Number(item?.rate);
+                    if (item && item.quote === 'CNY' && Number.isFinite(value)) {
+                        points.push({ date: item.date, value });
+                    }
+                });
+            } else if (data && typeof data === 'object' && data.rates && typeof data.rates === 'object') {
+                Object.entries(data.rates).forEach(([date, entry]) => {
+                    const value = getSeriesPointValue(entry, 'JPY', 'CNY');
+                    if (Number.isFinite(value) && value > 0) {
+                        points.push({ date, value });
+                    }
+                });
+            }
+            trendPoints = points.sort((a, b) => a.date.localeCompare(b.date));
 
             if (!trendPoints.length) throw new Error('empty trend data');
             drawJpyTrendChart(trendPoints);
@@ -2973,18 +3008,33 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     function updateDashboard() {
         const rateEl = document.getElementById('dashboard-rates-info');
         if (rateEl) {
-            if (rates.CNY && rates.JPY && rates.USD) {
-                const jpyCny = (rates.CNY / rates.JPY).toFixed(4);
-                const usdCny = (rates.CNY / rates.USD).toFixed(4);
+            const cnyRate = getSafeRate('CNY');
+            const jpyRate = getSafeRate('JPY');
+            const usdRate = getSafeRate('USD') || 1;
+            if (cnyRate && jpyRate) {
+                const jpyCny = (cnyRate / jpyRate).toFixed(4);
+                const usdCny = (cnyRate / usdRate).toFixed(4);
                 rateEl.innerText = `JPY→CNY ${jpyCny} | USD→CNY ${usdCny}`;
             } else {
-                rateEl.innerText = '汇率加载中...';
+                rateEl.innerText = '使用备用汇率中...';
             }
         }
 
         const titleEl = document.getElementById('dashboard-holiday-title');
         const infoEl = document.getElementById('dashboard-holiday-info');
         if (titleEl && infoEl) {
+            reminderLoadData();
+            if (!reminderData.length) reminderGenerateFromCRM();
+            const monthReminders = reminderData
+                .slice()
+                .sort((a, b) => a.daysLeft - b.daysLeft)
+                .slice(0, 3)
+                .map(item => `${item.date} ${item.title}`);
+            if (monthReminders.length) {
+                titleEl.innerText = '本月提醒';
+                infoEl.innerText = monthReminders.join(' | ');
+                return;
+            }
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth() + 1;
@@ -2998,7 +3048,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 if (upcoming.length >= 3) break;
             }
             titleEl.innerText = upcoming.length ? '本月节假/休市' : '本月平稳';
-            infoEl.innerText = upcoming.length ? upcoming.join(' | ') : '本月暂无更多节假或休市提醒';
+            infoEl.innerText = upcoming.length ? upcoming.join(' | ') : '本月暂无更多提醒';
         }
     }
 
@@ -7164,6 +7214,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     function reminderRefresh(){
         reminderGenerateFromCRM();
         reminderRender();
+        updateDashboard();
     }
 
     function reminderGenerateFromCRM(){
@@ -7220,6 +7271,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         });
         reminderData = newReminders;
         reminderSaveData();
+        updateDashboard();
     }
 
     function reminderRender(){
@@ -9234,6 +9286,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 <div style="text-align:center; border-bottom:3px solid #000; padding-bottom:10px; margin-bottom:15px;">
                     <div style="font-size:16px; font-weight:bold; color:#000;">SHIPPING LABEL</div>
                     <div style="font-size:10px; color:#666; margin-top:3px;">${t.title}</div>
+                    ${tracking && tracking !== t.tracking ? `<div style="font-size:14px; font-weight:bold; color:#2c7be5; margin-top:8px; padding:6px 12px; background:#e8f4f8; border-radius:4px; display:inline-block;">📦 ${tracking}</div>` : ''}
                 </div>
                 
                 ${barcodeHTML}
