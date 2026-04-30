@@ -5580,8 +5580,16 @@
     <script src="./optimized-assets/crm-password-optimized.js?v=20260430-2"></script>
     <script>
     (function () {
+        function getGlobalRatesObject() {
+            try {
+                if (typeof rates === 'object' && rates) return rates;
+            } catch (e) {}
+            if (window.rates && typeof window.rates === 'object') return window.rates;
+            return {};
+        }
+
         function getSafeRateValue(code) {
-            const source = window.rates || {};
+            const source = getGlobalRatesObject();
             const value = Number(source[code]);
             return Number.isFinite(value) && value > 0 ? value : null;
         }
@@ -5608,24 +5616,30 @@
             try {
                 const latestRates = await fetchLatestRates();
                 if (latestRates) {
+                    try { rates = latestRates; } catch (e) {}
                     window.rates = latestRates;
-                    localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates: window.rates }));
+                    localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates: latestRates }));
                 }
             } catch (e) {}
 
             if (!getSafeRateValue('USD')) {
                 try {
                     const cached = JSON.parse(localStorage.getItem('hcn_rates_cache') || '{}');
-                    if (cached && cached.rates) window.rates = cached.rates;
+                    if (cached && cached.rates) {
+                        try { rates = cached.rates; } catch (e) {}
+                        window.rates = cached.rates;
+                    }
                 } catch (e) {}
             }
 
             if (!getSafeRateValue('USD')) {
-                window.rates = {
+                const fallbackRates = {
                     USD: 1, CNY: 7.24, JPY: 149.5, EUR: 0.92, GBP: 0.79, HKD: 7.82,
                     KRW: 1350, SGD: 1.34, AUD: 1.53, CAD: 1.36, CHF: 0.88, THB: 35.8,
                     MYR: 4.72, VND: 25400, INR: 83.5, PHP: 56.5, TWD: 32.4, NZD: 1.68
                 };
+                try { rates = fallbackRates; } catch (e) {}
+                window.rates = fallbackRates;
             }
 
             window.convertRate('left');
@@ -5860,14 +5874,10 @@
             const infoEl = document.getElementById('dashboard-holiday-info');
             if (!titleEl || !infoEl) return;
 
-            try {
-                if (typeof window.reminderLoadData === 'function') window.reminderLoadData();
-                if ((!window.reminderData || !window.reminderData.length) && typeof window.reminderGenerateFromCRM === 'function') {
-                    window.reminderGenerateFromCRM();
-                }
-            } catch (e) {}
-
-            const reminders = Array.isArray(window.reminderData) ? window.reminderData.slice().sort((a, b) => a.daysLeft - b.daysLeft).slice(0, 3) : [];
+            const reminders = readRemindersDirect()
+                .slice()
+                .sort((a, b) => a.daysLeft - b.daysLeft)
+                .slice(0, 3);
             if (reminders.length) {
                 titleEl.innerText = '本月提醒';
                 infoEl.innerText = reminders.map(item => `${item.date} ${item.title}`).join(' | ');
@@ -5880,7 +5890,9 @@
 
         const originalReminderRefresh = window.reminderRefresh;
         window.reminderRefresh = function reminderRefreshOverride() {
-            if (typeof originalReminderRefresh === 'function') originalReminderRefresh();
+            if (typeof originalReminderRefresh === 'function') {
+                try { originalReminderRefresh(); } catch (e) {}
+            }
             window.updateDashboard();
         };
 
