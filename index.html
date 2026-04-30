@@ -5578,6 +5578,296 @@
 
     
     <script src="./optimized-assets/crm-password-optimized.js?v=20260430-2"></script>
+    <script>
+    (function () {
+        function getSafeRateValue(code) {
+            const source = window.rates || {};
+            const value = Number(source[code]);
+            return Number.isFinite(value) && value > 0 ? value : null;
+        }
+
+        window.initRates = async function initRatesOverride() {
+            try {
+                const res = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await res.json();
+                if (data && data.rates) {
+                    window.rates = data.rates;
+                    localStorage.setItem('hcn_rates_cache', JSON.stringify({ ts: Date.now(), rates: window.rates }));
+                }
+            } catch (e) {}
+
+            if (!getSafeRateValue('USD')) {
+                try {
+                    const cached = JSON.parse(localStorage.getItem('hcn_rates_cache') || '{}');
+                    if (cached && cached.rates) window.rates = cached.rates;
+                } catch (e) {}
+            }
+
+            if (!getSafeRateValue('USD')) {
+                window.rates = {
+                    USD: 1, CNY: 7.24, JPY: 149.5, EUR: 0.92, GBP: 0.79, HKD: 7.82,
+                    KRW: 1350, SGD: 1.34, AUD: 1.53, CAD: 1.36, CHF: 0.88, THB: 35.8,
+                    MYR: 4.72, VND: 25400, INR: 83.5, PHP: 56.5, TWD: 32.4, NZD: 1.68
+                };
+            }
+
+            window.convertRate('left');
+            window.convertTriple('JPY');
+            window.updateDashboard();
+            const el = document.getElementById('rate-status');
+            if (el) el.innerText = '汇率已加载';
+        };
+
+        window.convertRate = function convertRateOverride(dir) {
+            const fromEl = document.getElementById('cur-left');
+            const toEl = document.getElementById('cur-right');
+            const leftEl = document.getElementById('val-left');
+            const rightEl = document.getElementById('val-right');
+            if (!fromEl || !toEl || !leftEl || !rightEl) return;
+
+            const fromRate = getSafeRateValue(fromEl.value);
+            const toRate = getSafeRateValue(toEl.value);
+            if (!fromRate || !toRate) {
+                const statusEl = document.getElementById('rate-status');
+                if (statusEl) statusEl.innerText = '部分币种汇率缺失';
+                return;
+            }
+
+            if (dir === 'left') {
+                const leftValue = parseFloat(leftEl.value);
+                if (Number.isNaN(leftValue)) {
+                    rightEl.value = '';
+                    return;
+                }
+                rightEl.value = (leftValue / fromRate * toRate).toFixed(2);
+            } else {
+                const rightValue = parseFloat(rightEl.value);
+                if (Number.isNaN(rightValue)) {
+                    leftEl.value = '';
+                    return;
+                }
+                leftEl.value = (rightValue / toRate * fromRate).toFixed(2);
+            }
+
+            const statusEl = document.getElementById('rate-status');
+            if (statusEl) statusEl.innerText = `实时汇率：1 ${fromEl.value} ≈ ${(toRate / fromRate).toFixed(4)} ${toEl.value}`;
+            window.updateDashboard();
+        };
+
+        window.convertTriple = function convertTripleOverride(src) {
+            const jpyInput = document.getElementById('val-jpy-link');
+            const cnyInput = document.getElementById('val-cny-link');
+            const usdInput = document.getElementById('val-usd-link');
+            if (!jpyInput || !cnyInput || !usdInput) return;
+
+            const jpyRate = getSafeRateValue('JPY');
+            const cnyRate = getSafeRateValue('CNY');
+            const usdRate = getSafeRateValue('USD') || 1;
+            if (!jpyRate || !cnyRate) return;
+
+            let baseUsd = 0;
+            if (src === 'JPY') {
+                const value = parseFloat(jpyInput.value);
+                if (Number.isNaN(value)) {
+                    cnyInput.value = '';
+                    usdInput.value = '';
+                    return;
+                }
+                baseUsd = value / jpyRate;
+            } else if (src === 'CNY') {
+                const value = parseFloat(cnyInput.value);
+                if (Number.isNaN(value)) {
+                    jpyInput.value = '';
+                    usdInput.value = '';
+                    return;
+                }
+                baseUsd = value / cnyRate;
+            } else {
+                const value = parseFloat(usdInput.value);
+                if (Number.isNaN(value)) {
+                    jpyInput.value = '';
+                    cnyInput.value = '';
+                    return;
+                }
+                baseUsd = value / usdRate;
+            }
+
+            if (src !== 'JPY') jpyInput.value = (baseUsd * jpyRate).toFixed(2);
+            if (src !== 'CNY') cnyInput.value = (baseUsd * cnyRate).toFixed(2);
+            if (src !== 'USD') usdInput.value = (baseUsd * usdRate).toFixed(2);
+        };
+
+        window.loadJpyTrend = async function loadJpyTrendOverride(days) {
+            window.trendDays = days;
+            ['7', '30', '90'].forEach(item => {
+                const btn = document.getElementById(`trend-btn-${item}`);
+                if (btn) btn.classList.toggle('active', Number(item) === days);
+            });
+            const statusEl = document.getElementById('jpy-trend-status');
+            if (statusEl) statusEl.innerText = '走势图加载中...';
+
+            const end = new Date();
+            const start = new Date();
+            start.setDate(end.getDate() - days + 1);
+            const formatDate = (date) => {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            };
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+                const url = `https://api.frankfurter.dev/v2/rates?from=${formatDate(start)}&to=${formatDate(end)}&base=JPY&symbols=CNY`;
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                const data = await res.json();
+                const points = [];
+
+                if (data && data.rates && typeof data.rates === 'object') {
+                    Object.entries(data.rates).forEach(([date, entry]) => {
+                        const value = Number(entry && (entry.CNY ?? entry.JPYCNY ?? (entry.rates && entry.rates.CNY)));
+                        if (Number.isFinite(value) && value > 0) {
+                            points.push({ date, value });
+                        }
+                    });
+                }
+
+                if (!points.length) throw new Error('empty trend data');
+                points.sort((a, b) => a.date.localeCompare(b.date));
+                window.trendPoints = points;
+
+                const summaryEl = document.getElementById('jpy-trend-summary');
+                const canvas = document.getElementById('jpy-trend-canvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                const cssWidth = canvas.clientWidth || 600;
+                const cssHeight = 180;
+                canvas.width = cssWidth * dpr;
+                canvas.height = cssHeight * dpr;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(dpr, dpr);
+                ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+                const padding = { top: 14, right: 44, bottom: 26, left: 42 };
+                const width = cssWidth - padding.left - padding.right;
+                const height = cssHeight - padding.top - padding.bottom;
+                const values = points.map(item => item.value);
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+                const range = max - min || 0.0001;
+
+                ctx.fillStyle = '#7a8a99';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                for (let i = 0; i <= 3; i++) {
+                    const y = padding.top + (height / 3) * i;
+                    const val = max - (range / 3) * i;
+                    ctx.fillText(val.toFixed(4), padding.left - 6, y);
+                }
+
+                ctx.strokeStyle = '#e6edf5';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 3; i++) {
+                    const y = padding.top + (height / 3) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, y);
+                    ctx.lineTo(padding.left + width, y);
+                    ctx.stroke();
+                }
+
+                ctx.beginPath();
+                points.forEach((point, index) => {
+                    const x = padding.left + (width * index) / Math.max(points.length - 1, 1);
+                    const y = padding.top + height - ((point.value - min) / range) * height;
+                    if (index === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.strokeStyle = '#4a90e2';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                const lastPoint = points[points.length - 1];
+                const lastX = padding.left + width;
+                const lastY = padding.top + height - ((lastPoint.value - min) / range) * height;
+                ctx.fillStyle = '#4a90e2';
+                ctx.beginPath();
+                ctx.arc(lastX, lastY, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#4a90e2';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(lastPoint.value.toFixed(4), lastX + 6, lastY);
+
+                ctx.fillStyle = '#7a8a99';
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillText(points[0].date.slice(5), padding.left, cssHeight - 8);
+                ctx.textAlign = 'right';
+                ctx.fillText(lastPoint.date.slice(5), padding.left + width, cssHeight - 8);
+
+                if (statusEl) statusEl.innerText = `近${days}天 JPY/CNY 历史汇率`;
+                if (summaryEl) {
+                    const latest = values[values.length - 1];
+                    const first = values[0];
+                    const change = latest - first;
+                    summaryEl.innerText = `最新 ${latest.toFixed(4)} | 区间 ${min.toFixed(4)}-${max.toFixed(4)} | 变化 ${change >= 0 ? '+' : ''}${change.toFixed(4)}`;
+                }
+            } catch (e) {
+                const canvas = document.getElementById('jpy-trend-canvas');
+                if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                if (statusEl) statusEl.innerText = '走势图加载失败';
+                const summaryEl = document.getElementById('jpy-trend-summary');
+                if (summaryEl) summaryEl.innerText = '历史汇率接口暂不可用';
+            }
+        };
+
+        window.updateDashboard = function updateDashboardOverride() {
+            const rateEl = document.getElementById('dashboard-rates-info');
+            const cnyRate = getSafeRateValue('CNY');
+            const jpyRate = getSafeRateValue('JPY');
+            const usdRate = getSafeRateValue('USD') || 1;
+            if (rateEl) {
+                rateEl.innerText = (cnyRate && jpyRate)
+                    ? `JPY→CNY ${(cnyRate / jpyRate).toFixed(4)} | USD→CNY ${(cnyRate / usdRate).toFixed(4)}`
+                    : '使用备用汇率中...';
+            }
+
+            const titleEl = document.getElementById('dashboard-holiday-title');
+            const infoEl = document.getElementById('dashboard-holiday-info');
+            if (!titleEl || !infoEl) return;
+
+            try {
+                if (typeof window.reminderLoadData === 'function') window.reminderLoadData();
+                if ((!window.reminderData || !window.reminderData.length) && typeof window.reminderGenerateFromCRM === 'function') {
+                    window.reminderGenerateFromCRM();
+                }
+            } catch (e) {}
+
+            const reminders = Array.isArray(window.reminderData) ? window.reminderData.slice().sort((a, b) => a.daysLeft - b.daysLeft).slice(0, 3) : [];
+            if (reminders.length) {
+                titleEl.innerText = '本月提醒';
+                infoEl.innerText = reminders.map(item => `${item.date} ${item.title}`).join(' | ');
+                return;
+            }
+
+            titleEl.innerText = '本月平稳';
+            infoEl.innerText = '本月暂无更多提醒';
+        };
+
+        const originalReminderRefresh = window.reminderRefresh;
+        window.reminderRefresh = function reminderRefreshOverride() {
+            if (typeof originalReminderRefresh === 'function') originalReminderRefresh();
+            window.updateDashboard();
+        };
+    })();
+    </script>
 
 
     <template id="template-macro">
