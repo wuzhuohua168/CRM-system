@@ -9074,6 +9074,296 @@
         </div>
     </div>
 
+    <script>
+    // =====================================================
+    // VPS API 配置和同步功能
+    // =====================================================
+    
+    let apiConfigs = [];
+    let currentApiConfig = null;
+    let autoSyncEnabled = false;
+
+    function loadApiConfigs() {
+        try {
+            const saved = localStorage.getItem('hgcd_api_configs');
+            if (saved) {
+                const data = JSON.parse(saved);
+                apiConfigs = data.configs || [];
+                autoSyncEnabled = data.autoSync || false;
+                if (apiConfigs.length > 0) {
+                    currentApiConfig = apiConfigs[0];
+                }
+            }
+        } catch (e) {
+            console.error('加载API配置失败:', e);
+        }
+        updateAutoSyncUI();
+    }
+
+    function saveApiConfigs() {
+        try {
+            localStorage.setItem('hgcd_api_configs', JSON.stringify({
+                configs: apiConfigs,
+                autoSync: autoSyncEnabled
+            }));
+        } catch (e) {
+            console.error('保存API配置失败:', e);
+        }
+    }
+
+    function showApiConfig() {
+        const modal = document.getElementById('api-config-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            loadApiConfigs();
+            renderApiConfigList();
+            updateAutoSyncUI();
+        }
+    }
+
+    function hideApiConfig() {
+        const modal = document.getElementById('api-config-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function addNewApiConfig() {
+        const editSection = document.getElementById('api-edit-section');
+        if (editSection) {
+            editSection.style.display = 'block';
+            document.getElementById('api-edit-title').textContent = '添加新配置';
+            document.getElementById('config-name').value = '';
+            document.getElementById('config-api-url').value = '';
+            document.getElementById('config-api-key').value = '';
+        }
+    }
+
+    function editApiConfig(index) {
+        if (index < 0 || index >= apiConfigs.length) return;
+        const config = apiConfigs[index];
+        
+        const editSection = document.getElementById('api-edit-section');
+        if (editSection) {
+            editSection.style.display = 'block';
+            editSection.dataset.editIndex = index;
+            document.getElementById('api-edit-title').textContent = '编辑配置';
+            document.getElementById('config-name').value = config.name || '';
+            document.getElementById('config-api-url').value = config.apiUrl || '';
+            document.getElementById('config-api-key').value = config.apiKey || '';
+        }
+    }
+
+    function saveCurrentApiConfig() {
+        const name = document.getElementById('config-name').value.trim();
+        const apiUrl = document.getElementById('config-api-url').value.trim();
+        const apiKey = document.getElementById('config-api-key').value.trim();
+
+        if (!name || !apiUrl || !apiKey) {
+            showApiConfigStatus('请填写所有必填项', 'error');
+            return;
+        }
+
+        const config = { name, apiUrl, apiKey, createdAt: new Date().toISOString() };
+        
+        const editSection = document.getElementById('api-edit-section');
+        const editIndex = editSection?.dataset?.editIndex;
+        
+        if (editIndex !== undefined && editIndex !== '') {
+            apiConfigs[parseInt(editIndex)] = config;
+        } else {
+            apiConfigs.push(config);
+        }
+
+        saveApiConfigs();
+        renderApiConfigList();
+        cancelEditApiConfig();
+        showApiConfigStatus('配置保存成功', 'success');
+    }
+
+    function cancelEditApiConfig() {
+        const editSection = document.getElementById('api-edit-section');
+        if (editSection) {
+            editSection.style.display = 'none';
+            delete editSection.dataset.editIndex;
+        }
+    }
+
+    function deleteApiConfig(index) {
+        if (confirm('确定要删除这个API配置吗？')) {
+            apiConfigs.splice(index, 1);
+            saveApiConfigs();
+            renderApiConfigList();
+            showApiConfigStatus('配置已删除', 'success');
+        }
+    }
+
+    function renderApiConfigList() {
+        const listEl = document.getElementById('api-config-list');
+        if (!listEl) return;
+
+        if (apiConfigs.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center;color:#999;padding:20px;font-size:13px;">暂无API配置，请点击"添加配置"按钮</div>';
+            return;
+        }
+
+        listEl.innerHTML = apiConfigs.map((config, index) => `
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:8px;padding:12px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <span style="font-weight:bold;color:var(--text-primary);font-size:14px;">${escapeHtml(config.name)}</span>
+                    <div style="display:flex;gap:6px;">
+                        <button onclick="selectApiConfig(${index})" style="background:#4a90e2;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;">选择</button>
+                        <button onclick="editApiConfig(${index})" style="background:#f39c12;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;">编辑</button>
+                        <button onclick="deleteApiConfig(${index})" style="background:#e74c3c;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;">删除</button>
+                    </div>
+                </div>
+                <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;">${escapeHtml(config.apiUrl)}</div>
+            </div>
+        `).join('');
+    }
+
+    function selectApiConfig(index) {
+        if (index < 0 || index >= apiConfigs.length) return;
+        currentApiConfig = apiConfigs[index];
+        showApiConfigStatus(`已选择配置: ${currentApiConfig.name}`, 'success');
+    }
+
+    function toggleAutoSync() {
+        autoSyncEnabled = !autoSyncEnabled;
+        saveApiConfigs();
+        updateAutoSyncUI();
+    }
+
+    function updateAutoSyncUI() {
+        const checkbox = document.getElementById('config-auto-sync');
+        const slider = document.getElementById('auto-sync-slider');
+        const dot = document.getElementById('auto-sync-dot');
+        
+        if (checkbox) checkbox.checked = autoSyncEnabled;
+        if (slider) slider.style.backgroundColor = autoSyncEnabled ? '#9b59b6' : '#ccc';
+        if (dot) dot.style.transform = autoSyncEnabled ? 'translateX(24px)' : 'translateX(0)';
+    }
+
+    function showApiConfigStatus(message, type = 'info') {
+        const statusEl = document.getElementById('api-config-status');
+        if (statusEl) {
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            statusEl.style.color = type === 'error' ? '#e74c3c' : type === 'success' ? '#27ae60' : '#4a90e2';
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 3000);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function crmExportTracking() {
+        if (!currentApiConfig) {
+            alert('请先在API设置中配置并选择一个API');
+            showApiConfig();
+            return;
+        }
+
+        try {
+            const crmData = JSON.parse(localStorage.getItem('hgcd_crm_fcl_v1') || '[]');
+            
+            if (crmData.length === 0) {
+                alert('没有CRM数据可同步');
+                return;
+            }
+
+            const confirmed = confirm(`即将同步 ${crmData.length} 条CRM记录到云端，是否继续？`);
+            if (!confirmed) return;
+
+            showApiConfigStatus('正在同步数据到云端...', 'info');
+
+            const response = await fetch(`${currentApiConfig.apiUrl}/api/sync`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': currentApiConfig.apiKey,
+                    'X-User-ID': 'default_user'
+                },
+                body: JSON.stringify({
+                    data: crmData,
+                    dataType: 'crm_records'
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showApiConfigStatus(`✅ 同步成功！已上传 ${result.recordCount} 条记录`, 'success');
+                alert(`数据同步成功！\n已上传 ${result.recordCount} 条记录到云端`);
+            } else {
+                throw new Error(result.error || '同步失败');
+            }
+
+        } catch (error) {
+            console.error('同步到云端失败:', error);
+            showApiConfigStatus('❌ 同步失败: ' + error.message, 'error');
+            alert('同步失败: ' + error.message);
+        }
+    }
+
+    async function crmRestoreFromCloud() {
+        if (!currentApiConfig) {
+            alert('请先在API设置中配置并选择一个API');
+            showApiConfig();
+            return;
+        }
+
+        try {
+            const confirmed = confirm('从云端恢复数据将覆盖本地数据，是否继续？');
+            if (!confirmed) return;
+
+            showApiConfigStatus('正在从云端恢复数据...', 'info');
+
+            const response = await fetch(`${currentApiConfig.apiUrl}/api/restore?dataType=crm_records`, {
+                method: 'GET',
+                headers: {
+                    'X-API-Key': currentApiConfig.apiKey,
+                    'X-User-ID': 'default_user'
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                localStorage.setItem('hgcd_crm_fcl_v1', JSON.stringify(result.data));
+                showApiConfigStatus(`✅ 恢复成功！已下载 ${result.data.length} 条记录`, 'success');
+                alert(`数据恢复成功！\n已下载 ${result.data.length} 条记录\n最后更新: ${result.lastUpdated}`);
+                
+                if (typeof crmRender === 'function') {
+                    crmRender();
+                }
+            } else {
+                throw new Error(result.error || '恢复失败');
+            }
+
+        } catch (error) {
+            console.error('从云端恢复失败:', error);
+            showApiConfigStatus('❌ 恢复失败: ' + error.message, 'error');
+            alert('恢复失败: ' + error.message);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadApiConfigs();
+        
+        const autoSyncCheckbox = document.getElementById('config-auto-sync');
+        if (autoSyncCheckbox) {
+            autoSyncCheckbox.addEventListener('change', toggleAutoSync);
+        }
+    });
+
+    </script>
+
     </body>
     </html>
     </template>
