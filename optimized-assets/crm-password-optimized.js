@@ -1,5 +1,6 @@
 const PASSWORD_KEY = 'crm_system_password_hash';
     const SESSION_KEY = 'crm_system_session';
+    const AUTH_TOKEN_KEY = 'crm_auth_token';
     const LOCK_TIMEOUT = 30 * 60 * 1000;
     const SESSION_ACTIVITY_SYNC_MS = 15000;
     let lastActivityTime = Date.now();
@@ -7,6 +8,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     let modulesInitialized = false;
     let dashboardNowTimer = null;
     let autoBackupTimer = null;
+    let vpsHasPassword = null;
 
     function simpleHash(str){
         let hash = 0;
@@ -18,7 +20,42 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         return hash.toString(16);
     }
 
+    function getAuthToken() {
+        return localStorage.getItem(AUTH_TOKEN_KEY);
+    }
+
+    function setAuthToken(token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+    }
+
+    function clearAuthToken() {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+
+    function getAuthApiUrl() {
+        const config = getCurrentApiConfig();
+        return config.url || '';
+    }
+
+    async function checkVpsHasPassword() {
+        const apiUrl = getAuthApiUrl();
+        if (!apiUrl) {
+            return localStorage.getItem(PASSWORD_KEY) !== null;
+        }
+        
+        try {
+            const response = await fetch(apiUrl + '/api/auth/check');
+            const result = await response.json();
+            vpsHasPassword = result.hasPassword;
+            return result.hasPassword;
+        } catch (error) {
+            console.error('检查VPS密码状态失败:', error);
+            return localStorage.getItem(PASSWORD_KEY) !== null;
+        }
+    }
+
     function hasPassword(){
+        if (vpsHasPassword !== null) return vpsHasPassword;
         return localStorage.getItem(PASSWORD_KEY) !== null;
     }
 
@@ -90,17 +127,48 @@ const PASSWORD_KEY = 'crm_system_password_hash';
 
     async function handleLogin(){
         const password = document.getElementById('login-password').value;
-        const storedHash = localStorage.getItem(PASSWORD_KEY);
-        const inputHash = simpleHash(password);
+        const apiUrl = getAuthApiUrl();
         
-        if(inputHash === storedHash){
-            createSession();
-            hideLoginScreen();
-            await ensureModulesInitialized();
+        if (apiUrl) {
+            try {
+                const response = await fetch(apiUrl + '/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    setAuthToken(result.token);
+                    createSession();
+                    hideLoginScreen();
+                    await ensureModulesInitialized();
+                } else {
+                    document.getElementById('login-error').textContent = result.error || '密码错误';
+                    document.getElementById('login-error').style.display = 'block';
+                    document.getElementById('login-password').value = '';
+                    document.getElementById('login-password').focus();
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                document.getElementById('login-error').textContent = '连接服务器失败';
+                document.getElementById('login-error').style.display = 'block';
+            }
         } else {
-            document.getElementById('login-error').style.display = 'block';
-            document.getElementById('login-password').value = '';
-            document.getElementById('login-password').focus();
+            const storedHash = localStorage.getItem(PASSWORD_KEY);
+            const inputHash = simpleHash(password);
+            
+            if(inputHash === storedHash){
+                createSession();
+                hideLoginScreen();
+                await ensureModulesInitialized();
+            } else {
+                document.getElementById('login-error').textContent = '密码错误，请重试';
+                document.getElementById('login-error').style.display = 'block';
+                document.getElementById('login-password').value = '';
+                document.getElementById('login-password').focus();
+            }
         }
     }
 
@@ -113,33 +181,54 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             return;
         }
         
-        const hash = simpleHash(newPwd);
-        localStorage.setItem(PASSWORD_KEY, hash);
-        createSession();
-        hideLoginScreen();
-        await ensureModulesInitialized();
-        showToast('密码设置成功');
+        const apiUrl = getAuthApiUrl();
+        
+        if (apiUrl) {
+            try {
+                const response = await fetch(apiUrl + '/api/auth/set-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: newPwd })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    vpsHasPassword = true;
+                    createSession();
+                    hideLoginScreen();
+                    await ensureModulesInitialized();
+                    showToast('密码设置成功');
+                } else {
+                    document.getElementById('set-pwd-error').textContent = result.error || '设置失败';
+                    document.getElementById('set-pwd-error').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('设置密码失败:', error);
+                document.getElementById('set-pwd-error').textContent = '连接服务器失败';
+                document.getElementById('set-pwd-error').style.display = 'block';
+            }
+        } else {
+            const hash = simpleHash(newPwd);
+            localStorage.setItem(PASSWORD_KEY, hash);
+            createSession();
+            hideLoginScreen();
+            await ensureModulesInitialized();
+            showToast('密码设置成功');
+        }
     }
 
     function lockSystem(){
         clearSession();
+        clearAuthToken();
         showLoginForm();
     }
 
-    function changePassword(){
+    async function changePassword(){
         const oldPwd = document.getElementById('change-old-pwd').value;
         const newPwd = document.getElementById('change-new-pwd').value;
         const confirmPwd = document.getElementById('change-confirm-pwd').value;
         const errorEl = document.getElementById('change-pwd-error');
-        
-        const storedHash = localStorage.getItem(PASSWORD_KEY);
-        const oldHash = simpleHash(oldPwd);
-        
-        if(oldHash !== storedHash){
-            errorEl.textContent = '当前密码错误';
-            errorEl.style.display = 'block';
-            return;
-        }
         
         if(newPwd.length < 4){
             errorEl.textContent = '新密码至少需要4位';
@@ -153,15 +242,58 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             return;
         }
         
-        const newHash = simpleHash(newPwd);
-        localStorage.setItem(PASSWORD_KEY, newHash);
+        const apiUrl = getAuthApiUrl();
         
-        document.getElementById('change-old-pwd').value = '';
-        document.getElementById('change-new-pwd').value = '';
-        document.getElementById('change-confirm-pwd').value = '';
-        errorEl.style.display = 'none';
-        
-        showToast('密码修改成功');
+        if (apiUrl) {
+            try {
+                const token = getAuthToken();
+                const response = await fetch(apiUrl + '/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        oldPassword: oldPwd, 
+                        newPassword: newPwd,
+                        token: token
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('change-old-pwd').value = '';
+                    document.getElementById('change-new-pwd').value = '';
+                    document.getElementById('change-confirm-pwd').value = '';
+                    errorEl.style.display = 'none';
+                    showToast('密码修改成功');
+                } else {
+                    errorEl.textContent = result.error || '修改失败';
+                    errorEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('修改密码失败:', error);
+                errorEl.textContent = '连接服务器失败';
+                errorEl.style.display = 'block';
+            }
+        } else {
+            const storedHash = localStorage.getItem(PASSWORD_KEY);
+            const oldHash = simpleHash(oldPwd);
+            
+            if(oldHash !== storedHash){
+                errorEl.textContent = '当前密码错误';
+                errorEl.style.display = 'block';
+                return;
+            }
+            
+            const newHash = simpleHash(newPwd);
+            localStorage.setItem(PASSWORD_KEY, newHash);
+            
+            document.getElementById('change-old-pwd').value = '';
+            document.getElementById('change-new-pwd').value = '';
+            document.getElementById('change-confirm-pwd').value = '';
+            errorEl.style.display = 'none';
+            
+            showToast('密码修改成功');
+        }
     }
 
     function updateActivity(){
@@ -195,6 +327,8 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     });
 
     async function initAuth(){
+        await checkVpsHasPassword();
+        
         if(!hasPassword()){
             showSetPasswordForm();
         } else if(checkSession()){
