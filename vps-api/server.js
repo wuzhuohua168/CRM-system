@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,6 +49,23 @@ CREATE TABLE IF NOT EXISTS sync_log (
 
 CREATE INDEX IF NOT EXISTS idx_sync_log_user ON sync_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_sync_log_created ON sync_log(created_at);
+
+CREATE TABLE IF NOT EXISTS system_auth (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_token TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_token ON auth_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_session_expires ON auth_sessions(expires_at);
 `;
 
 db.exec(initSql);
@@ -85,6 +103,222 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         version: '1.0.0'
     });
+});
+
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password + 'crm_salt_2024').digest('hex');
+}
+
+function generateToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+function cleanExpiredSessions() {
+    const stmt = db.prepare('DELETE FROM auth_sessions WHERE expires_at < ?');
+    stmt.run(new Date().toISOString());
+}
+
+app.get('/api/auth/check', (req, res) => {
+    try {
+        const row = db.prepare('SELECT id FROM system_auth WHERE id = 1').get();
+        res.json({
+            success: true,
+            hasPassword: !!row
+        });
+    } catch (error) {
+        res.status(500).json({ error: '检查失败' });
+    }
+});
+
+app.post('/api/auth/set-password', (req, res) => {
+    try {
+        const { password } = req.body;
+        
+        if (!password || password.length < 4) {
+            return res.status(400).json({ 
+                error: '密码至少需要4位',
+                code: 'INVALID_PASSWORD'
+            });
+        }
+        
+        const existing = db.prepare('SELECT id FROM system_auth WHERE id = 1').get();
+        if (existing) {
+            return res.status(400).json({ 
+                error: '密码已设置，请使用修改密码功能',
+                code: 'PASSWORD_EXISTS'
+            });
+        }
+        
+        const passwordHash = hashPassword(password);
+        const now = new Date().toISOString();
+        
+        db.prepare(`
+            INSERT INTO system_auth (id, password_hash, created_at, updated_at)
+            VALUES (1, ?, ?, ?)
+        `).run(passwordHash, now, now);
+        
+        res.json({
+            success: true,
+            message: '密码设置成功'
+        });
+        
+    } catch (error) {
+        console.error('设置密码错误:', error);
+        res.status(500).json({ error: '设置密码失败' });
+    }
+});
+
+app.post('/api/auth/login', (req, res) => {
+    try {
+        cleanExpiredSessions();
+        
+        const { password } = req.body;
+        
+        if (!password) {
+            return res.status(400).json({ 
+                error: '请输入密码',
+                code: 'MISSING_PASSWORD'
+            });
+        }
+        
+        const row = db.prepare('SELECT password_hash FROM system_auth WHERE id = 1').get();
+        
+        if (!row) {
+            return res.status(400).json({ 
+                error: '系统未初始化，请先设置密码',
+                code: 'NOT_INITIALIZED'
+            });
+        }
+        
+        const inputHash = hashPassword(password);
+        
+        if (inputHash !== row.password_hash) {
+            return res.status(401).json({ 
+                error: '密码错误',
+                code: 'INVALID_PASSWORD'
+            });
+        }
+        
+        const token = generateToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        
+        db.prepare(`
+            INSERT INTO auth_sessions (session_token, expires_at)
+            VALUES (?, ?)
+        `).run(token, expiresAt.toISOString());
+        
+        res.json({
+            success: true,
+            token: token,
+            expiresAt: expiresAt.toISOString()
+        });
+        
+    } catch (error) {
+        console.error('登录错误:', error);
+        res.status(500).json({ error: '登录失败' });
+    }
+});
+
+app.post('/api/auth/verify', (req, res) => {
+    try {
+        cleanExpiredSessions();
+        
+        const { token } = req.body;
+        
+        if (!token) {
+            return res.status(400).json({ 
+                valid: false,
+                error: '缺少token'
+            });
+        }
+        
+        const row = db.prepare(`
+            SELECT expires_at FROM auth_sessions 
+            WHERE session_token = ? AND expires_at > ?
+        `).get(token, new Date().toISOString());
+        
+        res.json({
+            valid: !!row
+        });
+        
+    } catch (error) {
+        console.error('验证错误:', error);
+        res.status(500).json({ valid: false, error: '验证失败' });
+    }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    try {
+        const { token } = req.body;
+        
+        if (token) {
+            db.prepare('DELETE FROM auth_sessions WHERE session_token = ?').run(token);
+        }
+        
+        res.json({ success: true });
+        
+    } catch (error) {
+        res.status(500).json({ error: '登出失败' });
+    }
+});
+
+app.post('/api/auth/change-password', (req, res) => {
+    try {
+        const { oldPassword, newPassword, token } = req.body;
+        
+        if (!oldPassword || !newPassword) {
+            return res.status(400).json({ 
+                error: '请填写完整信息',
+                code: 'MISSING_FIELDS'
+            });
+        }
+        
+        if (newPassword.length < 4) {
+            return res.status(400).json({ 
+                error: '新密码至少需要4位',
+                code: 'INVALID_PASSWORD'
+            });
+        }
+        
+        const session = db.prepare(`
+            SELECT id FROM auth_sessions 
+            WHERE session_token = ? AND expires_at > ?
+        `).get(token, new Date().toISOString());
+        
+        if (!session) {
+            return res.status(401).json({ 
+                error: '未登录或会话已过期',
+                code: 'UNAUTHORIZED'
+            });
+        }
+        
+        const row = db.prepare('SELECT password_hash FROM system_auth WHERE id = 1').get();
+        
+        if (hashPassword(oldPassword) !== row.password_hash) {
+            return res.status(401).json({ 
+                error: '当前密码错误',
+                code: 'INVALID_OLD_PASSWORD'
+            });
+        }
+        
+        const newHash = hashPassword(newPassword);
+        const now = new Date().toISOString();
+        
+        db.prepare(`
+            UPDATE system_auth 
+            SET password_hash = ?, updated_at = ?
+            WHERE id = 1
+        `).run(newHash, now);
+        
+        res.json({
+            success: true,
+            message: '密码修改成功'
+        });
+        
+    } catch (error) {
+        console.error('修改密码错误:', error);
+        res.status(500).json({ error: '修改密码失败' });
+    }
 });
 
 app.post('/api/sync', authenticateAPI, (req, res) => {
