@@ -3795,13 +3795,15 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 updatedAt: r.updatedAt || new Date().toISOString()
             }));
             
-            fetch(apiUrl + '/api/orders', {
+            fetch(apiUrl + '/api/sync-all', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${apiKey}`
                 },
-                body: JSON.stringify(syncData)
+                body: JSON.stringify({
+                    orders: syncData
+                })
             })
             .then(response => response.json())
             .then(result => {
@@ -5442,6 +5444,13 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             const matchQ = !q || [r.client, r.orderno, r.mbl, r.hbl, r.pol, r.pod, r.goods, r.carrier, r.vessel, r.shipMode, r.bizType].join(' ').toLowerCase().includes(q);
             const matchS = !sf || r.status === sf;
             return matchQ && matchS;
+        });
+
+        // sort: 已结算排到后面
+        list.sort((a, b) => {
+            const aSettled = a.settlementStatus === '已结算' ? 1 : 0;
+            const bSettled = b.settlementStatus === '已结算' ? 1 : 0;
+            return aSettled - bSettled;
         });
 
         crmFilteredTotal = list.length;
