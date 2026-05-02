@@ -369,6 +369,92 @@ app.post('/api/sync', authenticateAPI, (req, res) => {
     }
 });
 
+app.post('/api/sync-all', authenticateAPI, (req, res) => {
+    try {
+        const allData = req.body;
+        
+        if (!allData || typeof allData !== 'object') {
+            return res.status(400).json({ 
+                error: '缺少数据',
+                code: 'MISSING_DATA'
+            });
+        }
+
+        const now = new Date().toISOString();
+        const dataJson = JSON.stringify(allData);
+        
+        const stmt = db.prepare(`
+            INSERT INTO crm_data (user_id, data_type, data_json, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id, data_type) 
+            DO UPDATE SET data_json = excluded.data_json, updated_at = excluded.updated_at
+        `);
+        
+        stmt.run(req.userId, 'all_data', dataJson, now);
+
+        const logStmt = db.prepare(`
+            INSERT INTO sync_log (user_id, action, record_count, ip_address, user_agent)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+        
+        const recordCount = allData.orders ? allData.orders.length : 1;
+        logStmt.run(req.userId, 'sync_all', recordCount, req.ip, req.get('user-agent'));
+
+        res.json({ 
+            success: true, 
+            message: '数据同步成功',
+            recordCount,
+            timestamp: now
+        });
+        
+    } catch (error) {
+        console.error('同步错误:', error);
+        res.status(500).json({ 
+            error: '数据同步失败',
+            code: 'SYNC_ERROR'
+        });
+    }
+});
+
+app.get('/api/backup', authenticateAPI, (req, res) => {
+    try {
+        const stmt = db.prepare(`
+            SELECT data_json, updated_at 
+            FROM crm_data 
+            WHERE user_id = ? AND data_type = 'all_data'
+        `);
+        
+        const row = stmt.get(req.userId);
+        
+        if (!row) {
+            return res.status(404).json({ 
+                error: '未找到备份数据',
+                code: 'NOT_FOUND'
+            });
+        }
+
+        const logStmt = db.prepare(`
+            INSERT INTO sync_log (user_id, action, ip_address, user_agent)
+            VALUES (?, ?, ?, ?)
+        `);
+        logStmt.run(req.userId, 'backup_restore', req.ip, req.get('user-agent'));
+
+        res.json({
+            success: true,
+            data: JSON.parse(row.data_json),
+            lastUpdated: row.updated_at,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('恢复错误:', error);
+        res.status(500).json({ 
+            error: '数据恢复失败',
+            code: 'RESTORE_ERROR'
+        });
+    }
+});
+
 app.get('/api/restore', authenticateAPI, (req, res) => {
     try {
         const dataType = req.query.dataType || 'crm_records';
