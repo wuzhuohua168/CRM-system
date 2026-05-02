@@ -40,17 +40,17 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     async function checkVpsHasPassword() {
         const apiUrl = getAuthApiUrl();
         if (!apiUrl) {
-            return localStorage.getItem(PASSWORD_KEY) !== null;
+            return { hasPassword: localStorage.getItem(PASSWORD_KEY) !== null, useLocal: true };
         }
         
         try {
             const response = await fetch(apiUrl + '/api/auth/check');
             const result = await response.json();
             vpsHasPassword = result.hasPassword;
-            return result.hasPassword;
+            return { hasPassword: result.hasPassword, useLocal: false };
         } catch (error) {
             console.error('检查VPS密码状态失败:', error);
-            return localStorage.getItem(PASSWORD_KEY) !== null;
+            return { hasPassword: localStorage.getItem(PASSWORD_KEY) !== null, useLocal: true, error: true };
         }
     }
 
@@ -144,6 +144,20 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                     createSession();
                     hideLoginScreen();
                     await ensureModulesInitialized();
+                } else if (result.code === 'NOT_INITIALIZED') {
+                    const storedHash = localStorage.getItem(PASSWORD_KEY);
+                    const inputHash = simpleHash(password);
+                    
+                    if(inputHash === storedHash){
+                        createSession();
+                        hideLoginScreen();
+                        await ensureModulesInitialized();
+                    } else {
+                        document.getElementById('login-error').textContent = '密码错误，请重试';
+                        document.getElementById('login-error').style.display = 'block';
+                        document.getElementById('login-password').value = '';
+                        document.getElementById('login-password').focus();
+                    }
                 } else {
                     document.getElementById('login-error').textContent = result.error || '密码错误';
                     document.getElementById('login-error').style.display = 'block';
@@ -152,8 +166,17 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 }
             } catch (error) {
                 console.error('登录失败:', error);
-                document.getElementById('login-error').textContent = '连接服务器失败';
-                document.getElementById('login-error').style.display = 'block';
+                const storedHash = localStorage.getItem(PASSWORD_KEY);
+                const inputHash = simpleHash(password);
+                
+                if(storedHash && inputHash === storedHash){
+                    createSession();
+                    hideLoginScreen();
+                    await ensureModulesInitialized();
+                } else {
+                    document.getElementById('login-error').textContent = '连接服务器失败';
+                    document.getElementById('login-error').style.display = 'block';
+                }
             }
         } else {
             const storedHash = localStorage.getItem(PASSWORD_KEY);
@@ -328,11 +351,17 @@ const PASSWORD_KEY = 'crm_system_password_hash';
 
     async function initAuth(){
         const apiUrl = getAuthApiUrl();
-        const vpsHasPwd = await checkVpsHasPassword();
         const localHasPwd = localStorage.getItem(PASSWORD_KEY) !== null;
         
-        if (apiUrl) {
-            if (!vpsHasPwd) {
+        let result;
+        try {
+            result = await checkVpsHasPassword();
+        } catch (e) {
+            result = { hasPassword: false, useLocal: true, error: true };
+        }
+        
+        if (apiUrl && !result.useLocal && !result.error) {
+            if (!result.hasPassword) {
                 showSetPasswordForm();
             } else if(checkSession()){
                 hideLoginScreen();
