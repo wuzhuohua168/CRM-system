@@ -84,7 +84,14 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 const authenticateAPI = (req, res, next) => {
-    const apiKey = req.headers['x-api-key'] || req.query.apiKey;
+    let apiKey = req.headers['x-api-key'] || req.query.apiKey;
+    
+    if (!apiKey) {
+        const authHeader = req.headers['authorization'] || '';
+        if (authHeader.startsWith('Bearer ')) {
+            apiKey = authHeader.substring(7);
+        }
+    }
     
     if (!apiKey || apiKey !== process.env.API_KEY) {
         return res.status(401).json({ 
