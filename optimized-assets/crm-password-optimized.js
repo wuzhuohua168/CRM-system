@@ -327,17 +327,32 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     });
 
     async function initAuth(){
-        await checkVpsHasPassword();
+        const apiUrl = getAuthApiUrl();
+        const vpsHasPwd = await checkVpsHasPassword();
+        const localHasPwd = localStorage.getItem(PASSWORD_KEY) !== null;
         
-        if(!hasPassword()){
-            showSetPasswordForm();
-        } else if(checkSession()){
-            hideLoginScreen();
-            lastActivityTime = Date.now();
-            syncSessionActivity(true);
-            await ensureModulesInitialized();
+        if (apiUrl) {
+            if (!vpsHasPwd) {
+                showSetPasswordForm();
+            } else if(checkSession()){
+                hideLoginScreen();
+                lastActivityTime = Date.now();
+                syncSessionActivity(true);
+                await ensureModulesInitialized();
+            } else {
+                showLoginForm();
+            }
         } else {
-            showLoginForm();
+            if(!localHasPwd){
+                showSetPasswordForm();
+            } else if(checkSession()){
+                hideLoginScreen();
+                lastActivityTime = Date.now();
+                syncSessionActivity(true);
+                await ensureModulesInitialized();
+            } else {
+                showLoginForm();
+            }
         }
     }
 
