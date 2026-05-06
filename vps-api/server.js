@@ -560,6 +560,80 @@ app.delete('/api/data', authenticateAPI, (req, res) => {
     }
 });
 
+app.get('/api/tracking', (req, res) => {
+    try {
+        const stmt = db.prepare(`
+            SELECT data_json, updated_at 
+            FROM crm_data 
+            WHERE user_id = ? AND data_type = 'all_data'
+        `);
+        
+        const row = stmt.get('default_user');
+        
+        if (!row) {
+            return res.json([]);
+        }
+        
+        const allData = JSON.parse(row.data_json);
+        const orders = allData.orders || [];
+        
+        const sixtyDaysAgo = new Date();
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+        
+        const trackingData = orders
+            .filter(order => {
+                const orderDate = new Date(order.updatedAt || order.createdAt);
+                return orderDate >= sixtyDaysAgo;
+            })
+            .map(order => ({
+                id: order.id,
+                orderno: order.orderno,
+                clientOrderNo: order.clientOrderNo,
+                mbl: order.mbl,
+                hbl: order.hbl,
+                shipMode: order.shipMode,
+                pol: order.pol,
+                pod: order.pod,
+                recvaddr: order.recvaddr,
+                goods: order.goods,
+                billWeight: order.billWeight || (order.fees && order.fees.billWeight),
+                cbm: order.cbm,
+                ctype: order.ctype,
+                cqty: order.cqty,
+                status: order.status,
+                etd: order.etd,
+                eta: order.eta,
+                ata: order.ata,
+                signed: order.signed,
+                warehouse: order.warehouse,
+                flight: order.flight,
+                airSigned: order.airSigned,
+                airAta: order.airAta,
+                airClearedDate: order.airClearedDate,
+                airBookedDate: order.airBookedDate,
+                tracking: order.tracking,
+                carrierType: order.carrierType,
+                bookedDate: order.bookedDate,
+                loadedDate: order.loadedDate,
+                clearedDate: order.clearedDate,
+                pickup: order.pickup,
+                deliveryDate: order.deliveryDate,
+                statusHistory: order.statusHistory,
+                createdAt: order.createdAt,
+                updatedAt: order.updatedAt
+            }));
+        
+        res.json(trackingData);
+        
+    } catch (error) {
+        console.error('Tracking查询错误:', error);
+        res.status(500).json({ 
+            error: '查询失败',
+            code: 'TRACKING_ERROR'
+        });
+    }
+});
+
 app.use((err, req, res, next) => {
     console.error('服务器错误:', err);
     res.status(500).json({ 
