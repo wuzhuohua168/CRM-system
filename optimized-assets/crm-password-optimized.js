@@ -326,7 +326,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
 
     function checkAutoLock(){
         if(!hasPassword()) return;
-        if (isSessionExpired()) {
+        const sessionData = getSessionData();
+        if (!sessionData) return;
+        if (Date.now() - lastActivityTime > LOCK_TIMEOUT && isSessionExpired(sessionData)) {
             lockSystem();
         }
     }
@@ -3457,6 +3459,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
     }
 
     function executeQuickBackup(){
+        updateActivity();
         hideQuickBackupModal();
         quickBackup();
     }
