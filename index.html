@@ -186,19 +186,19 @@
     <div id="tab4" class="tab-content">
         <div class="module-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <button onclick="changeMonth(-1)" style="border:none; background:none; font-size:20px;">◀</button>
-                <div id="cal-month-title" style="font-weight:bold;"></div>
-                <button onclick="changeMonth(1)" style="border:none; background:none; font-size:20px;">▶</button>
+                <button onclick="changeMonth(-1)" style="border:none; background:none; font-size:20px; color:var(--text-primary);">◀</button>
+                <div id="cal-month-title" style="font-weight:bold; color:var(--text-primary);"></div>
+                <button onclick="changeMonth(1)" style="border:none; background:none; font-size:20px; color:var(--text-primary);">▶</button>
             </div>
-            <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:#666; margin-bottom:10px;">
-                <div><span style="display:inline-block; width:10px; height:10px; background:#fff4f4; border:1px solid #f1cccc; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>日本假期</div>
-                <div><span style="display:inline-block; width:10px; height:10px; background:#fff9f1; border:1px solid #f1ddc2; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>国际节日</div>
-                <div><span style="display:inline-block; width:10px; height:10px; background:#1f6fb2; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>A股休市</div>
-                <div><span style="display:inline-block; width:10px; height:10px; background:#8e44ad; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>美股休市</div>
-                <div><span style="display:inline-block; width:10px; height:10px; background:#d35400; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>美股提前收市</div>
-                <div><span style="display:inline-block; width:10px; height:10px; background:#4a90e2; border-radius:50%; vertical-align:middle; margin-right:4px;"></span>备注</div>
+            <div class="cal-legend">
+                <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-jp"></span>日本假期</div>
+                <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-intl"></span>国际节日</div>
+                <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-a"></span>A股休市</div>
+                <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-us"></span>美股休市</div>
+                <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-us-early"></span>美股提前收市</div>
+                <div class="cal-legend-item"><span class="cal-legend-dot cal-legend-memo"></span>备注</div>
             </div>
-            <div style="font-size:11px; color:#777; margin-bottom:10px; line-height:1.6;">
+            <div class="cal-trading-time">
                 A股常规交易时间：09:30-11:30，13:00-15:00（北京时间）
                 <br>
                 美股常规交易时间：09:30-16:00（美东时间）；提前收市日通常 13:00 收市
@@ -1915,7 +1915,7 @@
     <div id="tab20" class="tab-content">
         <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-                <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #16a085; padding-left:8px;">💰 运价管理</div>
+                <div class="section-title section-title-green">💰 运价管理</div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn-main" style="background:#16a085; padding:8px 14px;" onclick="freightShowAddModal()">＋ 新增运价</button>
                     <button class="btn-main" style="background:#27ae60; padding:8px 14px;" onclick="freightExportCSV()">导出CSV</button>
@@ -1943,7 +1943,7 @@
         <!-- 国际运价指数趋势图 -->
         <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
-                <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #e74c3c; padding-left:8px;">🌍 国际运价指数趋势对比</div>
+                <div class="section-title section-title-red">🌍 国际运价指数趋势对比</div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                     <select id="global-index-period" onchange="loadGlobalFreightIndex()" style="padding:6px 10px; border:1px solid var(--border-color); border-radius:8px; font-size:12px; background:var(--bg-primary); color:var(--text-primary);">
                         <option value="30">近30天</option>
@@ -1954,8 +1954,8 @@
                     <button class="btn-main" style="background:#e74c3c; padding:6px 12px; font-size:12px;" onclick="loadGlobalFreightIndex()">刷新数据</button>
                 </div>
             </div>
-            <div style="font-size:11px; color:#888; margin-bottom:10px;">数据来源：FRED (Federal Reserve Economic Data) | 三大指数叠加对比，便于分析全球运价走势</div>
-            <div class="trend-card" style="position:relative; background:linear-gradient(135deg,#f8f9fa,#fff); border-radius:12px; padding:0; overflow:hidden;">
+            <div class="section-subtitle">数据来源：FRED (Federal Reserve Economic Data) | 三大指数叠加对比，便于分析全球运价走势</div>
+            <div class="trend-card trend-card-dark">
                 <canvas id="global-freight-index-canvas" style="display:block; width:100%;"></canvas>
                 <div id="global-index-tooltip" style="display:none; position:absolute; background:rgba(44,62,80,0.95); color:#fff; padding:8px 12px; border-radius:8px; font-size:11px; pointer-events:none; z-index:100; max-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
                 <div class="trend-meta" style="padding:8px 12px;">
@@ -1964,12 +1964,12 @@
                 </div>
             </div>
             <div id="global-index-legend" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;"></div>
-            <div id="global-index-info" style="margin-top:10px; padding:10px; background:#f0f8ff; border-radius:8px; font-size:11px; color:#555; line-height:1.6;">
+            <div id="global-index-info" class="index-info-box">
                 <b>指数说明：</b><br>
                 • <span style="color:#e74c3c;font-weight:bold;">BDI (波罗的海干散货指数)</span>：反映全球铁矿石、煤炭等大宗散货运价，是经济景气的重要风向标<br>
                 • <span style="color:#3498db;font-weight:bold;">SCFI (上海集装箱运价指数)</span>：反映上海出口至全球主要航线的集装箱即期运价<br>
                 • <span style="color:#27ae60;font-weight:bold;">FBX (Freightos Baltic Index)</span>：全球集装箱运价指数，覆盖12条主要航线，每日更新
-                <div style="margin-top:8px; padding:8px; background:#fff; border-radius:6px; font-size:10px;">
+                <div class="fbx-routes-box">
                     <b>FBX覆盖的12条主要航线：</b><br>
                     <span style="color:#27ae60;">FBX01</span> 中国/东亚→北美西海岸 | <span style="color:#27ae60;">FBX02</span> 北美西海岸→中国/东亚<br>
                     <span style="color:#27ae60;">FBX03</span> 中国/东亚→北美东海岸 | <span style="color:#27ae60;">FBX04</span> 北美东海岸→中国/东亚<br>
@@ -1982,7 +1982,7 @@
         </div>
 
         <div class="module-card" style="padding:12px 14px; margin-bottom:10px;">
-            <div style="font-size:15px; font-weight:bold; color:#2c3e50; border-left:4px solid #4a90e2; padding-left:8px; margin-bottom:12px;">📈 海运费趋势图（近45天）</div>
+            <div class="section-title section-title-blue" style="margin-bottom:12px;">📈 海运费趋势图（近45天）</div>
             <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
                 <select id="freight-trend-ctype" onchange="drawFreightTrendChart()" style="padding:8px 12px; border:1px solid var(--border-color); border-radius:8px; font-size:12px; background:var(--bg-primary); color:var(--text-primary);">
                     <option value="">全部柜型</option>
@@ -1993,7 +1993,7 @@
                 </select>
                 <button class="btn-main" style="background:#4a90e2; padding:8px 14px;" onclick="drawFreightTrendChart()">刷新图表</button>
             </div>
-            <div class="trend-card" style="position:relative;">
+            <div class="trend-card trend-card-dark" style="position:relative;">
                 <canvas id="freight-trend-canvas" width="600" height="280"></canvas>
                 <div id="freight-trend-tooltip" style="display:none; position:absolute; background:rgba(44,62,80,0.95); color:#fff; padding:8px 12px; border-radius:8px; font-size:11px; pointer-events:none; z-index:100; max-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.2);"></div>
                 <div class="trend-meta">
@@ -2005,7 +2005,7 @@
         </div>
 
         <div id="freight-list"></div>
-        <div id="freight-empty" style="display:none; text-align:center; color:#aaa; font-size:13px; padding:40px 0;">暂无运价记录，点击"＋ 新增运价"开始录入</div>
+        <div id="freight-empty" style="display:none; text-align:center; color:var(--text-tertiary); font-size:13px; padding:40px 0;">暂无运价记录，点击"＋ 新增运价"开始录入</div>
     </div>
 
     <!-- ===== 财务分析 TAB ===== -->
