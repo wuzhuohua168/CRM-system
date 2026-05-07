@@ -1771,8 +1771,70 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             };
             grid.appendChild(cell);
         }
+        updateMonthEarningsList(year, month + 1);
     }
     function changeMonth(d) { currDate.setMonth(currDate.getMonth() + d); initCalendar(); }
+
+    function updateMonthEarningsList(year, month) {
+        const listEl = document.getElementById('cal-month-earnings-list');
+        if (!listEl) return;
+        
+        const earnings = [];
+        
+        const aShareEarnings = {
+            '1-31': { label: 'A股年报预告截止', tip: 'A股年报业绩预告披露截止日' },
+            '4-30': { label: 'A股一季报截止', tip: 'A股一季报披露截止日' },
+            '7-15': { label: 'A股中报预告截止', tip: 'A股半年报业绩预告披露截止日' },
+            '8-31': { label: 'A股半年报截止', tip: 'A股半年报披露截止日' },
+            '10-31': { label: 'A股三季报截止', tip: 'A股三季报披露截止日' }
+        };
+        
+        Object.keys(aShareEarnings).forEach(key => {
+            const [m, d] = key.split('-');
+            if (parseInt(m) === month) {
+                earnings.push({
+                    date: `${month}月${d}日`,
+                    label: aShareEarnings[key].label,
+                    type: 'a'
+                });
+            }
+        });
+        
+        const usEarningsWindows = {
+            1: '美股Q4财报季',
+            2: '美股Q4财报季',
+            3: '美股Q4财报季',
+            4: '美股Q1财报季',
+            5: '美股Q1财报季',
+            6: '美股Q1财报季',
+            7: '美股Q2财报季',
+            8: '美股Q2财报季',
+            9: '美股Q2财报季',
+            10: '美股Q3财报季',
+            11: '美股Q3财报季',
+            12: '美股Q3财报季'
+        };
+        
+        if (usEarningsWindows[month]) {
+            earnings.push({
+                date: '全月',
+                label: usEarningsWindows[month],
+                type: 'us'
+            });
+        }
+        
+        if (earnings.length === 0) {
+            listEl.innerHTML = '<div style="color: var(--text-tertiary);">本月无财报日期</div>';
+            return;
+        }
+        
+        listEl.innerHTML = earnings.map(e => `
+            <div class="cal-earnings-item">
+                <span class="cal-earnings-date ${e.type}">${e.date}</span>
+                <span class="cal-earnings-label">${e.label}</span>
+            </div>
+        `).join('');
+    }
 
     function getHolidayInfo(year, month, day) {
         const jp = getJapaneseHoliday(year, month, day);
