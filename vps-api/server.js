@@ -70,6 +70,23 @@ CREATE INDEX IF NOT EXISTS idx_session_expires ON auth_sessions(expires_at);
 
 db.exec(initSql);
 
+const defaultPassword = '198903';
+const defaultPasswordHash = crypto.createHash('sha256').update(defaultPassword + 'crm_salt_2024').digest('hex');
+const now = new Date().toISOString();
+
+try {
+    const existingPassword = db.prepare('SELECT id FROM system_auth WHERE id = 1').get();
+    if (!existingPassword) {
+        db.prepare(`
+            INSERT INTO system_auth (id, password_hash, created_at, updated_at)
+            VALUES (1, ?, ?, ?)
+        `).run(defaultPasswordHash, now, now);
+        console.log('默认密码已设置');
+    }
+} catch (e) {
+    console.log('检查默认密码时出错:', e.message);
+}
+
 app.use(helmet());
 app.use(compression());
 app.use(cors());
