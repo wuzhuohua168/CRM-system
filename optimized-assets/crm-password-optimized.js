@@ -145,8 +145,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                     hideLoginScreen();
                     await ensureModulesInitialized();
                 } else if (result.code === 'NOT_INITIALIZED') {
-                    document.getElementById('login-error').textContent = 'VPS未设置密码，请先在系统设置中配置密码';
-                    document.getElementById('login-error').style.display = 'block';
+                    showSetPasswordForm();
                 } else {
                     document.getElementById('login-error').textContent = result.error || '密码错误';
                     document.getElementById('login-error').style.display = 'block';
