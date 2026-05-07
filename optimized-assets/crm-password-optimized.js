@@ -1956,7 +1956,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         const result = [];
         
         const aShareEarnings = {
+            '1-31': { label: 'A股年报预告截止', tip: 'A股年报业绩预告披露截止日（有条件强制）' },
             '4-30': { label: 'A股一季报截止', tip: 'A股一季报披露截止日' },
+            '7-15': { label: 'A股中报预告截止', tip: 'A股半年报业绩预告披露截止日（有条件强制）' },
             '8-31': { label: 'A股半年报截止', tip: 'A股半年报披露截止日' },
             '10-31': { label: 'A股三季报截止', tip: 'A股三季报披露截止日' }
         };
