@@ -145,19 +145,8 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                     hideLoginScreen();
                     await ensureModulesInitialized();
                 } else if (result.code === 'NOT_INITIALIZED') {
-                    const storedHash = localStorage.getItem(PASSWORD_KEY);
-                    const inputHash = simpleHash(password);
-                    
-                    if(inputHash === storedHash){
-                        createSession();
-                        hideLoginScreen();
-                        await ensureModulesInitialized();
-                    } else {
-                        document.getElementById('login-error').textContent = '密码错误，请重试';
-                        document.getElementById('login-error').style.display = 'block';
-                        document.getElementById('login-password').value = '';
-                        document.getElementById('login-password').focus();
-                    }
+                    document.getElementById('login-error').textContent = 'VPS未设置密码，请先在系统设置中配置密码';
+                    document.getElementById('login-error').style.display = 'block';
                 } else {
                     document.getElementById('login-error').textContent = result.error || '密码错误';
                     document.getElementById('login-error').style.display = 'block';
@@ -166,17 +155,8 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 }
             } catch (error) {
                 console.error('登录失败:', error);
-                const storedHash = localStorage.getItem(PASSWORD_KEY);
-                const inputHash = simpleHash(password);
-                
-                if(storedHash && inputHash === storedHash){
-                    createSession();
-                    hideLoginScreen();
-                    await ensureModulesInitialized();
-                } else {
-                    document.getElementById('login-error').textContent = '连接服务器失败';
-                    document.getElementById('login-error').style.display = 'block';
-                }
+                document.getElementById('login-error').textContent = '连接服务器失败，请检查网络';
+                document.getElementById('login-error').style.display = 'block';
             }
         } else {
             const storedHash = localStorage.getItem(PASSWORD_KEY);
@@ -353,27 +333,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
 
     async function initAuth(){
         const apiUrl = getAuthApiUrl();
-        const localHasPwd = localStorage.getItem(PASSWORD_KEY) !== null;
         
-        let result;
-        try {
-            result = await checkVpsHasPassword();
-        } catch (e) {
-            result = { hasPassword: false, useLocal: true, error: true };
-        }
-        
-        if (apiUrl && !result.useLocal && !result.error) {
-            if (!result.hasPassword) {
-                showSetPasswordForm();
-            } else if(checkSession()){
-                hideLoginScreen();
-                lastActivityTime = Date.now();
-                syncSessionActivity(true);
-                await ensureModulesInitialized();
-            } else {
-                showLoginForm();
-            }
-        } else {
+        if (!apiUrl) {
+            const localHasPwd = localStorage.getItem(PASSWORD_KEY) !== null;
             if(!localHasPwd){
                 showSetPasswordForm();
             } else if(checkSession()){
@@ -384,6 +346,30 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             } else {
                 showLoginForm();
             }
+            return;
+        }
+        
+        let result;
+        try {
+            result = await checkVpsHasPassword();
+        } catch (e) {
+            result = { hasPassword: false, useLocal: true, error: true };
+        }
+        
+        if (result.error) {
+            showLoginForm();
+            return;
+        }
+        
+        if (!result.hasPassword) {
+            showSetPasswordForm();
+        } else if(checkSession()){
+            hideLoginScreen();
+            lastActivityTime = Date.now();
+            syncSessionActivity(true);
+            await ensureModulesInitialized();
+        } else {
+            showLoginForm();
         }
     }
 
@@ -1960,6 +1946,54 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         if (y.usEarlyClose[key]) {
             result.push({ label: '美股早收', tip: '美股提前收市，13:00 收市（美东时间）', className: 'market-us-early' });
         }
+        
+        const earnings = getEarningsDates(year, month, day);
+        earnings.forEach(e => result.push(e));
+        
+        return result;
+    }
+
+    function getEarningsDates(year, month, day) {
+        const result = [];
+        
+        const aShareEarnings = {
+            '4-30': { label: 'A股一季报截止', tip: 'A股一季报披露截止日' },
+            '8-31': { label: 'A股半年报截止', tip: 'A股半年报披露截止日' },
+            '10-31': { label: 'A股三季报截止', tip: 'A股三季报披露截止日' }
+        };
+        
+        const usEarningsWindows = {
+            1: { label: '美股Q4财报季', tip: '美股Q4财报披露窗口（1月下旬-3月）' },
+            2: { label: '美股Q4财报季', tip: '美股Q4财报披露窗口（1月下旬-3月）' },
+            3: { label: '美股Q4财报季', tip: '美股Q4财报披露窗口（1月下旬-3月）' },
+            4: { label: '美股Q1财报季', tip: '美股Q1财报披露窗口（4月下旬-6月）' },
+            5: { label: '美股Q1财报季', tip: '美股Q1财报披露窗口（4月下旬-6月）' },
+            6: { label: '美股Q1财报季', tip: '美股Q1财报披露窗口（4月下旬-6月）' },
+            7: { label: '美股Q2财报季', tip: '美股Q2财报披露窗口（7月下旬-9月）' },
+            8: { label: '美股Q2财报季', tip: '美股Q2财报披露窗口（7月下旬-9月）' },
+            9: { label: '美股Q2财报季', tip: '美股Q2财报披露窗口（7月下旬-9月）' },
+            10: { label: '美股Q3财报季', tip: '美股Q3财报披露窗口（10月下旬-12月）' },
+            11: { label: '美股Q3财报季', tip: '美股Q3财报披露窗口（10月下旬-12月）' },
+            12: { label: '美股Q3财报季', tip: '美股Q3财报披露窗口（10月下旬-12月）' }
+        };
+        
+        const aKey = `${month}-${day}`;
+        if (aShareEarnings[aKey]) {
+            result.push({ 
+                label: aShareEarnings[aKey].label, 
+                tip: aShareEarnings[aKey].tip, 
+                className: 'market-earnings-a' 
+            });
+        }
+        
+        if (day === 15 && usEarningsWindows[month]) {
+            result.push({ 
+                label: usEarningsWindows[month].label, 
+                tip: usEarningsWindows[month].tip, 
+                className: 'market-earnings-us' 
+            });
+        }
+        
         return result;
     }
 
@@ -3936,6 +3970,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 bizType: r.bizType || 'fcl',
                 client: r.client || '',
                 orderno: r.orderno || '',
+                clientOrderNo: r.clientOrderNo || '',
                 mbl: r.mbl || '',
                 hbl: r.hbl || '',
                 shipMode: r.shipMode || '',
@@ -3953,25 +3988,37 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 cbm: r.cbm || 0,
                 billWeight: r.billWeight || 0,
                 unitPrice: r.unitPrice || 0,
+                bookedDate: r.bookedDate || '',
+                loadedDate: r.loadedDate || '',
                 cutoff: r.cutoff || '',
                 etd: r.etd || '',
                 eta: r.eta || '',
                 ata: r.ata || '',
+                clearedDate: r.clearedDate || '',
                 pickup: r.pickup || '',
+                deliveryDate: r.deliveryDate || '',
                 freetime: r.freetime || '',
                 signed: r.signed || '',
                 warehouse: r.warehouse || '',
                 flight: r.flight || '',
                 airSigned: r.airSigned || '',
+                airBookedDate: r.airBookedDate || '',
+                airAta: r.airAta || '',
+                airClearedDate: r.airClearedDate || '',
                 tracking: r.tracking || '',
                 carrierType: r.carrierType || '',
                 status: r.status || '',
+                settlementStatus: r.settlementStatus || '未结算',
                 incoterm: r.incoterm || '',
+                tags: r.tags || [],
                 notes: r.notes || '',
                 fees: r.fees || null,
                 costs: r.costs || null,
+                receivable: r.receivable || 0,
+                payable: r.payable || 0,
                 profit: r.profit || 0,
                 margin: r.margin || 0,
+                statusHistory: r.statusHistory || [],
                 createdAt: r.createdAt || new Date().toISOString(),
                 updatedAt: r.updatedAt || new Date().toISOString()
             }));
