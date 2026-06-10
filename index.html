@@ -3827,8 +3827,11 @@
         }
 
         function updateFclTitle() {
-            // 标题选择框的值会自动更新，无需额外处理
-            // 文件名会在processFileFcl函数中根据选择的值生成
+            const select = document.getElementById('fclTitleSelect');
+            const display = document.getElementById('fclTitleDisplay');
+            if (select && display) {
+                display.textContent = select.value;
+            }
         }
 
         document.addEventListener('input', (e) => {
@@ -4356,6 +4359,13 @@
                     <option value="custom">公司手动输入</option>
                 </select>
             </div>
+            <div class="input-item">
+                <label>费用单标题</label>
+                <select id="fclTitleSelect" onchange="updateFclTitle()">
+                    <option value="整柜费用确认单">整柜费用确认单</option>
+                    <option value="散货费用确认单">散货费用确认单</option>
+                </select>
+            </div>
             <div class="input-item input-wide"><label>智能识别信息</label><textarea id="fclSmart" placeholder="在此粘贴整柜信息，自动识别填入..."></textarea></div>
             <div class="input-item"><label>整柜公司名（表头）</label><input type="text" id="fclHeaderCompany" placeholder="整柜公司名"></div>
             <div class="input-item"><label>整柜公司地址（表头）</label><input type="text" id="fclHeaderAddr" placeholder="整柜公司地址"></div>
@@ -4409,12 +4419,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="fcl-title">
-                    <select id="fclTitleSelect" onchange="updateFclTitle()" style="display: block; margin: 0 auto; font-size: 18px; font-weight: bold; border: none; background: transparent; color: var(--text-primary); letter-spacing: 3px; cursor: pointer; outline: none;">
-                        <option value="整柜费用确认单">整柜费用确认单</option>
-                        <option value="散货费用确认单">散货费用确认单</option>
-                    </select>
-                </div>
+                <div class="fcl-title" id="fclTitleDisplay">整柜费用确认单</div>
                 <table class="fcl-table">
                     <colgroup>
                         <col style="width:8%">
@@ -5194,8 +5199,11 @@
         }
 
         function updateFclTitle() {
-            // 标题选择框的值会自动更新，无需额外处理
-            // 文件名会在processFileFcl函数中根据选择的值生成
+            const select = document.getElementById('fclTitleSelect');
+            const display = document.getElementById('fclTitleDisplay');
+            if (select && display) {
+                display.textContent = select.value;
+            }
         }
 
         document.addEventListener('input', (e) => {
