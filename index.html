@@ -3826,6 +3826,11 @@
             if (tr) tr.remove();
         }
 
+        function updateFclTitle() {
+            // 标题选择框的值会自动更新，无需额外处理
+            // 文件名会在processFileFcl函数中根据选择的值生成
+        }
+
         document.addEventListener('input', (e) => {
             const inMain = e.target && e.target.closest && e.target.closest('#fclMainBody');
             if (inMain && e.target.matches('[data-role="amount"]')) updateFclTotalFromRows();
@@ -4404,7 +4409,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="fcl-title">整柜费用确认单</div>
+                <div style="text-align: center; margin: 20px 0 10px;">
+                    <select id="fclTitleSelect" onchange="updateFclTitle()" style="font-size: 16px; font-weight: bold; padding: 5px 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); letter-spacing: 3px;">
+                        <option value="整柜费用确认单">整柜费用确认单</option>
+                        <option value="散货费用确认单">散货费用确认单</option>
+                    </select>
+                </div>
                 <table class="fcl-table">
                     <colgroup>
                         <col style="width:8%">
@@ -5183,6 +5193,11 @@
             if (tr) tr.remove();
         }
 
+        function updateFclTitle() {
+            // 标题选择框的值会自动更新，无需额外处理
+            // 文件名会在processFileFcl函数中根据选择的值生成
+        }
+
         document.addEventListener('input', (e) => {
             const inMain = e.target && e.target.closest && e.target.closest('#fclMainBody');
             if (inMain && e.target.matches('[data-role="amount"]')) updateFclTotalFromRows();
@@ -5308,7 +5323,8 @@
             const d = new Date();
             const dateStr = `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}`;
             const safeCompany = String(fclData.company || "").replace(/[\\/:*?"<>|]/g, "_").trim();
-            const fileName = `${safeCompany}整柜费用确认单${dateStr}.${type}`;
+            const titleType = document.getElementById('fclTitleSelect')?.value || "整柜费用确认单";
+            const fileName = `${safeCompany}${titleType}${dateStr}.${type}`;
 
             let blob;
             if (type === 'pdf') {
