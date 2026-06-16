@@ -4398,16 +4398,16 @@
             <button class="btn-csv" onclick="processFileFcl('csv')">③ 分享/下载 CSV</button>
             <button class="btn-preview payment-notice-toggle" onclick="togglePaymentNotice()" style="background:#16a085;color:#fff;border:none;">④ 付款账户信息</button>
             <button class="btn-preview btn-clear" onclick="clearCache('fcl')">清除缓存</button>
-            <button class="btn-preview" onclick="addFclRow()">新增序号行</button>
-            <button class="btn-preview" onclick="addFclDetailRow()">新增明细行</button>
-            <input type="number" id="fclDeleteRowIndex" placeholder="删除序号行" style="width:110px">
-            <button class="btn-preview no-export" onclick="removeFclRowByIndex()">删除序号行</button>
-            <input type="number" id="fclDeleteDetailIndex" placeholder="删除明细行" style="width:110px">
-            <button class="btn-preview no-export" onclick="removeFclDetailRowByIndex()">删除明细行</button>
+            <button class="btn-preview" onclick="addFclRow2()">新增序号行</button>
+            <button class="btn-preview" onclick="addFclDetailRow2()">新增明细行</button>
+            <input type="number" id="fclDeleteRowIndex2" placeholder="删除序号行" style="width:110px">
+            <button class="btn-preview no-export" onclick="removeFclRowByIndex2()">删除序号行</button>
+            <input type="number" id="fclDeleteDetailIndex2" placeholder="删除明细行" style="width:110px">
+            <button class="btn-preview no-export" onclick="removeFclDetailRowByIndex2()">删除明细行</button>
         </div>
     </div>
 
-    <div class="report-container" id="view-fcl">
+    <div class="report-container" id="view-fcl2">
         <div class="report-wrap fcl-wrap" id="capture-area-fcl">
             <div class="report-content">
                 <div class="report-header">
@@ -4475,7 +4475,7 @@
                         <th>备注</th>
                     </tr>
                     </tbody>
-                    <tbody id="fclMainBody">
+                    <tbody id="fclMainBody2">
                     <tr>
                         <td>1</td>
                         <td id="outFclVessel">-</td>
@@ -4492,7 +4492,7 @@
                         <td id="outFclRemark">-</td>
                     </tr>
                     </tbody>
-                    <tbody id="fclDetailBody">
+                    <tbody id="fclDetailBody2">
                     <tr>
                         <th colspan="9">服务类目</th>
                         <th colspan="2">金额</th>
@@ -5340,7 +5340,7 @@
                 await exportPdfFromElement(element, fileName, 'l');
                 return;
             } else {
-                const mainRows = Array.from(document.querySelectorAll('#fclMainBody tr')).map((row) => {
+                const mainRows = Array.from(document.querySelectorAll('#fclMainBody2 tr')).map((row) => {
                     const cells = Array.from(row.children);
                     const remarkCell = cells[cells.length - 1];
                     const remarkVal = remarkCell ? (remarkCell.querySelector('[data-role="remark"]')?.textContent.trim() || remarkCell.textContent.trim().replace("删除", "").trim()) : "";
@@ -5383,6 +5383,92 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        // ===== 整柜费用单专用函数（使用fclMainBody2和fclDetailBody2） =====
+        function addFclRow2() {
+            const body = document.getElementById('fclMainBody2');
+            if (!body) return;
+            const idx = body.querySelectorAll('tr').length + 1;
+            const tr = document.createElement('tr');
+            const cols = [
+                `<td>${idx}</td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true"></td>`,
+                `<td contenteditable="true" data-role="amount"></td>`,
+                `<td><div contenteditable="true" data-role="remark"></div></td>`
+            ];
+            tr.innerHTML = cols.join("");
+            body.appendChild(tr);
+            updateFclTotalFromRows2();
+        }
+
+        function removeFclRowByIndex2() {
+            const idx = parseInt(document.getElementById('fclDeleteRowIndex2')?.value || "", 10);
+            if (!idx || idx < 1) return;
+            const rows = document.querySelectorAll('#fclMainBody2 tr');
+            const tr = rows[idx - 1];
+            if (tr) tr.remove();
+            document.querySelectorAll('#fclMainBody2 tr').forEach((row, i) => {
+                const cell = row.querySelector('td');
+                if (cell) cell.textContent = i + 1;
+            });
+            updateFclTotalFromRows2();
+        }
+
+        function addFclDetailRow2() {
+            const body = document.getElementById('fclDetailBody2');
+            if (!body) return;
+            const tr = document.createElement('tr');
+            tr.dataset.origin = "user";
+            tr.innerHTML = [
+                `<td colspan="9" contenteditable="true" class="fcl-detail-name"></td>`,
+                `<td colspan="2" class="fcl-amount" contenteditable="true"></td>`,
+                `<td colspan="2"><div contenteditable="true" data-role="detail-remark"></div></td>`
+            ].join("");
+            body.appendChild(tr);
+        }
+
+        function removeFclDetailRowByIndex2() {
+            const idx = parseInt(document.getElementById('fclDeleteDetailIndex2')?.value || "", 10);
+            if (!idx || idx < 1) return;
+            const rows = document.querySelectorAll('#fclDetailBody2 tr');
+            const tr = rows[idx]; // 0 is header
+            if (tr) tr.remove();
+        }
+
+        function updateFclTotalFromRows2(resetManualDetails = false) {
+            const rows = document.querySelectorAll('#fclMainBody2 tr');
+            let total = 0;
+            rows.forEach(r => {
+                const cell = r.querySelector('[data-role="amount"]');
+                if (cell) total += parseNum(cell.textContent);
+            });
+            const inputAmount = parseNum(document.getElementById('fclAmount')?.value);
+            const detail1 = parseNum(document.getElementById('fclDetail1Amt')?.value);
+            const detail2 = parseNum(document.getElementById('fclDetail2Amt')?.value);
+            const detail3 = parseNum(document.getElementById('fclDetail3Amt')?.value);
+            const detailRows = Array.from(document.querySelectorAll('#fclDetailBody2 tr')).slice(1);
+            let detailRowSum = 0;
+            detailRows.forEach(r => {
+                const cell = r.querySelector('.fcl-amount');
+                if (cell) detailRowSum += parseNum(cell.textContent);
+            });
+            if (resetManualDetails) {
+                detailRowSum = 0;
+            }
+            total += inputAmount + detail1 + detail2 + detail3 + detailRowSum;
+            const totalStr = total ? Math.round(total) : "";
+            document.getElementById('outFclTotal').innerText = totalStr;
+            return totalStr;
         }
     </script>
 
