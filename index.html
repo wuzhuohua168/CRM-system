@@ -5099,7 +5099,7 @@
         }
 
         function updateFclTotalFromRows(resetManualDetails = false) {
-            const rows = document.querySelectorAll('#fclMainBody tr');
+            const rows = document.querySelectorAll('#fclMainBody2 tr');
             let total = 0;
             rows.forEach(r => {
                 const cell = r.querySelector('[data-role="amount"]');
@@ -5109,7 +5109,7 @@
             const detail1 = parseNum(document.getElementById('fclDetail1Amt')?.value);
             const detail2 = parseNum(document.getElementById('fclDetail2Amt')?.value);
             const detail3 = parseNum(document.getElementById('fclDetail3Amt')?.value);
-            const detailRows = Array.from(document.querySelectorAll('#fclDetailBody tr')).slice(1);
+            const detailRows = Array.from(document.querySelectorAll('#fclDetailBody2 tr')).slice(1);
             let detailRowSum = 0;
             detailRows.forEach(r => {
                 const cell = r.querySelector('.fcl-amount');
@@ -5126,7 +5126,7 @@
         }
 
         function addFclRow() {
-            const body = document.getElementById('fclMainBody');
+            const body = document.getElementById('fclMainBody2');
             const idx = body.querySelectorAll('tr').length + 1;
             const tr = document.createElement('tr');
             const cols = [
@@ -5153,7 +5153,7 @@
             const tr = btn.closest('tr');
             if (!tr) return;
             tr.remove();
-            document.querySelectorAll('#fclMainBody tr').forEach((row, i) => {
+            document.querySelectorAll('#fclMainBody2 tr').forEach((row, i) => {
                 const cell = row.querySelector('td');
                 if (cell) cell.textContent = i + 1;
             });
@@ -5163,10 +5163,10 @@
         function removeFclRowByIndex() {
             const idx = parseInt(document.getElementById('fclDeleteRowIndex')?.value || "", 10);
             if (!idx || idx < 1) return;
-            const rows = document.querySelectorAll('#fclMainBody tr');
+            const rows = document.querySelectorAll('#fclMainBody2 tr');
             const tr = rows[idx - 1];
             if (tr) tr.remove();
-            document.querySelectorAll('#fclMainBody tr').forEach((row, i) => {
+            document.querySelectorAll('#fclMainBody2 tr').forEach((row, i) => {
                 const cell = row.querySelector('td');
                 if (cell) cell.textContent = i + 1;
             });
@@ -5174,7 +5174,7 @@
         }
 
         function addFclDetailRow() {
-            const body = document.getElementById('fclDetailBody');
+            const body = document.getElementById('fclDetailBody2');
             const tr = document.createElement('tr');
             tr.dataset.origin = "user";
             tr.innerHTML = [
@@ -5193,7 +5193,7 @@
         function removeFclDetailRowByIndex() {
             const idx = parseInt(document.getElementById('fclDeleteDetailIndex')?.value || "", 10);
             if (!idx || idx < 1) return;
-            const rows = document.querySelectorAll('#fclDetailBody tr');
+            const rows = document.querySelectorAll('#fclDetailBody2 tr');
             const tr = rows[idx]; // 0 is header
             if (tr) tr.remove();
         }
