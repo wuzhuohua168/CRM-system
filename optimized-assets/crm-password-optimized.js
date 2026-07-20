@@ -6449,13 +6449,12 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             if (apiKey) return apiKey;
         }
         
-        // 2. 尝试内置默认key
-        const defaultKey = 'crm2024secretkey123';
-        
-        // 3. 尝试旧版localStorage里的cloudflare_api_key
+        // 2. 尝试旧版localStorage里的cloudflare_api_key
         const legacyKey = localStorage.getItem('cloudflare_api_key');
+        if (legacyKey) return legacyKey;
         
-        return legacyKey || defaultKey;
+        // 3. 使用默认密钥（与DEFAULT_API_KEY_ENCRYPTED解密后一致）
+        return decryptApiKey(DEFAULT_API_KEY_ENCRYPTED);
     }
 
     // 获取有效的API URL，依次尝试多个来源
@@ -6468,9 +6467,10 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         
         // 2. 尝试旧版localStorage里的cloudflare_api_url
         const legacyUrl = localStorage.getItem('cloudflare_api_url');
+        if (legacyUrl) return legacyUrl;
         
-        // 3. 使用默认VPS URL
-        return legacyUrl || 'https://crm.wubairan.com';
+        // 3. 使用默认VPS URL（与DEFAULT_API_URL一致）
+        return DEFAULT_API_URL;
     }
 
     function showApiConfig() {
