@@ -914,8 +914,15 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 'hgcd_crm_fcl_v1',
                 'logistics_client_data',
                 'logistics_supplier_data',
-                'logistics_reminders',
-                'logistics_rates_data'
+                'logistics_reminder_data',
+                'logistics_reconciliation_data',
+                'logistics_freight_data',
+                'freight_air_cache_v1',
+                'freight_fcl_cache_v1',
+                'dashboard_todos_v1',
+                'hcn_calendar_memos',
+                'shipment_notes_v1',
+                'logistics_workbench_state_v1'
             ];
             
             KEYS_TO_BACKUP.forEach(key => {
@@ -4276,15 +4283,16 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 updatedAt: r.updatedAt || new Date().toISOString()
             }));
             
+            const allData = collectCloudBackupData();
+            allData.orders = syncData;
+
             fetch(apiUrl + '/api/sync-all', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${apiKey}`
                 },
-                body: JSON.stringify({
-                    orders: syncData
-                })
+                body: JSON.stringify(allData)
             })
             .then(response => response.json())
             .then(result => {
@@ -4296,6 +4304,53 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 console.error('自动同步失败:', error);
             });
         }, 3000);
+    }
+
+    function safeReadJsonStorage(key, fallback) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch(e) {
+            return fallback;
+        }
+    }
+
+    function collectCloudBackupData() {
+        const allData = {
+            orders: crmLoad(),
+            clients: safeReadJsonStorage('logistics_client_data', []),
+            suppliers: safeReadJsonStorage('logistics_supplier_data', []),
+            airQuotes: [],
+            fclQuotes: [],
+            todos: safeReadJsonStorage('dashboard_todos_v1', []),
+            calendarMemos: [],
+            shipmentNotes: null,
+            appState: null,
+            apiConfigs: getApiConfigs(),
+            currentApiId: localStorage.getItem('crm_current_api_id') || 'default'
+        };
+
+        const airQuotesData = safeReadJsonStorage('freight_air_cache_v1', null);
+        if (airQuotesData) allData.airQuotes = [{ id: '1', data: airQuotesData }];
+
+        const fclQuotesData = safeReadJsonStorage('freight_fcl_cache_v1', null);
+        if (fclQuotesData) allData.fclQuotes = [{ id: '1', data: fclQuotesData }];
+
+        const memosData = safeReadJsonStorage('hcn_calendar_memos', null);
+        if (memosData && typeof memosData === 'object') {
+            allData.calendarMemos = Object.entries(memosData).map(([date, content]) => ({
+                id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${date}`,
+                date,
+                content
+            }));
+        }
+
+        const shipmentNotes = localStorage.getItem('shipment_notes_v1');
+        if (shipmentNotes) allData.shipmentNotes = shipmentNotes;
+
+        allData.appState = safeReadJsonStorage('logistics_workbench_state_v1', null);
+
+        return allData;
     }
 
     function crmGenerateTrackingData() {
