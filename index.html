@@ -3465,7 +3465,7 @@
             const inputQty = document.getElementById('inQty').value;
             
             const billWeightMatch = text.match(/(?:计费重|计费重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
-            const actWeightMatch = text.match(/(?:实际重量|实重|重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
+            const actWeightMatch = text.match(/(?:毛重|实际重量|实重|重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
             const billWeight = inputBillWeight ? parseFloat(inputBillWeight) : (billWeightMatch ? parseFloat(billWeightMatch[1]) : null);
             const actWeight = actWeightMatch ? parseFloat(actWeightMatch[1]) : 0;
             const volume = (text.match(/(?:体积|实际体积)[:：]?\s*(\d+(\.\d+)?)/) || ["", "0.00"])[1];
@@ -4837,7 +4837,7 @@
             const inputQty = document.getElementById('inQty').value;
             
             const billWeightMatch = text.match(/(?:计费重|计费重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
-            const actWeightMatch = text.match(/(?:实际重量|实重|重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
+            const actWeightMatch = text.match(/(?:毛重|实际重量|实重|重量)[:：]?\s*(\d+(\.\d+)?)(?:\s*(?:kg|KG|㎏))?/);
             const billWeight = inputBillWeight ? parseFloat(inputBillWeight) : (billWeightMatch ? parseFloat(billWeightMatch[1]) : null);
             const actWeight = actWeightMatch ? parseFloat(actWeightMatch[1]) : 0;
             const volume = (text.match(/(?:体积|实际体积)[:：]?\s*(\d+(\.\d+)?)/) || ["", "0.00"])[1];
