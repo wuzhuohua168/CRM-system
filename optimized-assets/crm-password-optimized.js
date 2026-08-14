@@ -974,7 +974,6 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         loadJpyTrend(30);
         initTimezoneInput();
         updateDashboard();
-        renderHomeQuoteGrid();
         updateDashboardNow();
         if (!dashboardNowTimer) dashboardNowTimer = setInterval(updateDashboardNow, 1000);
         updateStorageStatus();
@@ -1021,7 +1020,6 @@ const PASSWORD_KEY = 'crm_system_password_hash';
             renderGlobalSearch();
             renderPortSearch();
             renderIncotermTable();
-            renderHomeQuoteGrid();
             updateDashboardNow();
         }
         if(idx === 15) crmRender();
@@ -10185,13 +10183,6 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 iframe.contentWindow.postMessage({ type: 'theme-change', isDark: isDark }, '*');
             } catch(e) {}
         });
-
-        const quoteGrid = document.getElementById('home-quote-grid');
-        if (quoteGrid) {
-            quoteGrid.dataset.ready = 'false';
-            quoteGrid.innerHTML = '';
-            renderHomeQuoteGrid();
-        }
     }
 
     function initTheme() {
@@ -10200,13 +10191,6 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         if (saved === 'dark') {
             document.body.classList.add('dark-mode');
             if (btn) btn.textContent = '☀️';
-        }
-        
-        const quoteGrid = document.getElementById('home-quote-grid');
-        if (quoteGrid) {
-            quoteGrid.dataset.ready = 'false';
-            quoteGrid.innerHTML = '';
-            renderHomeQuoteGrid();
         }
     }
 
