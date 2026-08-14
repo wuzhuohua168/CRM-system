@@ -4054,6 +4054,78 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         setNewsBrowser(type);
     }
 
+    // 清除投资工具缓存
+    function clearInvestmentToolsCache() {
+        if (!confirm('确定要清除投资工具的所有缓存吗？\n\n这将清除：\n- LocalStorage\n- SessionStorage\n- IndexedDB\n- Service Worker缓存\n\n清除后建议刷新页面。')) {
+            return;
+        }
+
+        const clearLog = [];
+        
+        try {
+            // 1. 清除LocalStorage
+            localStorage.clear();
+            clearLog.push('✅ LocalStorage已清除');
+        } catch (e) {
+            clearLog.push('❌ LocalStorage清除失败: ' + e.message);
+        }
+        
+        try {
+            // 2. 清除SessionStorage
+            sessionStorage.clear();
+            clearLog.push('✅ SessionStorage已清除');
+        } catch (e) {
+            clearLog.push('❌ SessionStorage清除失败: ' + e.message);
+        }
+        
+        try {
+            // 3. 清除IndexedDB（投资工具数据库）
+            if (window.indexedDB) {
+                indexedDB.deleteDatabase('macro_persistence_v2');
+                indexedDB.deleteDatabase('macro_state_v2');
+                indexedDB.deleteDatabase('rsi_state_v2');
+                clearLog.push('✅ IndexedDB已清除');
+            }
+        } catch (e) {
+            clearLog.push('❌ IndexedDB清除失败: ' + e.message);
+        }
+        
+        // 4. 清除Service Worker缓存（异步）
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    caches.delete(name);
+                });
+                clearLog.push('✅ Service Worker缓存已清除');
+                showResult();
+            }).catch(e => {
+                clearLog.push('❌ Service Worker缓存清除失败: ' + e.message);
+                showResult();
+            });
+        } else {
+            showResult();
+        }
+        
+        function showResult() {
+            alert('缓存清除完成！\n\n' + clearLog.join('\n') + '\n\n请刷新页面以使更改生效。');
+            
+            // 刷新iframe
+            try {
+                const investFrame = document.getElementById('invest-online-frame');
+                const macroFrame = document.getElementById('macro-online-frame');
+                
+                if (investFrame) {
+                    investFrame.src = investFrame.src;
+                }
+                if (macroFrame) {
+                    macroFrame.src = macroFrame.src;
+                }
+            } catch (e) {
+                console.log('刷新iframe失败:', e);
+            }
+        }
+    }
+
     function resolveOriginPort(address) {
         const rule = PORT_RECOMMENDATION_RULES.find(item => item.keywords.some(key => address.includes(key)));
         if (!rule) {
