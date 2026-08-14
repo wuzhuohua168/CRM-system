@@ -9707,6 +9707,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         reconciliationGenerateFromCRM();
         reconciliationRender();
         freightLoadData();
+        renderHomeQuoteGrid();
         freightRender();
         freightInitTrendRoutes();
         const trendCanvas = document.getElementById('freight-trend-canvas');
