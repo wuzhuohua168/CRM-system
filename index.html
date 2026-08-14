@@ -3201,12 +3201,25 @@
         const FCL_CACHE_KEY = "freight_fcl_cache_v1";
         const PAYMENT_NOTICE_KEY = "freight_payment_notice_enabled_v1";
         const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
-        const PAYMENT_NOTICE_LINES = [
-            '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
-            '账户名称：深圳市恒基承达商务有限公司',
-            '账户号码：744580888548',
-            '开户银行：中国银行股份有限公司深圳北方大厦支行'
-        ];
+
+        // 账户信息配置
+        const PAYMENT_ACCOUNTS = {
+            hg: {
+                title: '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
+                name: '账户名称：深圳市恒基承达商务有限公司',
+                account: '账户号码：744580888548',
+                bank: '开户银行：中国银行股份有限公司深圳北方大厦支行'
+            },
+            hc: {
+                title: '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
+                name: '收款户：合辰供应链（深圳）有限公司',
+                account: '银行帐：4000051309100422348',
+                bank: '收款银行：中国工商银行股份有限公司深圳福田侨香支行'
+            }
+        };
+
+        // 默认使用恒基账户
+        let currentPaymentAccount = 'hg';
         let paymentNoticeEnabled = localStorage.getItem(PAYMENT_NOTICE_KEY) === '1';
 
         async function exportPdfFromElement(element, fileName, orientation = 'p') {
@@ -3401,6 +3414,12 @@
                 if (value === 'custom' || !presets[value]) return;
                 document.getElementById('fclHeaderCompany').value = presets[value].name;
                 document.getElementById('fclHeaderAddr').value = presets[value].addr;
+            }
+
+            // 智能切换账户信息
+            if (value === 'hg' || value === 'hc') {
+                currentPaymentAccount = value;
+                renderPaymentNotice();
             }
         }
 
@@ -4538,12 +4557,25 @@
         const FCL_CACHE_KEY = "freight_fcl_cache_v1";
         const PAYMENT_NOTICE_KEY = "freight_payment_notice_enabled_v1";
         const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
-        const PAYMENT_NOTICE_LINES = [
-            '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
-            '账户名称：深圳市恒基承达商务有限公司',
-            '账户号码：744580888548',
-            '开户银行：中国银行股份有限公司深圳北方大厦支行'
-        ];
+
+        // 账户信息配置
+        const PAYMENT_ACCOUNTS = {
+            hg: {
+                title: '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
+                name: '账户名称：深圳市恒基承达商务有限公司',
+                account: '账户号码：744580888548',
+                bank: '开户银行：中国银行股份有限公司深圳北方大厦支行'
+            },
+            hc: {
+                title: '尊敬的客户；请收到账单如有疑问，请在收到账单日起3日内提出，否则当是默认,请尽快核对账单，谢谢！请将运费支付到以下银行账号',
+                name: '收款户：合辰供应链（深圳）有限公司',
+                account: '银行帐：4000051309100422348',
+                bank: '收款银行：中国工商银行股份有限公司深圳福田侨香支行'
+            }
+        };
+
+        // 默认使用恒基账户
+        let currentPaymentAccount = 'hg';
         let paymentNoticeEnabled = localStorage.getItem(PAYMENT_NOTICE_KEY) === '1';
 
         async function exportPdfFromElement(element, fileName, orientation = 'p') {
@@ -4704,11 +4736,12 @@
         }
 
         function getPaymentNoticeHtml() {
+            const account = PAYMENT_ACCOUNTS[currentPaymentAccount] || PAYMENT_ACCOUNTS.hg;
             return [
-                `<div class="payment-notice-title">${PAYMENT_NOTICE_LINES[0]}</div>`,
-                `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[1]}</div>`,
-                `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[2]}</div>`,
-                `<div class="payment-notice-line">${PAYMENT_NOTICE_LINES[3]}</div>`
+                `<div class="payment-notice-title">${account.title}</div>`,
+                `<div class="payment-notice-line">${account.name}</div>`,
+                `<div class="payment-notice-line">${account.account}</div>`,
+                `<div class="payment-notice-line">${account.bank}</div>`
             ].join("");
         }
 
@@ -4774,6 +4807,12 @@
                 if (value === 'custom' || !presets[value]) return;
                 document.getElementById('fclHeaderCompany').value = presets[value].name;
                 document.getElementById('fclHeaderAddr').value = presets[value].addr;
+            }
+
+            // 智能切换账户信息
+            if (value === 'hg' || value === 'hc') {
+                currentPaymentAccount = value;
+                renderPaymentNotice();
             }
         }
 
