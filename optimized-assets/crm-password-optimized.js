@@ -4126,6 +4126,31 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         }
     }
 
+    // 加载快捷报价
+    function loadQuickQuotes() {
+        const quotes = document.querySelectorAll('.quick-quote-item .tradingview-widget-container');
+        quotes.forEach(container => {
+            const symbol = container.dataset.symbol;
+            if (!symbol) return;
+            
+            // 创建TradingView single-quote widget
+            const script = document.createElement('script');
+            script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
+            script.async = true;
+            script.innerHTML = JSON.stringify({
+                symbol: symbol,
+                width: '100%',
+                colorTheme: 'light',
+                isTransparent: true,
+                locale: 'zh_CN',
+                showSymbolLogo: false
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(script);
+        });
+    }
+
     function resolveOriginPort(address) {
         const rule = PORT_RECOMMENDATION_RULES.find(item => item.keywords.some(key => address.includes(key)));
         if (!rule) {
@@ -9707,7 +9732,7 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         reconciliationGenerateFromCRM();
         reconciliationRender();
         freightLoadData();
-        renderHomeQuoteGrid();
+        loadQuickQuotes();
         freightRender();
         freightInitTrendRoutes();
         const trendCanvas = document.getElementById('freight-trend-canvas');

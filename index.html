@@ -531,6 +531,27 @@
         <div class="module-card">
             <div class="title">快捷入口</div>
             <div class="mini-grid">
+                <div class="quick-card" style="background:linear-gradient(135deg, rgba(74,144,226,0.08), rgba(74,144,226,0.02)); padding:10px; border-left:3px solid #4a90e2;">
+                    <div style="font-weight:bold; margin-bottom:8px; font-size:13px; color:#2c3e50;">📊 快速报价</div>
+                    <div id="quick-quote-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px;">
+                        <div class="quick-quote-item" data-symbol="BTCUSD" style="text-align:center; padding:6px; background:#fff; border-radius:6px; border:1px solid #e8f0f8;">
+                            <div style="font-size:10px; color:#7f8c8d; margin-bottom:2px;">BTCUSD</div>
+                            <div class="tradingview-widget-container" data-symbol="BTCUSD" style="font-size:11px; font-weight:bold; color:#2c3e50;">--</div>
+                        </div>
+                        <div class="quick-quote-item" data-symbol="XAUUSD/WTI" style="text-align:center; padding:6px; background:#fff; border-radius:6px; border:1px solid #e8f0f8;">
+                            <div style="font-size:10px; color:#7f8c8d; margin-bottom:2px;">金油比</div>
+                            <div class="tradingview-widget-container" data-symbol="XAUUSD/WTI" style="font-size:11px; font-weight:bold; color:#2c3e50;">--</div>
+                        </div>
+                        <div class="quick-quote-item" data-symbol="SP500/WTI" style="text-align:center; padding:6px; background:#fff; border-radius:6px; border:1px solid #e8f0f8;">
+                            <div style="font-size:10px; color:#7f8c8d; margin-bottom:2px;">股油比</div>
+                            <div class="tradingview-widget-container" data-symbol="SP500/WTI" style="font-size:11px; font-weight:bold; color:#2c3e50;">--</div>
+                        </div>
+                        <div class="quick-quote-item" data-symbol="COPPER/WTI" style="text-align:center; padding:6px; background:#fff; border-radius:6px; border:1px solid #e8f0f8;">
+                            <div style="font-size:10px; color:#7f8c8d; margin-bottom:2px;">铜油比</div>
+                            <div class="tradingview-widget-container" data-symbol="COPPER/WTI" style="font-size:11px; font-weight:bold; color:#2c3e50;">--</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="quick-card focus-group quick-card-group">
                     <div class="quick-subgrid">
                         <div class="quick-subcard" onclick="openNewsBrowser('war')"><b>新闻浏览</b></div>
@@ -555,11 +576,6 @@
                 <div class="quick-card" onclick="switchTab(7)"><b>柜型与船司</b>看柜型、船司、免柜期参考</div>
                 <div class="quick-card" onclick="switchTab(8)"><b>货车尺寸</b>多国家货车尺寸、方数、载重</div>
             </div>
-        </div>
-
-        <div class="module-card">
-            <div class="title">📊 市场报价</div>
-            <div id="home-quote-grid" class="market-quote-grid"></div>
         </div>
 
         <div class="module-card" id="timeis-panel" style="display:none;">
