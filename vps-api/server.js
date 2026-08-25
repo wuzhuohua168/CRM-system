@@ -597,14 +597,7 @@ app.get('/api/tracking', (req, res) => {
         const allData = JSON.parse(row.data_json);
         const orders = allData.orders || [];
         
-        const sixtyDaysAgo = new Date();
-        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-        
         const trackingData = orders
-            .filter(order => {
-                const orderDate = new Date(order.updatedAt || order.createdAt);
-                return orderDate >= sixtyDaysAgo;
-            })
             .map(order => ({
                 id: order.id,
                 orderno: order.orderno,
