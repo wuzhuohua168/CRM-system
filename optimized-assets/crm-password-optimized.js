@@ -4394,22 +4394,6 @@ const PASSWORD_KEY = 'crm_system_password_hash';
                 if (result.success) {
                     console.log('自动同步成功:', result.message);
                 }
-                // 自动同步到 Cloudflare Worker（追踪系统）
-                const cfKey = decryptApiKey(CLOUDFLARE_API_KEY_ENCRYPTED);
-                return fetch(CLOUDFLARE_API_URL + '/api/sync-all', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${cfKey}`
-                    },
-                    body: JSON.stringify(allData)
-                });
-            })
-            .then(response => response && response.json())
-            .then(cfResult => {
-                if (cfResult && cfResult.success) {
-                    console.log('自动同步到CF成功:', cfResult.message);
-                }
             })
             .catch(error => {
                 console.error('自动同步失败:', error);
@@ -6905,27 +6889,9 @@ const PASSWORD_KEY = 'crm_system_password_hash';
         .then(response => response.json())
         .then(result => {
             if (result.success) {
-                console.log('[同步] VPS同步成功:', result.message);
+                showToast('✅ 数据已同步到云端');
             } else {
-                console.warn('[同步] VPS同步失败:', result.error);
-            }
-            // 同步到 Cloudflare Worker（追踪系统）
-            const cfKey = decryptApiKey(CLOUDFLARE_API_KEY_ENCRYPTED);
-            return fetch(CLOUDFLARE_API_URL + '/api/sync-all', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${cfKey}`
-                },
-                body: JSON.stringify(allData)
-            });
-        })
-        .then(response => response.json())
-        .then(cfResult => {
-            if (cfResult.success) {
-                showToast('✅ 数据已同步到云端和追踪系统');
-            } else {
-                showToast('⚠️ VPS已同步，但追踪系统同步失败：' + (cfResult.error || '未知错误'));
+                showToast('同步失败：' + (result.error || '未知错误'));
             }
         })
         .catch(error => {
